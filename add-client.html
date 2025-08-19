@@ -12,6 +12,7 @@
         <div class="card col-md-8 p-4 shadow-lg">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="card-title mb-0">Добавить клиента</h3>
+                <button id="favoriteBtn" class="btn btn-warning icon-btn" data-favorite="false" title="Избранный клиент">☆</button>
             </div>
             <div class="card-body">
                 <!-- Личные данные -->
@@ -188,6 +189,14 @@
         }
     });
 
+    // Переключение избранного клиента
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    favoriteBtn.addEventListener('click', function() {
+        const fav = favoriteBtn.dataset.favorite === 'true';
+        favoriteBtn.dataset.favorite = (!fav).toString();
+        favoriteBtn.textContent = fav ? '☆' : '★';
+    });
+
     window.saveClient = function() {
         // Собираем данные клиента
         const clientData = {
@@ -209,6 +218,7 @@
             courtDate: document.getElementById('courtDate').value,
             documentsCollected: document.getElementById('documentsCollected').checked,
             notes: document.getElementById('notes').value.trim(),
+            favorite: favoriteBtn.dataset.favorite === 'true',
             createdAt: new Date().toISOString()
         };
 

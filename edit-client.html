@@ -12,7 +12,10 @@
         <div class="card col-md-8 p-4 shadow-lg">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="card-title mb-0">Редактировать клиента</h3>
-                <button class="btn btn-primary icon-btn" onclick="generateContractPDF()" title="Скачать договор">⊜</button>
+                <div>
+                    <button id="favoriteBtn" class="btn btn-warning icon-btn me-2" data-favorite="false" title="Избранный клиент">☆</button>
+                    <button class="btn btn-primary icon-btn" onclick="generateContractPDF()" title="Скачать договор">⊜</button>
+                </div>
             </div>
             <div class="card-body">
                 <!-- Личные данные -->
@@ -208,6 +211,16 @@
             `;
         }
     });
+
+    // Переключение избранного клиента
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            const fav = favoriteBtn.dataset.favorite === 'true';
+            favoriteBtn.dataset.favorite = (!fav).toString();
+            favoriteBtn.textContent = fav ? '☆' : '★';
+        });
+    }
 
     // Инициализация задач для клиента
     function initTaskList(clientId) {
