@@ -1084,6 +1084,43 @@ window.showPaymentsModal = function(clientId) {
     modal.show();
 };
 
+// Сохранение консультации
+window.saveConsultation = function() {
+    const nameInput = document.getElementById('consultName');
+    const phoneInput = document.getElementById('consultPhone');
+    const dateInput = document.getElementById('consultDate');
+
+    const name = nameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const date = dateInput.value;
+
+    if (!name || !phone || !date) {
+        alert('Заполните все поля и выберите дату консультации!');
+        return;
+    }
+
+    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    consultations.push({ id: Date.now(), name, phone, date });
+    localStorage.setItem('consultations', JSON.stringify(consultations));
+
+    const modalEl = document.getElementById('addConsultationModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modalEl.addEventListener(
+        'hidden.bs.modal',
+        () => {
+            showClientsForDate(date);
+            if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
+                document.getElementById('calendar')._fullCalendar.refetchEvents();
+            }
+        },
+        { once: true }
+    );
+    modalInstance.hide();
+
+    nameInput.value = '';
+    phoneInput.value = '';
+};
+
 // --- вернуть функцию назначения консультации ---
 window.convertToClient = function(consultId, dateStr) {
     const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
