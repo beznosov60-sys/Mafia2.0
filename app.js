@@ -132,6 +132,8 @@ function displayCourtThisMonth() {
         return courtDate.getFullYear() === currentYear && courtDate.getMonth() === currentMonth;
     });
 
+    filteredClients.sort((a, b) => Number(b.favorite) - Number(a.favorite));
+
     courtThisMonthDiv.innerHTML = '';
     if (filteredClients.length === 0) {
         courtThisMonthDiv.innerHTML = '<li class="list-group-item text-center">Нет судебных дел в этом месяце</li>';
@@ -142,7 +144,7 @@ function displayCourtThisMonth() {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
         listItem.innerHTML = `
-            ${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
+            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
             <div>
                 <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
@@ -171,8 +173,10 @@ function displayClientsByMonth() {
         filteredClients = clients.filter(client => client.stage === stageFilter);
     }
 
-    // Сортировка клиентов по фамилии и имени с учетом русского алфавита
+    // Сортировка: избранные сначала, затем по фамилии и имени
     filteredClients.sort((a, b) => {
+        const favDiff = Number(b.favorite) - Number(a.favorite);
+        if (favDiff !== 0) return favDiff;
         const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
         const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
         return nameA.localeCompare(nameB, 'ru');
@@ -216,7 +220,7 @@ function displayClientsByMonth() {
             li.draggable = true;
             li.dataset.clientId = client.id;
             li.innerHTML = `
-                ${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
+                ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
                 <div class="d-flex flex-wrap align-items-center">
                     <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
@@ -355,6 +359,12 @@ function loadClientForEdit(clientId) {
     document.getElementById('documentsCollected').checked = client.documentsCollected || false;
     document.getElementById('documentsIcon').textContent = client.documentsCollected ? '✅' : '☐';
 
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if (favoriteBtn) {
+        favoriteBtn.dataset.favorite = client.favorite ? 'true' : 'false';
+        favoriteBtn.textContent = client.favorite ? '★' : '☆';
+    }
+
     const arbitrInput = document.getElementById('arbitrLink');
     const arbitrButton = document.getElementById('arbitrButton');
     arbitrButton.disabled = !arbitrInput.value.trim();
@@ -414,6 +424,7 @@ function updateClient() {
         courtDate: document.getElementById('courtDate').value,
         notes: document.getElementById('notes').value.trim(),
         documentsCollected: document.getElementById('documentsCollected').checked,
+        favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: existingClient.createdAt // Сохраняем исходную дату создания
     };
 
@@ -499,6 +510,7 @@ function saveClient() {
         courtDate: document.getElementById('courtDate').value,
         notes: document.getElementById('notes').value.trim(),
         documentsCollected: document.getElementById('documentsCollected').checked,
+        favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: new Date().toISOString(),
         tasks: window.tasks || [],
         finManagerPaid: false,
@@ -531,11 +543,11 @@ function searchClients() {
         return;
     }
 
-    const filteredClients = clients.filter(client => 
+    const filteredClients = clients.filter(client =>
         client.firstName.toLowerCase().includes(query) ||
-        client.lastName.toLowerCase().includes(query) || 
+        client.lastName.toLowerCase().includes(query) ||
         (client.caseNumber && client.caseNumber.toLowerCase().includes(query))
-    );
+    ).sort((a, b) => Number(b.favorite) - Number(a.favorite));
 
     if (filteredClients.length === 0) {
         resultsDiv.innerHTML = '<li class="list-group-item text-center">Клиенты не найдены</li>';
@@ -546,7 +558,7 @@ function searchClients() {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
         listItem.innerHTML = `
-            ${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
+            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
             <div>
                 <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
@@ -1098,6 +1110,7 @@ window.convertToClient = function(consultId, dateStr) {
         courtDate: dateStr,
         notes: '',
         documentsCollected: false,
+        favorite: false,
         createdAt: new Date().toISOString(),
         tasks: [],
         finManagerPaid: false,
