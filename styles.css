@@ -147,3 +147,17 @@ body {
 .list-group-item .btn-complete:hover {
     background: #e8590c;
 }
+
+.favorite-icon {
+    color: #ffc107;
+    margin-right: 0.25rem;
+}
+
+.client-info {
+    display: inline-flex;
+    align-items: center;
+}
+
+.documents-icon {
+    margin-left: 0.25rem;
+}
