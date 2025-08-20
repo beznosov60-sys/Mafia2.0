@@ -284,3 +284,29 @@ body.home-screen {
 .quick-action:hover {
     background-color: #f1f1f1;
 }
+/* Client card layout */
+.client-card-screen {
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.client-info-card,
+.client-court-card,
+.client-notes-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.court-date-badge {
+    background: #28a745;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
