@@ -177,13 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализация календаря (только на calendar.html)
     if (window.location.pathname.includes('calendar.html')) {
         initCalendar();
-        document.getElementById('addConsultationBtn')?.addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('addConsultationModal'));
-            modal.show();
-        });
-        document.getElementById('addTaskBtn')?.addEventListener('click', () => {
-            showAddTaskModal();
-        });
+        renderDayActions(new Date().toISOString().split('T')[0]);
     }
     // Проверка наличия клиентов
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
@@ -599,6 +593,53 @@ function generateContractPDF() {
     alert('Генерация договора временно недоступна. Функционал будет доработан позже.');
 }
 
+function renderDayActions(dateStr) {
+    const list = document.getElementById('dayActionsList');
+    if (!list) return;
+
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+
+    const tasks = clients
+        .filter(client => client.tasks && Array.isArray(client.tasks))
+        .flatMap(client => client.tasks
+            .filter(task => task.deadline === dateStr && !task.completed)
+            .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}` }))
+        );
+    const consults = consultations.filter(consult => consult.date === dateStr);
+    const courts = clients.filter(client => client.courtDate === dateStr);
+
+    list.innerHTML = '';
+    if (consults.length === 0 && tasks.length === 0 && courts.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-center">Нет событий</li>';
+        return;
+    }
+
+    consults.forEach(consult => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-success" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>`;
+        list.appendChild(li);
+    });
+
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `list-group-item d-flex justify-content-between align-items-center task-${task.priority}`;
+        li.innerHTML = `${task.text} (${task.clientName}) <button class="btn btn-sm btn-primary" onclick="completeTaskFromCalendar(${task.clientId}, ${task.id}, '${dateStr}')">Выполнено</button>`;
+        list.appendChild(li);
+    });
+
+    courts.forEach(client => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
+        const stageClass = stageColorClasses[client.stage] || '';
+        const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
+        li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge}`;
+        li.onclick = () => { window.location.href = `edit-client.html?id=${client.id}`; };
+        list.appendChild(li);
+    });
+}
+
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     const debugEl = document.getElementById('calendarDebug');
@@ -664,10 +705,10 @@ function initCalendar() {
             return { html: `<div class="event-dot" style="background-color: ${arg.event.backgroundColor}; display:inline-block; margin-right:4px;"></div><span style="font-size:0.9em">${arg.event.title}</span>` };
         },
         dateClick: function(info) {
-            showClientsForDate(info.dateStr);
+            renderDayActions(info.dateStr);
         },
         eventClick: function(info) {
-            showClientsForDate(info.event.startStr);
+            renderDayActions(info.event.startStr);
         }
     });
     calendar.render();
@@ -952,6 +993,24 @@ function advanceClientStage(client) {
     }
 }
 
+window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clientIndex = clients.findIndex(c => c.id === clientId);
+    if (clientIndex === -1) return;
+    const tasks = clients[clientIndex].tasks || [];
+    const tIndex = tasks.findIndex(t => t.id === taskId);
+    if (tIndex === -1) return;
+    tasks[tIndex].completed = true;
+    tasks[tIndex].completedAt = new Date().toISOString();
+    advanceClientStage(clients[clientIndex]);
+    clients[clientIndex].tasks = tasks;
+    localStorage.setItem('clients', JSON.stringify(clients));
+    renderDayActions(dateStr);
+    if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
+        document.getElementById('calendar')._fullCalendar.refetchEvents();
+    }
+};
+
 function completeSubStage() {
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = parseInt(urlParams.get('id'));
@@ -1068,6 +1127,7 @@ function showAddTaskModal(dateStr) {
         client.tasks.push(task);
         localStorage.setItem('clients', JSON.stringify(clients));
         modalInstance.hide();
+        renderDayActions(date);
         if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
             document.getElementById('calendar')._fullCalendar.refetchEvents();
         }
@@ -1076,7 +1136,7 @@ function showAddTaskModal(dateStr) {
     modalDiv.addEventListener('hidden.bs.modal', () => {
         modalDiv.remove();
         if (dateStr) {
-            showClientsForDate(dateStr);
+            renderDayActions(dateStr);
         }
     });
 }
@@ -1172,7 +1232,7 @@ window.saveConsultation = function() {
     modalEl.addEventListener(
         'hidden.bs.modal',
         () => {
-            showClientsForDate(date);
+            renderDayActions(date);
             if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
                 document.getElementById('calendar')._fullCalendar.refetchEvents();
             }
@@ -1226,7 +1286,30 @@ window.convertToClient = function(consultId, dateStr) {
         consultations.splice(idx, 1);
         localStorage.setItem('consultations', JSON.stringify(consultations));
     }
-    showClientsForDate(dateStr);
+    renderDayActions(dateStr);
+};
+
+window.openClientsModal = function() {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const list = document.getElementById('clientsModalList');
+    if (list) {
+        list.innerHTML = '';
+        if (clients.length === 0) {
+            list.innerHTML = '<li class="list-group-item text-center">Нет клиентов</li>';
+        } else {
+            clients.forEach(client => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item clickable-item';
+                li.textContent = `${client.firstName} ${client.lastName}`;
+                li.onclick = () => { window.location.href = `edit-client.html?id=${client.id}`; };
+                list.appendChild(li);
+            });
+        }
+    }
+    const modalEl = document.getElementById('clientsModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
 };
     
 

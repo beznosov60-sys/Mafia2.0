@@ -19,19 +19,18 @@
             </div>
             <div class="col-lg-4">
                 <div class="action-card h-100">
-                    <h2 class="h5 mb-3">Действия</h2>
-                    <a href="index.html" class="btn btn-outline-secondary w-100 mb-2">Назад</a>
-                    <button class="btn btn-primary w-100 mb-2" id="addTaskBtn">+ Добавить задачу</button>
-                    <button class="btn btn-success w-100" id="addConsultationBtn">+ Добавить консультацию</button>
+                    <h2 class="h5 mb-3">Задачи на день</h2>
+                    <ul class="list-group mb-3" id="dayActionsList"></ul>
+                    <button class="btn btn-outline-primary w-100" id="clientsModalBtn">Клиенты</button>
                 </div>
             </div>
         </div>
         <div class="row g-4 mt-1">
             <div class="col-6 col-md-3">
-                <a href="index.html" class="quick-action text-center">
+                <button class="quick-action w-100" id="quickClientsBtn">
                     <i class="bi bi-people fs-4 mb-2"></i>
                     Клиенты
-                </a>
+                </button>
             </div>
             <div class="col-6 col-md-3">
                 <button class="quick-action w-100" id="quickTaskBtn">
@@ -71,6 +70,23 @@
                     <ul class="list-group mb-3" id="dayConsultationsList">
                         <!-- В app.js уже реализовано добавление кнопки "Преобразовать в клиента" -->
                     </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно списка клиентов -->
+    <div class="modal fade" id="clientsModal" tabindex="-1" aria-labelledby="clientsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clientsModalLabel">Список клиентов</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="clientsModalList"></ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -121,15 +137,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const quickTask = document.getElementById('quickTaskBtn');
     if (quickTask) {
         quickTask.addEventListener('click', () => {
-            const addTask = document.getElementById('addTaskBtn');
-            if (addTask) addTask.click();
+            showAddTaskModal();
         });
     }
     const quickConsult = document.getElementById('quickConsultBtn');
     if (quickConsult) {
         quickConsult.addEventListener('click', () => {
-            const addConsult = document.getElementById('addConsultationBtn');
-            if (addConsult) addConsult.click();
+            const modal = new bootstrap.Modal(document.getElementById('addConsultationModal'));
+            modal.show();
+        });
+    }
+    const quickClients = document.getElementById('quickClientsBtn');
+    if (quickClients) {
+        quickClients.addEventListener('click', () => {
+            openClientsModal();
+        });
+    }
+    const clientsBtn = document.getElementById('clientsModalBtn');
+    if (clientsBtn) {
+        clientsBtn.addEventListener('click', () => {
+            openClientsModal();
         });
     }
 });
