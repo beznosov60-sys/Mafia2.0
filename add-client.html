@@ -148,15 +148,6 @@
                                     <label for="courtDate" class="form-label">Дата суда (опционально)</label>
                                     <input type="date" class="form-control" id="courtDate">
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Документы собраны</label>
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" id="documentsCollected">
-                                        <label class="form-check-label" for="documentsCollected">
-                                            <span id="documentsIcon">☐</span> Документы собраны
-                                        </label>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -221,7 +212,6 @@
             paidMonths: new Array(parseInt(document.getElementById('paymentMonths').value) || 0).fill(false),
             stage: document.getElementById('stage').value,
             courtDate: document.getElementById('courtDate').value,
-            documentsCollected: document.getElementById('documentsCollected').checked,
             notes: document.getElementById('notes').value.trim(),
             favorite: favoriteBtn.dataset.favorite === 'true',
             createdAt: new Date().toISOString()

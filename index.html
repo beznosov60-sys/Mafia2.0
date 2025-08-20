@@ -40,20 +40,10 @@
     <!-- Выдвижная панель -->
     <div id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <h5>Все клиенты по месяцам</h5>
+            <h5>Все клиенты</h5>
             <button class="btn btn-close" id="sidebarClose"></button>
         </div>
-        <div class="sidebar-filter">
-            <select id="stageFilter" class="form-select form-select-sm me-2">
-                <option value="">Все этапы</option>
-                <option value="Договор">Договор</option>
-                <option value="Подача в суд">Подача в суд</option>
-                <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
-                <option value="Завершение">Завершение</option>
-            </select>
-            <button class="btn btn-sm btn-primary me-2 icon-btn" id="sidebarRefresh">↺</button>
-        </div>
-        <div id="clientsByMonth" class="sidebar-content"></div>
+        <div id="clientsList" class="sidebar-content"></div>
     </div>
     <!-- Модальное окно для платежей -->
     <div class="modal fade" id="paymentsModal" tabindex="-1" aria-labelledby="paymentsModalLabel" aria-hidden="true">
