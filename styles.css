@@ -150,5 +150,29 @@ body {
 
 .favorite-icon {
     color: #ffc107;
-    margin-right: 0.25rem;
+    margin-right: 0.1rem;
+}
+
+.stage-badge {
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    color: #000;
+}
+
+.stage-contract {
+    background-color: #d8b4e2;
+}
+
+.stage-submission {
+    background-color: #f3c2d5;
+}
+
+.stage-decision {
+    background-color: #c2f3d5;
+}
+
+.stage-complete {
+    background-color: #c2d5f3;
 }

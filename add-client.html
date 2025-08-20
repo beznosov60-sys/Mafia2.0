@@ -123,19 +123,24 @@
                                     <button class="arbitr-icon ms-2" id="arbitrButton" disabled>◉</button>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="caseNumber" class="form-label">Номер дела (опционально)</label>
                                         <input type="text" class="form-control" id="caseNumber" placeholder="Введите номер дела">
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="stage" class="form-label">Этап</label>
                                         <select class="form-select" id="stage" required>
                                             <option value="" disabled>Выберите этап</option>
                                             <option value="Договор">Договор</option>
-                                            <option value="Заявление">Заявление</option>
-                                            <option value="В суде">В суде</option>
-                                            <option value="Ждёт решение">Ждёт решение</option>
+                                            <option value="Подача в суд">Подача в суд</option>
+                                            <option value="Решение суда">Решение суда</option>
                                             <option value="Завершение">Завершение</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="subStage" class="form-label">Подэтап</label>
+                                        <select class="form-select" id="subStage">
+                                            <option value="">Выберите подэтап</option>
                                         </select>
                                     </div>
                                 </div>
