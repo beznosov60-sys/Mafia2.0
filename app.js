@@ -91,6 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const stageSelect = document.getElementById('stage');
         const subStageSelect = document.getElementById('subStage');
         const historyToggle = document.getElementById('historyToggle');
+        const completeSubStageBtn = document.getElementById('completeSubStageBtn');
+        const paymentMonthsInput = document.getElementById('paymentMonths');
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const completeBtn = document.getElementById('completeClientBtn');
         arbitrButton.addEventListener('click', openArbitrLink);
         arbitrInput.addEventListener('input', () => {
             arbitrButton.disabled = !arbitrInput.value.trim();
@@ -101,7 +105,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
         updateSubStageOptions(stageSelect.value, subStageSelect);
-        historyToggle?.addEventListener('click', toggleTaskHistory);
+        historyToggle?.addEventListener('click', openHistoryModal);
+        completeSubStageBtn?.addEventListener('click', completeSubStage);
+        if (completeSubStageBtn) {
+            function updateSubStageButton() {
+                completeSubStageBtn.disabled = !subStageSelect.value;
+            }
+            subStageSelect.addEventListener('change', updateSubStageButton);
+            updateSubStageButton();
+        }
+        paymentMonthsInput?.addEventListener('input', function() {
+            const months = parseInt(this.value) || 0;
+            const container = document.getElementById('paidMonthsContainer');
+            container.innerHTML = '';
+            for (let i = 1; i <= months; i++) {
+                container.innerHTML += `
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="paidMonth${i}">
+                    <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
+                </div>`;
+            }
+        });
+        favoriteBtn?.addEventListener('click', function() {
+            const fav = favoriteBtn.dataset.favorite === 'true';
+            favoriteBtn.dataset.favorite = (!fav).toString();
+            favoriteBtn.textContent = fav ? '☆' : '★';
+        });
+        function updateCompleteBtnVisibility() {
+            if (!completeBtn) return;
+            completeBtn.style.display =
+                stageSelect.value === 'Завершение' && subStageSelect.value === 'ждем доки от суда'
+                    ? 'block'
+                    : 'none';
+        }
+        if (stageSelect && completeBtn && subStageSelect) {
+            stageSelect.addEventListener('change', updateCompleteBtnVisibility);
+            subStageSelect.addEventListener('change', updateCompleteBtnVisibility);
+            updateCompleteBtnVisibility();
+        }
+        window.completeClientFromEdit = function() {
+            const clientIdVal = parseInt(document.getElementById('clientId').value);
+            if (!clientIdVal) return;
+            if (confirm('Завершить клиента?')) {
+                if (window.completeClient) {
+                    window.completeClient(clientIdVal);
+                } else {
+                    alert('Функция завершения не найдена!');
+                }
+            }
+        };
         initTaskList(clientId);
     }
     // Инициализация кнопки арбитр и чекбокса документов на add-client.html
@@ -128,6 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('addConsultationBtn')?.addEventListener('click', () => {
             const modal = new bootstrap.Modal(document.getElementById('addConsultationModal'));
             modal.show();
+        });
+        document.getElementById('addTaskBtn')?.addEventListener('click', () => {
+            showAddTaskModal();
         });
     }
     // Проверка наличия клиентов
@@ -698,14 +753,6 @@ function showClientsForDate(dateStr) {
         }
     }
 
-    // Кнопка добавить задачу
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    if (addTaskBtn) {
-        addTaskBtn.onclick = function() {
-            showAddTaskModal(dateStr);
-        };
-    }
-
     if (modal) {
         let modalInstance = bootstrap.Modal.getInstance(modal);
         if (!modalInstance) {
@@ -717,89 +764,6 @@ function showClientsForDate(dateStr) {
     }
 }
 
-// Модальное окно для добавления задачи (простая реализация через prompt)
-function showAddTaskModal(dateStr) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    if (clients.length === 0) {
-        alert('Нет клиентов для добавления задачи!');
-        return;
-    }
-    let modalDiv = document.createElement('div');
-    modalDiv.className = 'modal fade';
-    modalDiv.innerHTML = `
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Добавить задачу на ${new Date(dateStr).toLocaleDateString('ru-RU')}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="calendarTaskClient" class="form-label">Клиент</label>
-                        <select id="calendarTaskClient" class="form-select">
-                            ${clients.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="calendarTaskText" class="form-label">Текст задачи</label>
-                        <input type="text" class="form-control" id="calendarTaskText" placeholder="Введите задачу">
-                    </div>
-                    <div class="mb-3">
-                        <label for="calendarTaskPriority" class="form-label">Приоритет</label>
-                        <select id="calendarTaskPriority" class="form-select">
-                            <option value="low">Низкая</option>
-                            <option value="medium">Средняя</option>
-                            <option value="high">Высокая</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id="calendarTaskSaveBtn">Сохранить</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modalDiv);
-    const modalInstance = new bootstrap.Modal(modalDiv);
-    modalInstance.show();
-
-    document.getElementById('calendarTaskSaveBtn').onclick = function() {
-        const clientId = parseInt(document.getElementById('calendarTaskClient').value);
-        const text = document.getElementById('calendarTaskText').value.trim();
-        const priority = document.getElementById('calendarTaskPriority').value;
-        if (!text) {
-            alert('Введите текст задачи!');
-            return;
-        }
-        let client = clients.find(c => c.id === clientId);
-        if (!client) {
-            alert('Клиент не найден!');
-            return;
-        }
-        let task = {
-            id: Date.now(),
-            text,
-            priority,
-            deadline: dateStr,
-            completed: false
-        };
-        if (!Array.isArray(client.tasks)) client.tasks = [];
-        client.tasks.push(task);
-        localStorage.setItem('clients', JSON.stringify(clients));
-        modalInstance.hide();
-        // Не вызываем showClientsForDate здесь!
-        // modalDiv.remove(); // удалится ниже
-        if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
-            document.getElementById('calendar')._fullCalendar.refetchEvents();
-        }
-    };
-
-    modalDiv.addEventListener('hidden.bs.modal', () => {
-        modalDiv.remove();
-        showClientsForDate(dateStr);
-    });
-}
 
 // Завершение клиента
 function completeClient(clientId) {
@@ -966,10 +930,12 @@ function renderCompletedTasks() {
     });
 }
 
-function toggleTaskHistory() {
-    const history = document.getElementById('taskHistory');
-    if (!history) return;
-    history.style.display = history.style.display === 'none' ? 'block' : 'none';
+function openHistoryModal() {
+    renderCompletedTasks();
+    const modalEl = document.getElementById('historyModal');
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 function advanceClientStage(client) {
@@ -986,6 +952,37 @@ function advanceClientStage(client) {
     }
 }
 
+function completeSubStage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = parseInt(urlParams.get('id'));
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clientIndex = clients.findIndex(c => c.id === clientId);
+    if (clientIndex === -1) return;
+    const client = clients[clientIndex];
+    if (!Array.isArray(client.tasks)) client.tasks = [];
+    if (client.subStage) {
+        client.tasks.push({
+            id: Date.now(),
+            text: client.subStage,
+            priority: 'medium',
+            completed: true,
+            completedAt: new Date().toISOString()
+        });
+    }
+    advanceClientStage(client);
+    localStorage.setItem('clients', JSON.stringify(clients));
+    const stageSelect = document.getElementById('stage');
+    const subStageSelect = document.getElementById('subStage');
+    if (stageSelect && subStageSelect) {
+        stageSelect.value = client.stage;
+        updateSubStageOptions(client.stage, subStageSelect);
+        subStageSelect.value = client.subStage || '';
+    }
+    window.tasks = client.tasks;
+    renderTaskList();
+    renderCompletedTasks();
+}
+
 // --- Для add-client.html ---
 // window.saveClient = function() { ... } уже реализовано и сохраняет задачи в localStorage
 
@@ -999,11 +996,12 @@ function showAddTaskModal(dateStr) {
     }
     let modalDiv = document.createElement('div');
     modalDiv.className = 'modal fade';
+    const dateTitle = dateStr ? ` на ${new Date(dateStr).toLocaleDateString('ru-RU')}` : '';
     modalDiv.innerHTML = `
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Добавить задачу на ${new Date(dateStr).toLocaleDateString('ru-RU')}</h5>
+                    <h5 class="modal-title">Добавить задачу${dateTitle}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -1025,6 +1023,10 @@ function showAddTaskModal(dateStr) {
                             <option value="high">Высокая</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="calendarTaskDate" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="calendarTaskDate" value="${dateStr ? dateStr : ''}">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-success" id="calendarTaskSaveBtn">Сохранить</button>
@@ -1041,8 +1043,13 @@ function showAddTaskModal(dateStr) {
         const clientId = parseInt(document.getElementById('calendarTaskClient').value);
         const text = document.getElementById('calendarTaskText').value.trim();
         const priority = document.getElementById('calendarTaskPriority').value;
+        const date = document.getElementById('calendarTaskDate').value || dateStr;
         if (!text) {
             alert('Введите текст задачи!');
+            return;
+        }
+        if (!date) {
+            alert('Выберите дату задачи!');
             return;
         }
         let client = clients.find(c => c.id === clientId);
@@ -1054,15 +1061,13 @@ function showAddTaskModal(dateStr) {
             id: Date.now(),
             text,
             priority,
-            deadline: dateStr,
+            deadline: date,
             completed: false
         };
         if (!Array.isArray(client.tasks)) client.tasks = [];
         client.tasks.push(task);
         localStorage.setItem('clients', JSON.stringify(clients));
         modalInstance.hide();
-        // Не вызываем showClientsForDate здесь!
-        // modalDiv.remove(); // удалится ниже
         if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
             document.getElementById('calendar')._fullCalendar.refetchEvents();
         }
@@ -1070,7 +1075,9 @@ function showAddTaskModal(dateStr) {
 
     modalDiv.addEventListener('hidden.bs.modal', () => {
         modalDiv.remove();
-        showClientsForDate(dateStr);
+        if (dateStr) {
+            showClientsForDate(dateStr);
+        }
     });
 }
 
