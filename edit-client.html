@@ -155,14 +155,14 @@
                                             <option value="" disabled>Выберите этап</option>
                                             <option value="Договор">Договор</option>
                                             <option value="Подача в суд">Подача в суд</option>
-                                            <option value="Решение суда">Решение суда</option>
+                                            <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
                                             <option value="Завершение">Завершение</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label for="subStage" class="form-label">Подэтап</label>
+                                        <label for="subStage" class="form-label">Задача</label>
                                         <select class="form-select" id="subStage">
-                                            <option value="">Выберите подэтап</option>
+                                            <option value="">Выберите задачу</option>
                                         </select>
                                     </div>
                                 </div>
@@ -291,13 +291,19 @@
     }
     document.addEventListener('DOMContentLoaded', function() {
         const stageSelect = document.getElementById('stage');
+        const subStageSelect = document.getElementById('subStage');
         const completeBtn = document.getElementById('completeClientBtn');
-        if (stageSelect && completeBtn) {
-            stageSelect.addEventListener('change', function() {
-                completeBtn.style.display = stageSelect.value === 'Завершение' ? 'block' : 'none';
-            });
+        function updateCompleteBtnVisibility() {
+            completeBtn.style.display =
+                stageSelect.value === 'Завершение' && subStageSelect.value === 'ждем доки от суда'
+                    ? 'block'
+                    : 'none';
+        }
+        if (stageSelect && completeBtn && subStageSelect) {
+            stageSelect.addEventListener('change', updateCompleteBtnVisibility);
+            subStageSelect.addEventListener('change', updateCompleteBtnVisibility);
             // Инициализация при загрузке
-            completeBtn.style.display = stageSelect.value === 'Завершение' ? 'block' : 'none';
+            updateCompleteBtnVisibility();
         }
         window.completeClientFromEdit = function() {
             const clientId = parseInt(document.getElementById('clientId').value);

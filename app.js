@@ -1,14 +1,36 @@
 const subStages = {
-    'Договор': ['сбор документов', 'составление заявления', 'номер дела', 'подача документов клиенту ФУ'],
-    'Подача в суд': ['заявление приняли', 'подготовить доки, которые запросил суд', 'прибить доки и отправить клиенту', 'ждем принятия заявления'],
-    'Решение суда': ['сообщить клиенту и отправить решение ФУ', 'подать на завершение', 'получить решение', 'исключение из КМ'],
-    'Завершение': ['собрать доки для завершения', 'доки отправлены, ждем завершения']
+    'Договор': ['сбор документов', 'составление заявления', 'отправить заявление'],
+    'Подача в суд': [
+        'Ждём номер дела',
+        'направить клиента ФУ чтобы приняла',
+        'заявление приняли',
+        'заявление отложили',
+        'приобщить доки которые запросил суд до указанной судом даты',
+        'ждем принятия заявления',
+        'дата суда по рассмотрению',
+        'оплатить депозит',
+        'приобщить доки и депозит до даты суда',
+        'ждем доки от суда'
+    ],
+    'Решение суда о банкротстве': [
+        'сообщить клиенту и отправить решение, если есть решение',
+        'оплатить публикацию ФУ',
+        'пояснение по сделкам',
+        'исключение из КМ',
+        'торги по реализации залога'
+    ],
+    'Завершение': [
+        'собрать доки для завершения',
+        'отправить доки ФУ',
+        'доки отправлены ждем завершения',
+        'ждем доки от суда'
+    ]
 };
 
 const stageColorClasses = {
     'Договор': 'stage-contract',
     'Подача в суд': 'stage-submission',
-    'Решение суда': 'stage-decision',
+    'Решение суда о банкротстве': 'stage-decision',
     'Завершение': 'stage-complete'
 };
 
@@ -18,7 +40,7 @@ function updateSubStageOptions(stage, select) {
     if (!stage || !subStages[stage]) {
         const opt = document.createElement('option');
         opt.value = '';
-        opt.textContent = 'Выберите подэтап';
+        opt.textContent = 'Выберите задачу';
         select.appendChild(opt);
         return;
     }
@@ -268,7 +290,7 @@ function displayClientsByMonth() {
                 <div class="d-flex flex-wrap align-items-center">
                     <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    ${client.stage === 'Завершение' ? `<button class="btn btn-complete ms-2" onclick="completeClient(${client.id})">Завершить</button>` : ''}
+                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="btn btn-complete ms-2" onclick="completeClient(${client.id})">Завершить</button>` : ''}
                 </div>
             `;
             li.onclick = (event) => {
@@ -323,11 +345,11 @@ function updateClientStageOnDrop(clientId, targetMonth, targetUl) {
                         <option value="" disabled selected>Выберите этап</option>
                         <option value="Договор">Договор</option>
                         <option value="Подача в суд">Подача в суд</option>
-                        <option value="Решение суда">Решение суда</option>
+                        <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
                         <option value="Завершение">Завершение</option>
                     </select>
                     <select class="form-select" id="newSubStage">
-                        <option value="">Выберите подэтап</option>
+                        <option value="">Выберите задачу</option>
                     </select>
                 </div>
                 <div class="modal-footer">
@@ -932,6 +954,19 @@ function completeClient(clientId) {
 function displayArchivedClients() {
     const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
     // ...реализация вывода архива по вашему желанию...
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    // Trigger animation
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // --- Для edit-client.html ---
