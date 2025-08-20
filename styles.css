@@ -91,7 +91,7 @@ body.home-screen {
     right: -300px;
     width: 300px;
     height: 100%;
-    background-color: #fff;
+    background-color: #ffffff;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
     transition: right 0.3s ease-in-out;
     z-index: 1000;
