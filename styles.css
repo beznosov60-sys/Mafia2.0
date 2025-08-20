@@ -2,6 +2,62 @@ body {
     font-family: Arial, sans-serif;
 }
 
+/* Главный экран */
+body.home-screen {
+    background: linear-gradient(135deg, #c3cfe2 0%, #e2ebf0 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.home-screen .main-wrapper {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.home-screen .search-bar {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 25px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px 20px;
+}
+
+.home-screen .search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0 10px;
+}
+
+.home-screen .search-bar .bi {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+.home-screen .icon-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.home-screen .circle-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
 .clickable-item {
     cursor: pointer;
     transition: background-color 0.2s;
