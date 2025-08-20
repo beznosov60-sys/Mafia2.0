@@ -740,8 +740,13 @@ function showClientsForDate(dateStr) {
     }
 
     if (modal) {
-        const modalInstance = new bootstrap.Modal(modal);
-        modalInstance.show();
+        let modalInstance = bootstrap.Modal.getInstance(modal);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modal);
+        }
+        if (!modal.classList.contains('show')) {
+            modalInstance.show();
+        }
     }
 }
 
