@@ -1112,6 +1112,8 @@ window.saveConsultation = function() {
             if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
                 document.getElementById('calendar')._fullCalendar.refetchEvents();
             }
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
         },
         { once: true }
     );
