@@ -130,21 +130,19 @@ body {
     margin-left: 0.25rem;
 }
 
-.list-group-item .btn-complete {
+.btn-complete {
     background: #fd7e14; /* Оранжевый */
     color: #fff;
     border: none;
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
-    margin-right: 0.5rem;
-    margin-bottom: 0.25rem;
     min-width: 90px;
     white-space: nowrap;
     font-weight: 500;
     transition: background 0.2s;
 }
 
-.list-group-item .btn-complete:hover {
+.btn-complete:hover {
     background: #e8590c;
 }
 
@@ -175,4 +173,21 @@ body {
 
 .stage-complete {
     background-color: #c2d5f3;
+}
+
+.toast-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1055;
+}
+
+.toast-message.show {
+    opacity: 1;
 }
