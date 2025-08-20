@@ -425,6 +425,9 @@ function updateClient() {
         notes: document.getElementById('notes').value.trim(),
         documentsCollected: document.getElementById('documentsCollected').checked,
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
+        tasks: window.tasks || existingClient.tasks || [],
+        finManagerPaid: existingClient.finManagerPaid || false,
+        courtDepositPaid: existingClient.courtDepositPaid || false,
         createdAt: existingClient.createdAt // Сохраняем исходную дату создания
     };
 
