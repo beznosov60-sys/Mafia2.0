@@ -201,3 +201,30 @@ body {
 .toast-message.show {
     opacity: 1;
 }
+
+/* --- Light calendar redesign --- */
+.calendar-card,
+.action-card {
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: #000;
+    transition: background-color 0.3s;
+}
+
+.quick-action:hover {
+    background-color: #f1f1f1;
+}
