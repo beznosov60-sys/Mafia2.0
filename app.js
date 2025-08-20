@@ -73,9 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Инициализация панели
         document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
         document.getElementById('sidebarClose')?.addEventListener('click', toggleSidebar);
-        document.getElementById('sidebarRefresh')?.addEventListener('click', displayClientsByMonth);
-        document.getElementById('stageFilter')?.addEventListener('change', displayClientsByMonth);
-        displayClientsByMonth();
+        displayClientsList();
     }
     // Загрузка данных для редактирования (только на edit-client.html)
     if (window.location.pathname.includes('edit-client.html')) {
@@ -90,10 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const arbitrInput = document.getElementById('arbitrLink');
         const arbitrButton = document.getElementById('arbitrButton');
         const courtDateInput = document.getElementById('courtDate');
-        const documentsCheckbox = document.getElementById('documentsCollected');
-        const documentsIcon = document.getElementById('documentsIcon');
         const stageSelect = document.getElementById('stage');
         const subStageSelect = document.getElementById('subStage');
+        const historyToggle = document.getElementById('historyToggle');
         arbitrButton.addEventListener('click', openArbitrLink);
         arbitrInput.addEventListener('input', () => {
             arbitrButton.disabled = !arbitrInput.value.trim();
@@ -102,11 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
         courtDateInput.addEventListener('input', () => {
             updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
         });
-        documentsCheckbox.addEventListener('change', () => {
-            documentsIcon.textContent = documentsCheckbox.checked ? '✅' : '☐';
-        });
         stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
         updateSubStageOptions(stageSelect.value, subStageSelect);
+        historyToggle?.addEventListener('click', toggleTaskHistory);
         initTaskList(clientId);
     }
     // Инициализация кнопки арбитр и чекбокса документов на add-client.html
@@ -114,8 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const arbitrInput = document.getElementById('arbitrLink');
         const arbitrButton = document.getElementById('arbitrButton');
         const courtDateInput = document.getElementById('courtDate');
-        const documentsCheckbox = document.getElementById('documentsCollected');
-        const documentsIcon = document.getElementById('documentsIcon');
         const stageSelect = document.getElementById('stage');
         const subStageSelect = document.getElementById('subStage');
         arbitrButton.addEventListener('click', openArbitrLink);
@@ -125,9 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         courtDateInput.addEventListener('input', () => {
             updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
-        });
-        documentsCheckbox.addEventListener('change', () => {
-            documentsIcon.textContent = documentsCheckbox.checked ? '✅' : '☐';
         });
         stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
         updateSubStageOptions(stageSelect.value, subStageSelect);
@@ -208,9 +198,9 @@ function displayCourtThisMonth() {
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         listItem.innerHTML = `
-            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
+            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge}
             <div>
-                <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
+                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
             </div>
         `;
@@ -223,22 +213,13 @@ function displayCourtThisMonth() {
     });
 }
 
-// Отображение клиентов по месяцам в боковой панели
-function displayClientsByMonth() {
+// Отображение списка клиентов в боковой панели
+function displayClientsList() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientsByMonthDiv = document.getElementById('clientsByMonth');
-    if (!clientsByMonthDiv) return;
+    const listDiv = document.getElementById('clientsList');
+    if (!listDiv) return;
 
-    const stageFilter = document.getElementById('stageFilter').value;
-
-    // Фильтрация по этапу
-    let filteredClients = clients;
-    if (stageFilter) {
-        filteredClients = clients.filter(client => client.stage === stageFilter);
-    }
-
-    // Сортировка: избранные сначала, затем по фамилии и имени
-    filteredClients.sort((a, b) => {
+    clients.sort((a, b) => {
         const favDiff = Number(b.favorite) - Number(a.favorite);
         if (favDiff !== 0) return favDiff;
         const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
@@ -246,145 +227,49 @@ function displayClientsByMonth() {
         return nameA.localeCompare(nameB, 'ru');
     });
 
-    // Сгруппировка по месяцам
-    const groupedClients = {};
-    const months = [
-        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-    ];
-
-    filteredClients.forEach(client => {
-        let key = 'Без даты суда';
-        let sortKey = '9999-99';
-        if (client.courtDate) {
-            const courtDate = new Date(client.courtDate);
-            key = `${months[courtDate.getMonth()]} ${courtDate.getFullYear()}`;
-            sortKey = `${courtDate.getFullYear()}-${courtDate.getMonth().toString().padStart(2, '0')}`;
-        }
-        if (!groupedClients[key]) {
-            groupedClients[key] = { clients: [], sortKey };
-        }
-        groupedClients[key].clients.push(client);
-    });
-
-    clientsByMonthDiv.innerHTML = '';
-    Object.keys(groupedClients).sort((a, b) => {
-        const sortKeyA = groupedClients[a].sortKey;
-        const sortKeyB = groupedClients[b].sortKey;
-        return sortKeyB.localeCompare(sortKeyA);
-    }).forEach(month => {
-        const monthGroup = document.createElement('div');
-        monthGroup.className = 'month-group';
-        monthGroup.innerHTML = `<h6>${month}</h6>`;
-        const ul = document.createElement('ul');
-        ul.className = 'list-group';
-        groupedClients[month].clients.forEach(client => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
-            li.draggable = true;
-            li.dataset.clientId = client.id;
-            const stageClass = stageColorClasses[client.stage] || '';
-            const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
-            li.innerHTML = `
-                ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
-                <div class="d-flex flex-wrap align-items-center">
-                    <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
-                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="btn btn-complete ms-2" onclick="completeClient(${client.id})">Завершить</button>` : ''}
-                </div>
-            `;
-            li.onclick = (event) => {
-                if (!event.target.closest('a') && !event.target.closest('button')) {
-                    window.location.href = `edit-client.html?id=${client.id}`;
-                }
-            };
-            li.addEventListener('dragstart', (event) => {
-                event.dataTransfer.setData('text/plain', client.id);
-                li.classList.add('dragging');
-            });
-            li.addEventListener('dragend', (event) => {
-                li.classList.remove('dragging');
-            });
-            ul.appendChild(li);
-        });
-        ul.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
-        ul.addEventListener('drop', (event) => {
-            event.preventDefault();
-            const clientId = event.dataTransfer.getData('text/plain');
-            const targetMonth = month === 'Без даты суда' ? null : month;
-            updateClientStageOnDrop(clientId, targetMonth, ul);
-        });
-        monthGroup.appendChild(ul);
-        clientsByMonthDiv.appendChild(monthGroup);
-    });
-
-    if (Object.keys(groupedClients).length === 0) {
-        clientsByMonthDiv.innerHTML = '<p class="text-center">Нет клиентов</p>';
+    listDiv.innerHTML = '';
+    if (clients.length === 0) {
+        listDiv.innerHTML = '<p class="text-center">Нет клиентов</p>';
+        return;
     }
-}
 
-// Обновление этапа клиента при перетаскивании
-function updateClientStageOnDrop(clientId, targetMonth, targetUl) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === parseInt(clientId));
-    if (!client) return;
+    const ul = document.createElement('ul');
+    ul.className = 'list-group';
 
-    const stageModal = document.createElement('div');
-    stageModal.className = 'modal fade';
-    stageModal.innerHTML = `
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Выберите новый этап для ${client.firstName} ${client.lastName}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <select class="form-select mb-2" id="newStage">
-                        <option value="" disabled selected>Выберите этап</option>
-                        <option value="Договор">Договор</option>
-                        <option value="Подача в суд">Подача в суд</option>
-                        <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
-                        <option value="Завершение">Завершение</option>
-                    </select>
-                    <select class="form-select" id="newSubStage">
-                        <option value="">Выберите задачу</option>
-                    </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" onclick="applyNewStage(${clientId})">Сохранить</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+    clients.forEach(client => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item clickable-item';
+        li.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <span>${client.firstName} ${client.lastName}</span>
+                <div>
+                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
+                    <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}">▾</button>
                 </div>
             </div>
-        </div>
-    `;
-    document.body.appendChild(stageModal);
-    const modalInstance = new bootstrap.Modal(stageModal);
-    modalInstance.show();
+            <div class="client-details mt-2" style="display:none;">
+                <button class="client-btn client-btn-payments me-1" onclick="showPaymentsModal(${client.id})">Платежи</button>
+                ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete me-1" onclick="completeClient(${client.id})">Завершить</button>` : ''}
+                <div class="task-info">${client.subStage ? client.subStage : ''}</div>
+            </div>
+        `;
+        li.onclick = (event) => {
+            if (!event.target.closest('a') && !event.target.classList.contains('toggle-details') && !event.target.closest('.client-details')) {
+                window.location.href = `edit-client.html?id=${client.id}`;
+            }
+        };
+        ul.appendChild(li);
+    });
 
-    const stageSelect = stageModal.querySelector('#newStage');
-    const subStageSelect = stageModal.querySelector('#newSubStage');
-    stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
-    updateSubStageOptions(stageSelect.value, subStageSelect);
+    ul.addEventListener('click', (event) => {
+        if (event.target.classList.contains('toggle-details')) {
+            event.stopPropagation();
+            const details = event.target.closest('li').querySelector('.client-details');
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
+    });
 
-    window.applyNewStage = function(clientId) {
-        const newStage = stageSelect.value;
-        const newSubStage = subStageSelect.value;
-        if (!newStage) {
-            alert('Выберите этап!');
-            return;
-        }
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
-        const clientIndex = clients.findIndex(c => c.id === parseInt(clientId));
-        if (clientIndex !== -1) {
-            clients[clientIndex].stage = newStage;
-            clients[clientIndex].subStage = newSubStage;
-            localStorage.setItem('clients', JSON.stringify(clients));
-            displayClientsByMonth();
-            modalInstance.hide();
-        }
-    };
+    listDiv.appendChild(ul);
 }
 
 // Инициализация чекбоксов оплаты для edit-client.html
@@ -433,8 +318,6 @@ function loadClientForEdit(clientId) {
     document.getElementById('subStage').value = client.subStage || '';
     document.getElementById('courtDate').value = client.courtDate || '';
     document.getElementById('notes').value = client.notes || '';
-    document.getElementById('documentsCollected').checked = client.documentsCollected || false;
-    document.getElementById('documentsIcon').textContent = client.documentsCollected ? '✅' : '☐';
 
     const favoriteBtn = document.getElementById('favoriteBtn');
     if (favoriteBtn) {
@@ -501,7 +384,6 @@ function updateClient() {
         subStage: document.getElementById('subStage').value,
         courtDate: document.getElementById('courtDate').value,
         notes: document.getElementById('notes').value.trim(),
-        documentsCollected: document.getElementById('documentsCollected').checked,
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         tasks: window.tasks || existingClient.tasks || [],
         finManagerPaid: existingClient.finManagerPaid || false,
@@ -591,7 +473,6 @@ function saveClient() {
         subStage: document.getElementById('subStage').value,
         courtDate: document.getElementById('courtDate').value,
         notes: document.getElementById('notes').value.trim(),
-        documentsCollected: document.getElementById('documentsCollected').checked,
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: new Date().toISOString(),
         tasks: window.tasks || [],
@@ -642,9 +523,9 @@ function searchClients() {
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         listItem.innerHTML = `
-            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}
+            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge}
             <div>
-                <button class="btn btn-sm btn-info me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
+                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
             </div>
         `;
@@ -694,12 +575,12 @@ function initCalendar() {
             const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
             const clientEvents = clients
                 .filter(client => client.courtDate)
-                .map(client => ({
-                    title: `${client.firstName} ${client.lastName} (${client.stage}${client.subStage ? ' - ' + client.subStage : ''})`,
-                    start: client.courtDate,
-                    backgroundColor: client.documentsCollected ? '#28a745' : '#dc3545',
-                    extendedProps: { type: 'client', clientId: client.id }
-                }));
+                    .map(client => ({
+                        title: `${client.firstName} ${client.lastName} (${client.stage}${client.subStage ? ' - ' + client.subStage : ''})`,
+                        start: client.courtDate,
+                        backgroundColor: '#0d6efd',
+                        extendedProps: { type: 'client', clientId: client.id }
+                    }));
             // --- ДОБАВИТЬ задачи как события ---
             const taskEvents = clients
                 .filter(client => client.tasks && Array.isArray(client.tasks))
@@ -779,7 +660,7 @@ function showClientsForDate(dateStr) {
                 li.className = `list-group-item clickable-item d-flex justify-content-between align-items-center`;
                 const stageClass = stageColorClasses[client.stage] || '';
                 const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
-                li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge} ${client.documentsCollected ? '<span class="documents-icon">✅</span>' : ''}`;
+                li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge}`;
                 li.onclick = () => {
                     window.location.href = `edit-client.html?id=${client.id}`;
                 };
@@ -947,7 +828,7 @@ function completeClient(clientId) {
     localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
 
     showToast('Клиент перемещён в архив!');
-    displayClientsByMonth();
+    displayClientsList();
 }
 
 // Для будущего: функция отображения архива
@@ -976,6 +857,7 @@ function initTaskList(clientId) {
     const client = clients.find(c => c.id === parseInt(clientId));
     window.tasks = client && Array.isArray(client.tasks) ? client.tasks : [];
     renderTaskList();
+    renderCompletedTasks();
 }
 function addTask() {
     const text = document.getElementById('taskText').value.trim();
@@ -993,7 +875,8 @@ function addTask() {
         completed: false
     };
     window.tasks.push(task);
-    renderTaskList();
+      renderTaskList();
+      renderCompletedTasks();
     document.getElementById('taskText').value = '';
     document.getElementById('taskDeadline').value = '';
     // Сохраняем задачи в клиенте
@@ -1011,11 +894,15 @@ function renderTaskList() {
     if (!list) return;
     list.innerHTML = '';
     window.tasks.forEach((task, idx) => {
+        if (task.completed) return;
         const li = document.createElement('li');
         li.className = `list-group-item d-flex justify-content-between align-items-center task-${task.priority}`;
         li.innerHTML = `
-            ${task.text} (${task.deadline ? task.deadline : 'Без срока'}) 
-            <button class="btn btn-sm btn-danger" onclick="removeTask(${idx})">Удалить</button>
+            ${task.text} (${task.deadline ? task.deadline : 'Без срока'})
+            <div>
+                <button class="client-btn client-btn-complete me-2" onclick="completeTask(${idx})">Выполнено</button>
+                <button class="btn btn-sm btn-danger" onclick="removeTask(${idx})">Удалить</button>
+            </div>
         `;
         list.appendChild(li);
     });
@@ -1023,6 +910,7 @@ function renderTaskList() {
 function removeTask(idx) {
     window.tasks.splice(idx, 1);
     renderTaskList();
+    renderCompletedTasks();
     // Сохраняем задачи в клиенте
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = parseInt(urlParams.get('id'));
@@ -1031,6 +919,70 @@ function removeTask(idx) {
     if (clientIndex !== -1) {
         clients[clientIndex].tasks = window.tasks;
         localStorage.setItem('clients', JSON.stringify(clients));
+    }
+}
+
+function completeTask(idx) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = parseInt(urlParams.get('id'));
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clientIndex = clients.findIndex(c => c.id === clientId);
+    if (clientIndex === -1) return;
+    const task = window.tasks[idx];
+    if (!task) return;
+    task.completed = true;
+    task.completedAt = new Date().toISOString();
+    advanceClientStage(clients[clientIndex]);
+    clients[clientIndex].tasks = window.tasks;
+    localStorage.setItem('clients', JSON.stringify(clients));
+    const stageSelect = document.getElementById('stage');
+    const subStageSelect = document.getElementById('subStage');
+    if (stageSelect && subStageSelect) {
+        stageSelect.value = clients[clientIndex].stage;
+        updateSubStageOptions(stageSelect.value, subStageSelect);
+        subStageSelect.value = clients[clientIndex].subStage || '';
+    }
+    renderTaskList();
+    renderCompletedTasks();
+}
+
+function renderCompletedTasks() {
+    const list = document.getElementById('completedTaskList');
+    const stageInfo = document.getElementById('currentStageInfo');
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = parseInt(urlParams.get('id'));
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => c.id === clientId);
+    if (stageInfo && client) {
+        stageInfo.textContent = client.stage ? `Этап: ${client.stage}${client.subStage ? ' - ' + client.subStage : ''}` : '';
+    }
+    if (!list) return;
+    list.innerHTML = '';
+    window.tasks.filter(t => t.completed).forEach(task => {
+        const li = document.createElement('li');
+        li.className = `list-group-item task-${task.priority}`;
+        li.textContent = `${task.text} (${task.completedAt ? new Date(task.completedAt).toLocaleDateString('ru-RU') : ''})`;
+        list.appendChild(li);
+    });
+}
+
+function toggleTaskHistory() {
+    const history = document.getElementById('taskHistory');
+    if (!history) return;
+    history.style.display = history.style.display === 'none' ? 'block' : 'none';
+}
+
+function advanceClientStage(client) {
+    const stages = Object.keys(subStages);
+    const currentStageIndex = stages.indexOf(client.stage);
+    const currentSubStages = subStages[client.stage] || [];
+    const currentSubIndex = currentSubStages.indexOf(client.subStage);
+    if (currentSubIndex !== -1 && currentSubIndex < currentSubStages.length - 1) {
+        client.subStage = currentSubStages[currentSubIndex + 1];
+    } else if (currentStageIndex !== -1 && currentStageIndex < stages.length - 1) {
+        const nextStage = stages[currentStageIndex + 1];
+        client.stage = nextStage;
+        client.subStage = subStages[nextStage] ? subStages[nextStage][0] : '';
     }
 }
 
@@ -1254,7 +1206,6 @@ window.convertToClient = function(consultId, dateStr) {
         subStage: '',
         courtDate: dateStr,
         notes: '',
-        documentsCollected: false,
         favorite: false,
         createdAt: new Date().toISOString(),
         tasks: [],
