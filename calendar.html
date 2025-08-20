@@ -62,7 +62,10 @@
                         <label for="consultPhone" class="form-label">Номер телефона</label>
                         <input type="tel" class="form-control" id="consultPhone" placeholder="Введите номер телефона" required>
                     </div>
-                    <input type="hidden" id="consultDate">
+                    <div class="mb-3">
+                        <label for="consultDate" class="form-label">Дата консультации</label>
+                        <input type="date" class="form-control" id="consultDate" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-success" onclick="saveConsultation()">Сохранить</button>
