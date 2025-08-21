@@ -441,9 +441,18 @@ function loadClientCard(clientId) {
     const monthly = client.paymentMonths ? Math.round((client.totalAmount || 0) / client.paymentMonths) : 0;
     document.getElementById('monthlyPayment').textContent = client.paymentMonths ? `${monthly} ₽ / ${client.paymentMonths} мес.` : '—';
     document.getElementById('clientNotes').value = client.notes || '';
+    if (client.arbitrLink) {
+        const linkBlock = document.getElementById('clientLinkBlock');
+        const linkEl = document.getElementById('clientLink');
+        linkEl.href = client.arbitrLink;
+        linkEl.textContent = client.arbitrLink;
+        linkBlock.classList.remove('d-none');
+    }
     document.getElementById('editClientBtn').onclick = () => {
         window.location.href = `edit-client.html?id=${client.id}`;
     };
+    window.tasks = client.tasks || [];
+    renderTaskList();
     renderClientPayments(client);
 }
 
@@ -541,11 +550,13 @@ function updateClient() {
         clients[index] = updatedClient;
         localStorage.setItem('clients', JSON.stringify(clients));
         console.log('Клиент обновлен:', updatedClient);
-        window.location.href = 'index.html';
+        const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
+        window.location.href = returnUrl;
     } else {
         console.error('Клиент не найден в localStorage:', clientId);
         alert('Клиент не найден!');
-        window.location.href = 'index.html';
+        const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
+        window.location.href = returnUrl;
     }
 }
 
@@ -574,7 +585,8 @@ function deleteClient() {
         clients.splice(clientIndex, 1);
         localStorage.setItem('clients', JSON.stringify(clients));
         console.log('Клиент удален:', clientId);
-        window.location.href = 'index.html';
+        const returnUrl = document.referrer || 'index.html';
+        window.location.href = returnUrl;
     }
 }
 
@@ -1018,7 +1030,8 @@ function initTaskList(clientId) {
 }
 function addTask() {
     const text = document.getElementById('taskText').value.trim();
-    const priority = document.getElementById('taskPriority').value;
+    const priorityEl = document.getElementById('taskPriority');
+    const priority = priorityEl ? priorityEl.value : 'medium';
     const deadline = document.getElementById('taskDeadline').value;
     if (!text) {
         alert('Введите текст задачи!');
