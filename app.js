@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         favoriteBtn?.addEventListener('click', function() {
             const fav = favoriteBtn.dataset.favorite === 'true';
             favoriteBtn.dataset.favorite = (!fav).toString();
-            favoriteBtn.textContent = fav ? '☆' : '★';
+            favoriteBtn.innerHTML = fav ? '<i class="ri-star-line"></i>' : '<i class="ri-star-fill"></i>';
         });
         function updateCompleteBtnVisibility() {
             if (!completeBtn) return;
@@ -305,7 +305,7 @@ function displayCourtThisMonth() {
         const fullName = `${client.firstName} ${client.lastName}`;
         li.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
-                <div>${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${fullName}</div>
+                <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}</div>
                 <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}">▾</button>
             </div>
             <div class="client-details mt-2" style="display:none;">
@@ -441,7 +441,7 @@ function loadClientForEdit(clientId) {
     const favoriteBtn = document.getElementById('favoriteBtn');
     if (favoriteBtn) {
         favoriteBtn.dataset.favorite = client.favorite ? 'true' : 'false';
-        favoriteBtn.textContent = client.favorite ? '★' : '☆';
+        favoriteBtn.innerHTML = client.favorite ? '<i class="ri-star-fill"></i>' : '<i class="ri-star-line"></i>';
     }
 
     const arbitrInput = document.getElementById('arbitrLink');
@@ -714,7 +714,7 @@ function searchClients() {
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         listItem.innerHTML = `
-            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge}
+            ${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${stageBadge}
             <div>
                 <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
@@ -765,7 +765,7 @@ function renderDayActions(dateStr) {
     consults.forEach(consult => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-success" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>`;
+        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>`;
         list.appendChild(li);
     });
 
@@ -779,7 +779,7 @@ function renderDayActions(dateStr) {
     payments.forEach(p => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `Оплата: ${p.client.firstName} ${p.client.lastName} (${p.payment.amount} ₽) <button class="btn btn-sm btn-success" onclick="confirmPayment(${p.client.id}, ${p.idx}, '${dateStr}')">Оплатил</button>`;
+        li.innerHTML = `Оплата: ${p.client.firstName} ${p.client.lastName} (${p.payment.amount} ₽) <button class="btn btn-sm btn-primary" onclick="confirmPayment(${p.client.id}, ${p.idx}, '${dateStr}')">Оплатил</button>`;
         list.appendChild(li);
     });
 
@@ -829,7 +829,7 @@ function renderDebtorsList() {
     debtors.forEach(d => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `${d.client.firstName} ${d.client.lastName} — ${new Date(d.payment.date).toLocaleDateString('ru-RU')} <button class="btn btn-sm btn-success" onclick="confirmPayment(${d.client.id}, ${d.idx}, '${d.payment.date}')">Оплатил</button>`;
+        li.innerHTML = `${d.client.firstName} ${d.client.lastName} — ${new Date(d.payment.date).toLocaleDateString('ru-RU')} <button class="btn btn-sm btn-primary" onclick="confirmPayment(${d.client.id}, ${d.idx}, '${d.payment.date}')">Оплатил</button>`;
         list.appendChild(li);
     });
 }
@@ -1001,7 +1001,7 @@ function showClientsForDate(dateStr) {
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
                     ${consult.name} (Тел: ${consult.phone})
-                    <button class="btn btn-sm btn-success" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>
+                    <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>
                 `;
                 consultationsList.appendChild(li);
             });
@@ -1303,7 +1303,7 @@ function showAddTaskModal(dateStr) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id="calendarTaskSaveBtn">Сохранить</button>
+                    <button type="button" class="btn btn-primary" id="calendarTaskSaveBtn">Сохранить</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 </div>
             </div>
