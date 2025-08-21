@@ -354,6 +354,43 @@ body.home-screen {
     color: #fff;
 }
 
+.btn-back {
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
+    text-decoration: none;
+}
+
+.btn-back:hover {
+    background-color: var(--primary-color-dark);
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-show {
+    color: var(--primary-color);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.btn-show:hover {
+    color: var(--primary-color-dark);
+}
+
+.client-link {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.client-link:hover {
+    color: var(--primary-color-dark);
+    text-decoration: underline;
+}
+
 .client-notes-card textarea {
     background: #f8f9fa;
     border: none;
