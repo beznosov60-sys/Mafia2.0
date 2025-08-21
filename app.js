@@ -926,6 +926,17 @@ function initCalendar() {
         }
     });
     calendar.render();
+    markDaysWithEvents();
+    calendar.on('eventsSet', markDaysWithEvents);
+
+    function markDaysWithEvents() {
+        const dayCells = document.querySelectorAll('.fc-daygrid-day');
+        dayCells.forEach(cell => {
+            const dateStr = cell.getAttribute('data-date');
+            const hasEvent = calendar.getEvents().some(ev => ev.startStr === dateStr);
+            cell.classList.toggle('fc-has-events', hasEvent);
+        });
+    }
     // Сохраняем ссылку для обновления событий
     calendarEl._fullCalendar = calendar;
     if (debugEl) {
