@@ -112,6 +112,19 @@ function updateSubStageOptions(stage, select) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM загружен, инициализация...');
+    document.body.classList.add('loaded');
+    document.querySelectorAll('a').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || link.target === '_blank') return;
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.body.classList.remove('loaded');
+            setTimeout(() => {
+                window.location.href = href;
+            }, 300);
+        });
+    });
+    document.getElementById('showArchivedBtn')?.addEventListener('click', showArchivedClients);
     await syncClientsFromServer();
     if (!localStorage.getItem('consultations')) {
         localStorage.setItem('consultations', JSON.stringify([]));
@@ -316,7 +329,7 @@ function displayCourtThisMonth() {
                 <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}${getCourtTypeBadge(client)}</div>
                 <button class="btn btn-sm btn-outline-primary toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
             </div>
-            <div class="client-details mt-2" style="display:none;">
+            <div class="client-details mt-2">
                 ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
                 <div class="client-actions">
                     <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
@@ -339,10 +352,10 @@ function displayCourtThisMonth() {
             event.stopPropagation();
             const details = toggleBtn.closest('li').querySelector('.client-details');
             const icon = toggleBtn.querySelector('i');
-            const isHidden = details.style.display === 'none';
-            details.style.display = isHidden ? 'block' : 'none';
+            const isOpen = details.classList.toggle('open');
+            details.style.maxHeight = isOpen ? details.scrollHeight + 'px' : 0;
             if (icon) {
-                icon.className = isHidden ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+                icon.className = isOpen ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
             }
         }
     });
@@ -382,7 +395,7 @@ function displayClientsList() {
                     <button class="btn btn-sm btn-outline-light toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
                 </div>
             </div>
-            <div class="client-details mt-2" style="display:none;">
+            <div class="client-details mt-2">
                 ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
                 <div class="client-actions">
                     <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
@@ -404,10 +417,10 @@ function displayClientsList() {
             event.stopPropagation();
             const details = toggleBtn.closest('li').querySelector('.client-details');
             const icon = toggleBtn.querySelector('i');
-            const isHidden = details.style.display === 'none';
-            details.style.display = isHidden ? 'block' : 'none';
+            const isOpen = details.classList.toggle('open');
+            details.style.maxHeight = isOpen ? details.scrollHeight + 'px' : 0;
             if (icon) {
-                icon.className = isHidden ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+                icon.className = isOpen ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
             }
         }
     });
@@ -879,7 +892,6 @@ function openDebtorsModal() {
 
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
-    const debugEl = document.getElementById('calendarDebug');
     if (!calendarEl) {
         console.error('Элемент #calendar не найден');
         return;
@@ -974,11 +986,6 @@ function initCalendar() {
     }
     // Сохраняем ссылку для обновления событий
     calendarEl._fullCalendar = calendar;
-    if (debugEl) {
-        const events = calendar.getEvents();
-        debugEl.textContent = `Загружено событий: ${events.length}`;
-        debugEl.style.display = 'block';
-    }
 }
 
 function showClientsForDate(dateStr) {
@@ -1096,10 +1103,27 @@ function completeClient(clientId) {
     displayClientsList();
 }
 
-// Для будущего: функция отображения архива
-function displayArchivedClients() {
+// Отображение завершённых клиентов в модальном окне
+function showArchivedClients() {
+    const listEl = document.getElementById('archivedClientsList');
+    if (!listEl) return;
     const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
-    // ...реализация вывода архива по вашему желанию...
+    listEl.innerHTML = '';
+    if (archivedClients.length === 0) {
+        listEl.innerHTML = '<li class="list-group-item">Архив пуст</li>';
+    } else {
+        archivedClients.forEach(client => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = `${client.firstName} ${client.lastName}`;
+            listEl.appendChild(li);
+        });
+    }
+    const modalEl = document.getElementById('archivedClientsModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
 }
 
 function showToast(message) {
