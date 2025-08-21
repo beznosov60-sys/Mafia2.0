@@ -179,6 +179,17 @@ document.addEventListener('DOMContentLoaded', () => {
         initCalendar();
         renderDayActions(new Date().toISOString().split('T')[0]);
     }
+    // Загрузка карточки клиента (только на client-card.html)
+    if (window.location.pathname.includes('client-card.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('id');
+        if (clientId) {
+            loadClientCard(clientId);
+        } else {
+            alert('Клиент не найден!');
+            window.location.href = 'index.html';
+        }
+    }
     // Проверка наличия клиентов
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     if (clients.length === 0) {
@@ -255,7 +266,7 @@ function displayCourtThisMonth() {
         `;
         listItem.onclick = (event) => {
             if (!event.target.closest('a') && !event.target.closest('button')) {
-                window.location.href = `edit-client.html?id=${client.id}`;
+                window.location.href = `client-card.html?id=${client.id}`;
             }
         };
         courtThisMonthDiv.appendChild(listItem);
@@ -304,7 +315,7 @@ function displayClientsList() {
         `;
         li.onclick = (event) => {
             if (!event.target.closest('a') && !event.target.classList.contains('toggle-details') && !event.target.closest('.client-details')) {
-                window.location.href = `edit-client.html?id=${client.id}`;
+                window.location.href = `client-card.html?id=${client.id}`;
             }
         };
         ul.appendChild(li);
@@ -383,6 +394,31 @@ function loadClientForEdit(clientId) {
     // Инициализация задач
     window.tasks = client.tasks || [];
     renderTaskList();
+}
+
+// Загрузка клиента для карточки
+function loadClientCard(clientId) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => c.id === parseInt(clientId));
+    if (!client) {
+        alert('Клиент не найден!');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    const fullName = [client.firstName, client.middleName, client.lastName].filter(Boolean).join(' ');
+    document.getElementById('clientName').textContent = fullName;
+    document.getElementById('dealInfo').textContent = client.caseNumber ? `Дело №${client.caseNumber}` : '';
+    document.getElementById('clientPhone').textContent = client.phone || '';
+    document.getElementById('clientStage').textContent = client.stage || '';
+    document.getElementById('nextCourtDate').textContent = client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : '—';
+    document.getElementById('activeAccount').textContent = client.totalAmount ? `${client.totalAmount} ₽` : '0 ₽';
+    const monthly = client.paymentMonths ? Math.round((client.totalAmount || 0) / client.paymentMonths) : 0;
+    document.getElementById('monthlyPayment').textContent = client.paymentMonths ? `${monthly} ₽ / ${client.paymentMonths} мес.` : '—';
+    document.getElementById('clientNotes').value = client.notes || '';
+    document.getElementById('editClientBtn').onclick = () => {
+        window.location.href = `edit-client.html?id=${client.id}`;
+    };
 }
 
 // Обновление клиента
@@ -580,7 +616,7 @@ function searchClients() {
         `;
         listItem.onclick = (event) => {
             if (!event.target.closest('a') && !event.target.closest('button')) {
-                window.location.href = `edit-client.html?id=${client.id}`;
+                window.location.href = `client-card.html?id=${client.id}`;
             }
         };
         resultsDiv.appendChild(listItem);
@@ -635,7 +671,7 @@ function renderDayActions(dateStr) {
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge}`;
-        li.onclick = () => { window.location.href = `edit-client.html?id=${client.id}`; };
+        li.onclick = () => { window.location.href = `client-card.html?id=${client.id}`; };
         list.appendChild(li);
     });
 }
@@ -759,7 +795,7 @@ function showClientsForDate(dateStr) {
                 const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
                 li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge}`;
                 li.onclick = () => {
-                    window.location.href = `edit-client.html?id=${client.id}`;
+                    window.location.href = `client-card.html?id=${client.id}`;
                 };
                 clientsList.appendChild(li);
             });
@@ -1302,7 +1338,7 @@ window.openClientsModal = function() {
                 const li = document.createElement('li');
                 li.className = 'list-group-item clickable-item';
                 li.textContent = `${client.firstName} ${client.lastName}`;
-                li.onclick = () => { window.location.href = `edit-client.html?id=${client.id}`; };
+                li.onclick = () => { window.location.href = `client-card.html?id=${client.id}`; };
                 list.appendChild(li);
             });
         }
