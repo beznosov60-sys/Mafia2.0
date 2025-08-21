@@ -283,4 +283,105 @@ body.home-screen {
 
 .quick-action:hover {
     background-color: #f1f1f1;
+<<<<<<< HEAD
 }
+=======
+}
+/* Client card layout */
+.client-card-screen {
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.client-card-screen::before,
+.client-card-screen::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.client-card-screen::before {
+    background: linear-gradient(135deg, #ff5f6d, #ffc371);
+    top: -60px;
+    right: -60px;
+}
+
+.client-card-screen::after {
+    background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
+    bottom: -60px;
+    left: -60px;
+}
+
+.client-info-card,
+.client-court-card,
+.client-notes-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.court-date-badge {
+    background: #28a745;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
+.btn-save {
+    background-color: #ff5f6d;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    transition: opacity 0.2s;
+}
+
+.btn-save:hover {
+    opacity: 0.9;
+}
+
+.client-notes-card textarea {
+    background: #f8f9fa;
+    border: none;
+    resize: none;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+/* Calendar event styling */
+.calendar-event {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.calendar-event .event-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
+.event-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.fc-daygrid-event {
+    border: none;
+    padding: 0 2px;
+    background: transparent;
+}
+
+>>>>>>> a017b4bebb408bc2d69c7a491d910d4a6c2f4cc6

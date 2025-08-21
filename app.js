@@ -701,8 +701,9 @@ function initCalendar() {
             successCallback(allEvents);
         },
         eventContent: function(arg) {
-            // Показываем точку и текст задачи
-            return { html: `<div class="event-dot" style="background-color: ${arg.event.backgroundColor}; display:inline-block; margin-right:4px;"></div><span style="font-size:0.9em">${arg.event.title}</span>` };
+            return {
+                html: `<div class="calendar-event"><span class="event-dot" style="background-color: ${arg.event.backgroundColor};"></span><span class="event-text">${arg.event.title}</span></div>`
+            };
         },
         dateClick: function(info) {
             renderDayActions(info.dateStr);
