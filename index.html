@@ -38,7 +38,10 @@
             <h5>Все клиенты</h5>
             <button class="btn btn-close" id="sidebarClose"></button>
         </div>
-        <div id="clientsList" class="sidebar-content"></div>
+        <div class="sidebar-content">
+            <button class="btn btn-archived" id="showArchivedBtn">Завершённые клиенты</button>
+            <div id="clientsList"></div>
+        </div>
     </div>
     <!-- Модальное окно для платежей -->
     <div class="modal fade" id="paymentsModal" tabindex="-1" aria-labelledby="paymentsModalLabel" aria-hidden="true">
@@ -60,6 +63,23 @@
                         </thead>
                         <tbody id="paymentsTableBody"></tbody>
                     </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно завершённых клиентов -->
+    <div class="modal fade" id="archivedClientsModal" tabindex="-1" aria-labelledby="archivedClientsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="archivedClientsModalLabel">Завершённые клиенты</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="archivedClientsList"></ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
