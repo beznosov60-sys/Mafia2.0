@@ -351,11 +351,15 @@ function displayCourtThisMonth() {
         if (toggleBtn) {
             event.stopPropagation();
             const details = toggleBtn.closest('li').querySelector('.client-details');
-            const icon = toggleBtn.querySelector('i');
             const isOpen = details.classList.toggle('open');
-            details.style.maxHeight = isOpen ? details.scrollHeight + 'px' : 0;
-            if (icon) {
-                icon.className = isOpen ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+            toggleBtn.classList.toggle('open', isOpen);
+            if (isOpen) {
+                details.style.maxHeight = '0px';
+                requestAnimationFrame(() => {
+                    details.style.maxHeight = details.scrollHeight + 'px';
+                });
+            } else {
+                details.style.maxHeight = '0';
             }
         }
     });
@@ -416,11 +420,15 @@ function displayClientsList() {
         if (toggleBtn) {
             event.stopPropagation();
             const details = toggleBtn.closest('li').querySelector('.client-details');
-            const icon = toggleBtn.querySelector('i');
             const isOpen = details.classList.toggle('open');
-            details.style.maxHeight = isOpen ? details.scrollHeight + 'px' : 0;
-            if (icon) {
-                icon.className = isOpen ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+            toggleBtn.classList.toggle('open', isOpen);
+            if (isOpen) {
+                details.style.maxHeight = '0px';
+                requestAnimationFrame(() => {
+                    details.style.maxHeight = details.scrollHeight + 'px';
+                });
+            } else {
+                details.style.maxHeight = '0';
             }
         }
     });
