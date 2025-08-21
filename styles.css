@@ -368,6 +368,58 @@ body.home-screen {
     background-color: var(--neutral-300);
     border-color: var(--neutral-400);
 }
+
+/* Dark theme overrides */
+body.dark-theme {
+    background-color: var(--neutral-900);
+    color: var(--neutral-100);
+}
+.dark-theme .calendar-card,
+.dark-theme .action-card {
+    background-color: var(--neutral-800);
+    border: 1px solid var(--neutral-700);
+    box-shadow: none;
+    color: var(--neutral-100);
+}
+.dark-theme .quick-action {
+    background-color: var(--neutral-800);
+    border: 1px solid var(--neutral-700);
+    color: var(--neutral-100);
+}
+.dark-theme .quick-action:hover {
+    background-color: var(--neutral-700);
+    border-color: var(--neutral-600);
+}
+.dark-theme .fc {
+    background-color: var(--neutral-900);
+    color: var(--neutral-100);
+}
+.dark-theme .fc-theme-standard td,
+.dark-theme .fc-theme-standard th {
+    border-color: var(--neutral-800);
+}
+.dark-theme .fc-daygrid-day-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 4px auto;
+    border-radius: 50%;
+}
+.dark-theme .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    border: 2px solid var(--primary-color);
+}
+.dark-theme .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+    color: var(--neutral-600);
+}
+.dark-theme .fc-has-events .fc-daygrid-day-number {
+    background: var(--primary-color);
+    color: var(--neutral-100);
+}
+.dark-theme .fc-daygrid-event {
+    display: none;
+}
 /* Client card layout */
 .client-card-screen {
     background: #f5f5f5;
