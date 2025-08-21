@@ -41,7 +41,7 @@ body.home-screen {
 
 .home-screen .main-wrapper {
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     text-align: center;
 }
 
@@ -53,6 +53,8 @@ body.home-screen {
     border-radius: 25px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     padding: 10px 20px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .home-screen .search-bar input {
@@ -169,10 +171,11 @@ body.home-screen {
 .sidebar {
     position: fixed;
     top: 0;
-    right: -300px;
-    width: 300px;
+    right: -350px;
+    width: 350px;
     height: 100%;
-    background-color: #fff;
+    background-color: var(--primary-color);
+    color: var(--neutral-100);
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
     transition: right 0.3s ease-in-out;
     z-index: 1000;
@@ -188,11 +191,33 @@ body.home-screen {
     justify-content: space-between;
     align-items: center;
     padding: 15px;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--neutral-100);
 }
 
 .sidebar-content {
     padding: 15px;
+}
+
+.sidebar .list-group-item {
+    background: transparent;
+    color: var(--neutral-100);
+    border: none;
+}
+
+.sidebar .toggle-details {
+    color: var(--neutral-100);
+}
+
+.client-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.client-details .client-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
 
@@ -424,6 +449,10 @@ body.home-screen {
 }
 
 #calendar .fc-daygrid-event {
+    display: none;
+}
+
+#calendar .fc-daygrid-more-link {
     display: none;
 }
 

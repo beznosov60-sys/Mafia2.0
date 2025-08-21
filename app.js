@@ -306,12 +306,15 @@ function displayCourtThisMonth() {
         li.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}</div>
-                <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}">▾</button>
+                <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
             </div>
             <div class="client-details mt-2" style="display:none;">
-                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})">Платежи</button>
-                ${client.courtDate ? `<span class="me-2">${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
-                ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
+                ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
+                <div class="client-actions">
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
+                    ${client.courtDate ? `<span class="ms-2">${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
+                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link ms-2">Суд</a>` : ''}
+                </div>
             </div>
         `;
         li.onclick = (event) => {
@@ -323,10 +326,16 @@ function displayCourtThisMonth() {
     });
 
     courtThisMonthDiv.addEventListener('click', (event) => {
-        if (event.target.classList.contains('toggle-details')) {
+        const toggleBtn = event.target.closest('.toggle-details');
+        if (toggleBtn) {
             event.stopPropagation();
-            const details = event.target.closest('li').querySelector('.client-details');
-            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            const details = toggleBtn.closest('li').querySelector('.client-details');
+            const icon = toggleBtn.querySelector('i');
+            const isHidden = details.style.display === 'none';
+            details.style.display = isHidden ? 'block' : 'none';
+            if (icon) {
+                icon.className = isHidden ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+            }
         }
     });
 }
@@ -362,13 +371,15 @@ function displayClientsList() {
                 <span>${client.firstName} ${client.lastName}</span>
                 <div>
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}">▾</button>
+                    <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
                 </div>
             </div>
             <div class="client-details mt-2" style="display:none;">
-                <button class="client-btn client-btn-payments me-1" onclick="showPaymentsModal(${client.id})">Платежи</button>
-                ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete me-1" onclick="completeClient(${client.id})">Завершить</button>` : ''}
-                <div class="task-info">${client.subStage ? client.subStage : ''}</div>
+                ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
+                <div class="client-actions">
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
+                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient(${client.id})">Завершить</button>` : ''}
+                </div>
             </div>
         `;
         li.onclick = (event) => {
@@ -380,10 +391,16 @@ function displayClientsList() {
     });
 
     ul.addEventListener('click', (event) => {
-        if (event.target.classList.contains('toggle-details')) {
+        const toggleBtn = event.target.closest('.toggle-details');
+        if (toggleBtn) {
             event.stopPropagation();
-            const details = event.target.closest('li').querySelector('.client-details');
-            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            const details = toggleBtn.closest('li').querySelector('.client-details');
+            const icon = toggleBtn.querySelector('i');
+            const isHidden = details.style.display === 'none';
+            details.style.display = isHidden ? 'block' : 'none';
+            if (icon) {
+                icon.className = isHidden ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line';
+            }
         }
     });
 
