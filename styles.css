@@ -207,6 +207,9 @@ body.home-screen {
 
 .sidebar .toggle-details {
     color: var(--neutral-100);
+    border: 1px solid var(--neutral-100);
+    border-radius: 4px;
+    padding: 2px 6px;
 }
 
 .client-details {
@@ -322,6 +325,15 @@ body.home-screen {
     color: var(--primary-color);
     margin-right: 0.1rem;
     font-size: 1rem;
+}
+
+.court-badge {
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    background-color: var(--primary-color);
+    color: #fff;
 }
 
 .stage-badge {
@@ -515,28 +527,6 @@ body.dark-theme {
     justify-content: center;
     align-items: center;
     position: relative;
-}
-
-.client-card-screen::before,
-.client-card-screen::after {
-    content: '';
-    position: absolute;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    z-index: -1;
-}
-
-.client-card-screen::before {
-    background: linear-gradient(135deg, #ff5f6d, #ffc371);
-    top: -60px;
-    right: -60px;
-}
-
-.client-card-screen::after {
-    background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
-    bottom: -60px;
-    left: -60px;
 }
 
 .client-info-card,

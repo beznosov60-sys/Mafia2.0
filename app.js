@@ -34,6 +34,14 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+function getCourtTypeBadge(client) {
+    const types = client.courtTypes || {};
+    if (types.arbitration && types.tret) return '<span class="court-badge">АС/ТС</span>';
+    if (types.arbitration) return '<span class="court-badge">АС</span>';
+    if (types.tret) return '<span class="court-badge">ТС</span>';
+    return '';
+}
+
 const originalSetItem = localStorage.setItem.bind(localStorage);
 async function syncClientsFromServer() {
     try {
@@ -305,8 +313,8 @@ function displayCourtThisMonth() {
         const fullName = `${client.firstName} ${client.lastName}`;
         li.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
-                <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}</div>
-                <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
+                <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}${getCourtTypeBadge(client)}</div>
+                <button class="btn btn-sm btn-outline-primary toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
             </div>
             <div class="client-details mt-2" style="display:none;">
                 ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
@@ -318,7 +326,7 @@ function displayCourtThisMonth() {
             </div>
         `;
         li.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.classList.contains('toggle-details') && !event.target.closest('.client-details')) {
+            if (!event.target.closest('a') && !event.target.closest('.toggle-details') && !event.target.closest('.client-details')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
         };
@@ -368,10 +376,10 @@ function displayClientsList() {
         li.className = 'list-group-item clickable-item';
         li.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
-                <span>${client.firstName} ${client.lastName}</span>
+                <span>${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</span>
                 <div>
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
+                    <button class="btn btn-sm btn-outline-light toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
                 </div>
             </div>
             <div class="client-details mt-2" style="display:none;">
@@ -383,7 +391,7 @@ function displayClientsList() {
             </div>
         `;
         li.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.classList.contains('toggle-details') && !event.target.closest('.client-details')) {
+            if (!event.target.closest('a') && !event.target.closest('.toggle-details') && !event.target.closest('.client-details')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
         };
@@ -484,6 +492,16 @@ function loadClientCard(clientId) {
 
     const fullName = [client.firstName, client.middleName, client.lastName].filter(Boolean).join(' ');
     document.getElementById('clientName').textContent = fullName;
+    const courtBadgeEl = document.getElementById('courtTypeBadge');
+    if (courtBadgeEl) {
+        const types = client.courtTypes || {};
+        let text = '';
+        if (types.arbitration && types.tret) text = 'АС/ТС';
+        else if (types.arbitration) text = 'АС';
+        else if (types.tret) text = 'ТС';
+        courtBadgeEl.textContent = text;
+        courtBadgeEl.style.display = text ? 'inline-block' : 'none';
+    }
     document.getElementById('dealInfo').textContent = client.caseNumber ? `Дело №${client.caseNumber}` : '';
     document.getElementById('clientPhone').textContent = client.phone || '';
     document.getElementById('clientStage').textContent = client.stage || '';
@@ -731,7 +749,7 @@ function searchClients() {
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         listItem.innerHTML = `
-            ${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${stageBadge}
+            ${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}${stageBadge}
             <div>
                 <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
