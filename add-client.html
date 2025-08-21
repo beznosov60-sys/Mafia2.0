@@ -9,174 +9,167 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container d-flex justify-content-center align-items-center min-vh-100">
-        <div class="card col-md-8 p-4 shadow-lg">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="card-title mb-0">Добавить клиента</h3>
-                <button id="favoriteBtn" class="btn icon-btn" data-favorite="false" title="Избранный клиент"><i class="ri-star-line"></i></button>
+    <div class="container py-5">
+        <div class="card mx-auto p-4 shadow-lg" style="max-width: 700px;">
+            <h3 class="mb-4">Добавить клиента</h3>
+
+            <div class="step-indicator">
+                <div class="step active" data-step="1">1. Личные данные</div>
+                <div class="step" data-step="2">2. Оплата и этап</div>
+                <div class="step" data-step="3">3. Заметки</div>
             </div>
-            <div class="card-body">
-                <!-- Личные данные -->
-                <h5 class="mb-3">Личные данные</h5>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="firstName" class="form-label">Имя</label>
-                        <input type="text" class="form-control" id="firstName" placeholder="Введите имя" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="middleName" class="form-label">Отчество</label>
-                        <input type="text" class="form-control" id="middleName" placeholder="Введите отчество">
-                    </div>
-                    <div class="col-md-4 mb-3">
+
+            <!-- Шаг 1 -->
+            <div class="form-step active" id="step1">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
                         <label for="lastName" class="form-label">Фамилия</label>
-                        <input type="text" class="form-control" id="lastName" placeholder="Введите фамилию" required>
+                        <input type="text" class="form-control" id="lastName" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="firstName" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="firstName" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="middleName" class="form-label">Отчество</label>
+                        <input type="text" class="form-control" id="middleName">
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="birthDate" class="form-label">Дата рождения</label>
-                        <input type="date" class="form-control" id="birthDate">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="phone" class="form-label">Номер телефона</label>
-                        <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)">
-                    </div>
-                </div>
-                <!-- Паспортные данные -->
-                <div class="accordion" id="accordionPassport">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="passportHeading">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#passportCollapse" aria-expanded="false" aria-controls="passportCollapse">
-                                Паспортные данные
-                            </button>
-                        </h2>
-                        <div id="passportCollapse" class="accordion-collapse collapse" aria-labelledby="passportHeading" data-bs-parent="#accordionPassport">
-                            <div class="accordion-body">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="passportSeries" class="form-label">Серия паспорта</label>
-                                        <input type="text" class="form-control" id="passportSeries" placeholder="Введите серию паспорта">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="passportNumber" class="form-label">Номер паспорта</label>
-                                        <input type="text" class="form-control" id="passportNumber" placeholder="Введите номер паспорта">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="passportIssueDate" class="form-label">Дата выдачи паспорта</label>
-                                        <input type="date" class="form-control" id="passportIssueDate">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="passportIssuePlace" class="form-label">Место выдачи паспорта</label>
-                                        <input type="text" class="form-control" id="passportIssuePlace" placeholder="Введите место выдачи">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Оплата -->
-                <div class="accordion mt-3" id="accordionPayment">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="paymentHeading">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#paymentCollapse" aria-expanded="false" aria-controls="paymentCollapse">
-                                Оплата
-                            </button>
-                        </h2>
-                        <div id="paymentCollapse" class="accordion-collapse collapse" aria-labelledby="paymentHeading" data-bs-parent="#accordionPayment">
-                            <div class="accordion-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="totalAmount" class="form-label">Общая сумма</label>
-                                        <input type="number" class="form-control" id="totalAmount" min="0" placeholder="Введите сумму">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="paymentMonths" class="form-label">Количество месяцев</label>
-                                        <input type="number" class="form-control" id="paymentMonths" min="0" placeholder="Введите количество месяцев">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="paymentStartDate" class="form-label">Дата начала периода</label>
-                                        <input type="date" class="form-control" id="paymentStartDate">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Чекбоксы оплаты -->
-                <div id="paidMonthsContainer" class="mb-3"></div>
-                <!-- Дело -->
-                <div class="accordion mt-3" id="accordionCase">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="caseHeading">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#caseCollapse" aria-expanded="false" aria-controls="caseCollapse">
-                                Судебный процесс
-                            </button>
-                        </h2>
-                        <div id="caseCollapse" class="accordion-collapse collapse" aria-labelledby="caseHeading" data-bs-parent="#accordionCase">
-                            <div class="accordion-body">
-                                <div class="mb-3 d-flex align-items-end">
-                                    <div class="flex-grow-1">
-                                        <label for="arbitrLink" class="form-label">Ссылка на арбитр (опционально)</label>
-                                        <input type="url" class="form-control" id="arbitrLink" placeholder="https://example.com">
-                                    </div>
-                                    <button class="arbitr-icon ms-2" id="arbitrButton" disabled>◉</button>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label for="caseNumber" class="form-label">Номер дела (опционально)</label>
-                                        <input type="text" class="form-control" id="caseNumber" placeholder="Введите номер дела">
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="stage" class="form-label">Этап</label>
-                                        <select class="form-select" id="stage" required>
-                                            <option value="" disabled>Выберите этап</option>
-                                            <option value="Договор">Договор</option>
-                                            <option value="Подача в суд">Подача в суд</option>
-                                            <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
-                                            <option value="Завершение">Завершение</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="subStage" class="form-label">Задача</label>
-                                        <select class="form-select" id="subStage">
-                                            <option value="">Выберите задачу</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="courtDate" class="form-label">Дата суда (опционально)</label>
-                                    <input type="date" class="form-control" id="courtDate">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Заметки -->
-                <h5 class="mb-3 mt-3">Заметки</h5>
                 <div class="mb-3">
-                    <label for="notes" class="form-label">Заметки (опционально)</label>
-                    <textarea class="form-control" id="notes" rows="4" placeholder="Введите заметки"></textarea>
+                    <label for="phone" class="form-label">Номер телефона</label>
+                    <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)">
                 </div>
-                <!-- Кнопки -->
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary w-75" onclick="saveClient()">Сохранить</button>
-                    <a href="index.html" class="btn btn-secondary w-25">Отмена</a>
+                <div id="passportFields" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="passportSeries" class="form-label">Серия паспорта</label>
+                            <input type="text" class="form-control" id="passportSeries">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportNumber" class="form-label">Номер паспорта</label>
+                            <input type="text" class="form-control" id="passportNumber">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportIssueDate" class="form-label">Дата выдачи</label>
+                            <input type="date" class="form-control" id="passportIssueDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportIssuePlace" class="form-label">Место выдачи</label>
+                            <input type="text" class="form-control" id="passportIssuePlace">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addPassportBtn">
+                    <i class="ri-add-line"></i> Паспортные данные
+                </button>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" id="toStep2">Далее</button>
                 </div>
             </div>
+
+            <!-- Шаг 2 -->
+            <div class="form-step" id="step2">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="totalAmount" class="form-label">Общая сумма</label>
+                        <input type="number" class="form-control" id="totalAmount" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="paymentMonths" class="form-label">Кол-во месяцев</label>
+                        <input type="number" class="form-control" id="paymentMonths" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="paymentStartDate" class="form-label">Дата начала</label>
+                        <input type="date" class="form-control" id="paymentStartDate">
+                    </div>
+                </div>
+                <div id="paidMonthsContainer" class="mb-3"></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="stage" class="form-label">Этап</label>
+                        <select class="form-select" id="stage">
+                            <option value="" disabled selected>Выберите этап</option>
+                            <option value="Договор">Договор</option>
+                            <option value="Подача в суд">Подача в суд</option>
+                            <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
+                            <option value="Завершение">Завершение</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="subStage" class="form-label">Задача</label>
+                        <select class="form-select" id="subStage">
+                            <option value="">Выберите задачу</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block">Суд</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="courtArbitrage">
+                        <label class="form-check-label" for="courtArbitrage">Арбитражный суд</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="courtTret">
+                        <label class="form-check-label" for="courtTret">Третейский суд</label>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" id="backToStep1">Назад</button>
+                    <button class="btn btn-primary" id="toStep3">Далее</button>
+                </div>
+            </div>
+
+            <!-- Шаг 3 -->
+            <div class="form-step" id="step3">
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Заметки</label>
+                    <textarea id="notes" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="mb-3 d-flex align-items-end">
+                    <div class="flex-grow-1">
+                        <label for="arbitrLink" class="form-label">Ссылка на суд</label>
+                        <input type="url" class="form-control" id="arbitrLink" placeholder="https://example.com">
+                    </div>
+                    <button class="arbitr-icon ms-2" id="arbitrButton" disabled>◉</button>
+                </div>
+                <div class="mb-3">
+                    <label for="courtDate" class="form-label">Дата суда</label>
+                    <input type="date" class="form-control" id="courtDate">
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" id="backToStep2">Назад</button>
+                    <button class="btn btn-primary" onclick="saveClient()">Сохранить</button>
+                </div>
+            </div>
+
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
     <script>
-    // Инициализация чекбоксов оплаты
+    const steps = Array.from(document.querySelectorAll('.form-step'));
+    const indicators = Array.from(document.querySelectorAll('.step-indicator .step'));
+    function showStep(index) {
+        steps.forEach((step, i) => {
+            step.classList.toggle('active', i === index);
+            indicators[i].classList.toggle('active', i === index);
+        });
+    }
+    document.getElementById('toStep2').addEventListener('click', () => showStep(1));
+    document.getElementById('toStep3').addEventListener('click', () => showStep(2));
+    document.getElementById('backToStep1').addEventListener('click', () => showStep(0));
+    document.getElementById('backToStep2').addEventListener('click', () => showStep(1));
+
+    document.getElementById('addPassportBtn').addEventListener('click', () => {
+        document.getElementById('passportFields').classList.toggle('d-none');
+    });
+
     document.getElementById('paymentMonths').addEventListener('input', function() {
         const months = parseInt(this.value) || 0;
         const container = document.getElementById('paidMonthsContainer');
         container.innerHTML = '';
         for (let i = 1; i <= months; i++) {
-            // Исправлено: label for и id совпадают
             container.innerHTML += `
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="paidMonth${i}">
@@ -186,22 +179,14 @@
         }
     });
 
-    // Переключение избранного клиента
-    const favoriteBtn = document.getElementById('favoriteBtn');
-    favoriteBtn.addEventListener('click', function() {
-        const fav = favoriteBtn.dataset.favorite === 'true';
-        favoriteBtn.dataset.favorite = (!fav).toString();
-        favoriteBtn.innerHTML = fav ? '<i class="ri-star-line"></i>' : '<i class="ri-star-fill"></i>';
-    });
-
     window.saveClient = function() {
-        // Собираем данные клиента
+        const paidMonths = [];
+        document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
         const clientData = {
             id: Date.now(),
             firstName: document.getElementById('firstName').value.trim(),
             middleName: document.getElementById('middleName').value.trim(),
             lastName: document.getElementById('lastName').value.trim(),
-            birthDate: document.getElementById('birthDate').value,
             phone: document.getElementById('phone').value.trim(),
             passportSeries: document.getElementById('passportSeries').value.trim(),
             passportNumber: document.getElementById('passportNumber').value.trim(),
@@ -210,15 +195,19 @@
             totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
             paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
             paymentStartDate: document.getElementById('paymentStartDate').value,
-            paidMonths: new Array(parseInt(document.getElementById('paymentMonths').value) || 0).fill(false),
+            paidMonths: paidMonths,
             stage: document.getElementById('stage').value,
+            subStage: document.getElementById('subStage').value,
+            courtTypes: {
+                arbitration: document.getElementById('courtArbitrage').checked,
+                tret: document.getElementById('courtTret').checked
+            },
+            arbitrLink: document.getElementById('arbitrLink').value.trim(),
             courtDate: document.getElementById('courtDate').value,
             notes: document.getElementById('notes').value.trim(),
-            favorite: favoriteBtn.dataset.favorite === 'true',
+            favorite: false,
             createdAt: new Date().toISOString()
         };
-
-        // Валидация
         if (!clientData.firstName || !clientData.lastName) {
             alert('Имя и фамилия обязательны!');
             return;
@@ -227,15 +216,12 @@
             alert('Номер телефона должен содержать 10-12 цифр!');
             return;
         }
-
-        // Сохраняем клиента в localStorage
         const clients = JSON.parse(localStorage.getItem('clients')) || [];
         clients.push(clientData);
         localStorage.setItem('clients', JSON.stringify(clients));
-
-        // Переход на главную страницу
         window.location.href = 'index.html';
     }
     </script>
 </body>
 </html>
+
