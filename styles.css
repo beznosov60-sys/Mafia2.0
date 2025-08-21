@@ -369,6 +369,59 @@ body.home-screen {
     border-color: var(--neutral-400);
 }
 
+/* Calendar adjustments */
+.calendar-card {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+#calendar .fc {
+    border-radius: 15px;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+#calendar .fc-toolbar .fc-button {
+    background-color: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
+    color: var(--neutral-700);
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+}
+
+#calendar .fc-toolbar .fc-button.fc-button-active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+#calendar .fc-daygrid-day-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: 4px auto;
+    border-radius: 50%;
+}
+
+#calendar .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    border: 2px solid var(--primary-color);
+}
+
+#calendar .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+    color: var(--neutral-500);
+}
+
+#calendar .fc-has-events .fc-daygrid-day-number {
+    background: var(--primary-color);
+    color: var(--neutral-100);
+}
+
+#calendar .fc-daygrid-event {
+    display: none;
+}
+
 /* Dark theme overrides */
 body.dark-theme {
     background-color: var(--neutral-900);
