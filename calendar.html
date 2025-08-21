@@ -26,25 +26,33 @@
             </div>
         </div>
         <div class="row g-4 mt-1">
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-4">
                 <button class="quick-action w-100" id="quickClientsBtn">
                     <i class="bi bi-people fs-4 mb-2"></i>
                     Клиенты
                 </button>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-4">
                 <button class="quick-action w-100" id="quickTaskBtn">
                     <i class="bi bi-list-task fs-4 mb-2"></i>
                     Задачи
                 </button>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-4">
                 <button class="quick-action w-100" id="quickConsultBtn">
                     <i class="bi bi-chat-dots fs-4 mb-2"></i>
                     Консультации
                 </button>
             </div>
-            <div class="col-6 col-md-3">
+        </div>
+        <div class="row g-4 mt-1">
+            <div class="col-6 col-md-6">
+                <button class="quick-action w-100" id="quickDebtorsBtn">
+                    <i class="bi bi-exclamation-circle fs-4 mb-2"></i>
+                    Должники
+                </button>
+            </div>
+            <div class="col-6 col-md-6">
                 <a href="index.html" class="quick-action text-center">
                     <i class="bi bi-house fs-4 mb-2"></i>
                     Главная
@@ -87,6 +95,23 @@
                 </div>
                 <div class="modal-body">
                     <ul class="list-group" id="clientsModalList"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно должников -->
+    <div class="modal fade" id="debtorsModal" tabindex="-1" aria-labelledby="debtorsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="debtorsModalLabel">Должники</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="debtorsModalList"></ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -151,6 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (quickClients) {
         quickClients.addEventListener('click', () => {
             openClientsModal();
+        });
+    }
+    const quickDebtors = document.getElementById('quickDebtorsBtn');
+    if (quickDebtors) {
+        quickDebtors.addEventListener('click', () => {
+            openDebtorsModal();
         });
     }
     const clientsBtn = document.getElementById('clientsModalBtn');

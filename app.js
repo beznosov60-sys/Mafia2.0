@@ -34,6 +34,30 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+function getPaymentSchedule(client) {
+    const schedule = [];
+    if (!client.paymentMonths || !client.paymentStartDate) return schedule;
+    const amount = client.totalAmount ? Math.round(client.totalAmount / client.paymentMonths) : 0;
+    for (let i = 0; i < client.paymentMonths; i++) {
+        const date = new Date(client.paymentStartDate);
+        date.setMonth(date.getMonth() + i);
+        schedule.push({
+            date: date.toISOString().split('T')[0],
+            amount,
+            paid: client.paidMonths && client.paidMonths[i]
+        });
+    }
+    return schedule;
+}
+
+function refetchCalendarEvents() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = calendarEl ? calendarEl._fullCalendar : null;
+    if (calendar) {
+        calendar.refetchEvents();
+    }
+}
+
 function updateSubStageOptions(stage, select) {
     if (!select) return;
     select.innerHTML = '';
@@ -371,6 +395,7 @@ function loadClientForEdit(clientId) {
     document.getElementById('passportIssuePlace').value = client.passportIssuePlace || '';
     document.getElementById('totalAmount').value = client.totalAmount || '';
     document.getElementById('paymentMonths').value = client.paymentMonths || '';
+    document.getElementById('paymentStartDate').value = client.paymentStartDate || '';
     document.getElementById('arbitrLink').value = client.arbitrLink || '';
     document.getElementById('caseNumber').value = client.caseNumber || '';
     document.getElementById('stage').value = client.stage;
@@ -419,6 +444,23 @@ function loadClientCard(clientId) {
     document.getElementById('editClientBtn').onclick = () => {
         window.location.href = `edit-client.html?id=${client.id}`;
     };
+    renderClientPayments(client);
+}
+
+function renderClientPayments(client) {
+    const tbody = document.getElementById('paymentScheduleBody');
+    if (!tbody) return;
+    const schedule = getPaymentSchedule(client);
+    tbody.innerHTML = '';
+    if (schedule.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">Нет данных</td></tr>';
+        return;
+    }
+    schedule.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${p.amount}</td><td>${p.paid ? 'Оплачен' : 'Не оплачен'}</td>`;
+        tbody.appendChild(tr);
+    });
 }
 
 // Обновление клиента
@@ -463,6 +505,7 @@ function updateClient() {
         totalAmount: parseInt(document.getElementById('totalAmount').value) || 0,
         paymentMonths: paymentMonths,
         paidMonths: paidMonths,
+        paymentStartDate: document.getElementById('paymentStartDate').value,
         arbitrLink: document.getElementById('arbitrLink').value.trim(),
         caseNumber: document.getElementById('caseNumber').value.trim(),
         stage: document.getElementById('stage').value,
@@ -551,6 +594,7 @@ function saveClient() {
         passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
         totalAmount: parseInt(document.getElementById('totalAmount').value) || 0,
         paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
+        paymentStartDate: document.getElementById('paymentStartDate').value,
         paidMonths: new Array(parseInt(document.getElementById('paymentMonths').value) || 0).fill(false),
         arbitrLink: document.getElementById('arbitrLink').value.trim(),
         caseNumber: document.getElementById('caseNumber').value.trim(),
@@ -642,11 +686,16 @@ function renderDayActions(dateStr) {
             .filter(task => task.deadline === dateStr && !task.completed)
             .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}` }))
         );
+    const payments = clients
+        .flatMap(client => getPaymentSchedule(client)
+            .map((p, idx) => ({ client, payment: p, idx }))
+            .filter(p => p.payment.date === dateStr && !p.payment.paid)
+        );
     const consults = consultations.filter(consult => consult.date === dateStr);
     const courts = clients.filter(client => client.courtDate === dateStr);
 
     list.innerHTML = '';
-    if (consults.length === 0 && tasks.length === 0 && courts.length === 0) {
+    if (consults.length === 0 && tasks.length === 0 && courts.length === 0 && payments.length === 0) {
         list.innerHTML = '<li class="list-group-item text-center">Нет событий</li>';
         return;
     }
@@ -665,6 +714,13 @@ function renderDayActions(dateStr) {
         list.appendChild(li);
     });
 
+    payments.forEach(p => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `Оплата: ${p.client.firstName} ${p.client.lastName} (${p.payment.amount} ₽) <button class="btn btn-sm btn-success" onclick="confirmPayment(${p.client.id}, ${p.idx}, '${dateStr}')">Оплатил</button>`;
+        list.appendChild(li);
+    });
+
     courts.forEach(client => {
         const li = document.createElement('li');
         li.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
@@ -674,6 +730,54 @@ function renderDayActions(dateStr) {
         li.onclick = () => { window.location.href = `client-card.html?id=${client.id}`; };
         list.appendChild(li);
     });
+}
+
+function confirmPayment(clientId, paymentIndex, dateStr) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => c.id === clientId);
+    if (!client || !client.paidMonths || paymentIndex >= client.paidMonths.length) return;
+    client.paidMonths[paymentIndex] = true;
+    localStorage.setItem('clients', JSON.stringify(clients));
+    if (dateStr) {
+        renderDayActions(dateStr);
+    }
+    renderDebtorsList();
+    refetchCalendarEvents();
+}
+
+function getDebtors() {
+    const today = new Date().toISOString().split('T')[0];
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    return clients.flatMap(client =>
+        getPaymentSchedule(client)
+            .map((p, idx) => ({ client, payment: p, idx }))
+            .filter(p => !p.payment.paid && p.payment.date < today)
+    );
+}
+
+function renderDebtorsList() {
+    const list = document.getElementById('debtorsModalList');
+    if (!list) return;
+    const debtors = getDebtors();
+    list.innerHTML = '';
+    if (debtors.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-center">Нет должников</li>';
+        return;
+    }
+    debtors.forEach(d => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `${d.client.firstName} ${d.client.lastName} — ${new Date(d.payment.date).toLocaleDateString('ru-RU')} <button class="btn btn-sm btn-success" onclick="confirmPayment(${d.client.id}, ${d.idx}, '${d.payment.date}')">Оплатил</button>`;
+        list.appendChild(li);
+    });
+}
+
+function openDebtorsModal() {
+    renderDebtorsList();
+    const modalEl = document.getElementById('debtorsModal');
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 function initCalendar() {
@@ -733,7 +837,18 @@ function initCalendar() {
                     backgroundColor: '#0d6efd',
                     extendedProps: { type: 'consultation', consultId: consult.id }
                 }));
-            const allEvents = [...clientEvents, ...taskEvents, ...consultationEvents];
+            const paymentEvents = clients
+                .flatMap(client => getPaymentSchedule(client)
+                    .map((p, idx) => ({ client, payment: p, idx }))
+                    .filter(p => !p.payment.paid)
+                    .map(p => ({
+                        title: `Оплата: ${p.client.firstName} ${p.client.lastName}`,
+                        start: p.payment.date,
+                        backgroundColor: '#198754',
+                        extendedProps: { type: 'payment', clientId: p.client.id, paymentIndex: p.idx }
+                    }))
+                );
+            const allEvents = [...clientEvents, ...taskEvents, ...consultationEvents, ...paymentEvents];
             successCallback(allEvents);
         },
         eventContent: function(arg) {
@@ -1188,17 +1303,18 @@ window.showPaymentsModal = function(clientId) {
     paymentsTableBody.innerHTML = '';
 
     // Месячные платежи
-    if (client.paymentMonths && client.paymentMonths > 0) {
-        for (let i = 0; i < client.paymentMonths; i++) {
+    const schedule = getPaymentSchedule(client);
+    if (schedule.length > 0) {
+        schedule.forEach((p, i) => {
             paymentsTableBody.innerHTML += `
                 <tr>
                     <td>Месяц ${i + 1}</td>
-                    <td>${client.paymentStartDate ? new Date(client.paymentStartDate).toLocaleDateString('ru-RU') : '-'}</td>
-                    <td>${client.totalAmount ? Math.round(client.totalAmount / client.paymentMonths) : '-'}</td>
-                    <td>${client.paidMonths && client.paidMonths[i] ? 'Оплачен' : 'Не оплачен'}</td>
+                    <td>${new Date(p.date).toLocaleDateString('ru-RU')}</td>
+                    <td>${p.amount}</td>
+                    <td>${p.paid ? 'Оплачен' : 'Не оплачен'}</td>
                 </tr>
             `;
-        }
+        });
     } else {
         paymentsTableBody.innerHTML += '<tr><td colspan="4" class="text-center">Нет данных о платежах</td></tr>';
     }
