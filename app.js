@@ -34,6 +34,32 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+const originalSetItem = localStorage.setItem.bind(localStorage);
+async function syncClientsFromServer() {
+    try {
+        const res = await fetch('/api/clients');
+        const clients = await res.json();
+        originalSetItem('clients', JSON.stringify(clients));
+    } catch (e) {
+        console.error('Не удалось загрузить клиентов с сервера', e);
+        if (!localStorage.getItem('clients')) {
+            originalSetItem('clients', JSON.stringify([]));
+        }
+    }
+}
+
+localStorage.setItem = function(key, value) {
+    originalSetItem(key, value);
+    if (key === 'clients') {
+        fetch('/api/clients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: value
+        }).catch(err => console.error('Не удалось сохранить клиентов на сервер', err));
+    }
+};
+
+
 function getPaymentSchedule(client) {
     const schedule = [];
     if (!client.paymentMonths || !client.paymentStartDate) return schedule;
@@ -76,12 +102,9 @@ function updateSubStageOptions(stage, select) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM загружен, инициализация...');
-    // Инициализация данных
-    if (!localStorage.getItem('clients')) {
-        localStorage.setItem('clients', JSON.stringify([]));
-    }
+    await syncClientsFromServer();
     if (!localStorage.getItem('consultations')) {
         localStorage.setItem('consultations', JSON.stringify([]));
     }
