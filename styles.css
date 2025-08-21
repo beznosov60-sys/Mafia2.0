@@ -1,15 +1,38 @@
 :root {
-    --primary-color: #0d6efd;
-    --primary-color-dark: #0b5ed7;
+    /* Purple hue */
+    --purple-700: #4339F2;
+    --purple-600: #5C52F9;
+    --purple-500: #7066FF;
+    --purple-400: #8B83FF;
+    --purple-300: #C1C6FF;
+    --purple-200: #E0E0FF;
+    --purple-100: #F3F3FF;
+    /* Neutral colors */
+    --neutral-900: #14142B;
+    --neutral-800: #4E4B66;
+    --neutral-700: #6E7191;
+    --neutral-600: #A0A3BD;
+    --neutral-500: #D9DBE9;
+    --neutral-400: #EFF0F6;
+    --neutral-300: #F7F7FC;
+    --neutral-200: #FDFDFE;
+    --neutral-100: #FFFFFF;
+    /* Theme shortcuts */
+    --primary-color: var(--purple-600);
+    --primary-color-dark: var(--purple-700);
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--neutral-300);
+    color: var(--neutral-900);
 }
 
 /* Главный экран */
 body.home-screen {
-    background: linear-gradient(135deg, #c3cfe2 0%, #e2ebf0 100%);
+    background: var(--neutral-200);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -25,9 +48,10 @@ body.home-screen {
 .home-screen .search-bar {
     display: flex;
     align-items: center;
-    background: #fff;
+    background: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
     border-radius: 25px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     padding: 10px 20px;
 }
 
@@ -36,11 +60,13 @@ body.home-screen {
     border: none;
     outline: none;
     padding: 0 10px;
+    background: transparent;
+    color: var(--neutral-900);
 }
 
-.home-screen .search-bar .bi {
+.home-screen .search-bar i {
     font-size: 1.2rem;
-    color: #6c757d;
+    color: var(--neutral-600);
 }
 
 .home-screen .icon-buttons {
@@ -61,6 +87,11 @@ body.home-screen {
     justify-content: center;
     font-size: 1.5rem;
     color: #fff;
+    transition: background 0.2s;
+}
+
+.home-screen .circle-btn:hover {
+    background: var(--primary-color-dark);
 }
 
 .clickable-item {
@@ -83,6 +114,51 @@ body.home-screen {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid var(--neutral-400);
+    background-color: var(--neutral-100);
+    color: var(--neutral-700);
+    transition: background 0.2s, color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: var(--neutral-300);
+    color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-color-dark);
+    border-color: var(--primary-color-dark);
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: var(--neutral-300);
+    border-color: var(--neutral-400);
+    color: var(--neutral-900);
+}
+
+.btn-secondary:hover {
+    background-color: var(--neutral-400);
+    border-color: var(--neutral-400);
+    color: var(--neutral-900);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: #fff;
 }
 
 .btn-square {
@@ -218,8 +294,9 @@ body.home-screen {
 }
 
 .favorite-icon {
-    color: #ffc107;
+    color: var(--primary-color);
     margin-right: 0.1rem;
+    font-size: 1rem;
 }
 
 .stage-badge {
@@ -278,16 +355,18 @@ body.home-screen {
     align-items: center;
     justify-content: center;
     height: 120px;
-    background-color: #fff;
+    background-color: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
     border-radius: 15px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     text-decoration: none;
-    color: #000;
-    transition: background-color 0.3s;
+    color: var(--neutral-900);
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .quick-action:hover {
-    background-color: #f1f1f1;
+    background-color: var(--neutral-300);
+    border-color: var(--neutral-400);
 }
 /* Client card layout */
 .client-card-screen {

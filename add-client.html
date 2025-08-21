@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM - Добавить клиента</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,7 +13,7 @@
         <div class="card col-md-8 p-4 shadow-lg">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="card-title mb-0">Добавить клиента</h3>
-                <button id="favoriteBtn" class="btn btn-warning icon-btn" data-favorite="false" title="Избранный клиент">☆</button>
+                <button id="favoriteBtn" class="btn icon-btn" data-favorite="false" title="Избранный клиент"><i class="ri-star-line"></i></button>
             </div>
             <div class="card-body">
                 <!-- Личные данные -->
@@ -160,8 +161,8 @@
                 </div>
                 <!-- Кнопки -->
                 <div class="d-flex gap-2">
-                    <button class="btn btn-success w-75" onclick="saveClient()">Сохранить</button>
-                    <a href="index.html" class="btn btn-outline-secondary w-25">Отмена</a>
+                    <button class="btn btn-primary w-75" onclick="saveClient()">Сохранить</button>
+                    <a href="index.html" class="btn btn-secondary w-25">Отмена</a>
                 </div>
             </div>
         </div>
@@ -190,7 +191,7 @@
     favoriteBtn.addEventListener('click', function() {
         const fav = favoriteBtn.dataset.favorite === 'true';
         favoriteBtn.dataset.favorite = (!fav).toString();
-        favoriteBtn.textContent = fav ? '☆' : '★';
+        favoriteBtn.innerHTML = fav ? '<i class="ri-star-line"></i>' : '<i class="ri-star-fill"></i>';
     });
 
     window.saveClient = function() {
