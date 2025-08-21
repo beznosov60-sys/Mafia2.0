@@ -277,23 +277,34 @@ function displayCourtThisMonth() {
     }
 
     filteredClients.forEach(client => {
-        const listItem = document.createElement('li');
-        listItem.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
-        const stageClass = stageColorClasses[client.stage] || '';
-        const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
-        listItem.innerHTML = `
-            ${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${client.firstName} ${client.lastName}${stageBadge}
-            <div>
-                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
-                ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
+        const li = document.createElement('li');
+        li.className = 'list-group-item clickable-item';
+        const fullName = `${client.firstName} ${client.lastName}`;
+        li.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>${client.favorite ? '<span class="favorite-icon">★</span>' : ''}${fullName}</div>
+                <button class="btn btn-sm btn-link toggle-details" data-client="${client.id}">▾</button>
+            </div>
+            <div class="client-details mt-2" style="display:none;">
+                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})">Платежи</button>
+                ${client.courtDate ? `<span class="me-2">${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
+                ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
             </div>
         `;
-        listItem.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.closest('button')) {
+        li.onclick = (event) => {
+            if (!event.target.closest('a') && !event.target.classList.contains('toggle-details') && !event.target.closest('.client-details')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
         };
-        courtThisMonthDiv.appendChild(listItem);
+        courtThisMonthDiv.appendChild(li);
+    });
+
+    courtThisMonthDiv.addEventListener('click', (event) => {
+        if (event.target.classList.contains('toggle-details')) {
+            event.stopPropagation();
+            const details = event.target.closest('li').querySelector('.client-details');
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
     });
 }
 
@@ -454,6 +465,22 @@ function loadClientCard(clientId) {
     window.tasks = client.tasks || [];
     renderTaskList();
     renderClientPayments(client);
+    const taskCollapseEl = document.getElementById('clientTasksCollapse');
+    const taskToggle = document.querySelector('[data-bs-target="#clientTasksCollapse"]');
+    if (taskCollapseEl && taskToggle) {
+        taskCollapseEl.addEventListener('shown.bs.collapse', () => taskToggle.textContent = 'Скрыть');
+        taskCollapseEl.addEventListener('hidden.bs.collapse', () => taskToggle.textContent = 'Показать');
+        if (window.tasks.length > 0) {
+            const collapse = new bootstrap.Collapse(taskCollapseEl, {toggle: false});
+            collapse.show();
+        }
+    }
+    const payCollapseEl = document.getElementById('paymentScheduleCollapse');
+    const payToggle = document.querySelector('[data-bs-target="#paymentScheduleCollapse"]');
+    if (payCollapseEl && payToggle) {
+        payCollapseEl.addEventListener('shown.bs.collapse', () => payToggle.textContent = 'Скрыть');
+        payCollapseEl.addEventListener('hidden.bs.collapse', () => payToggle.textContent = 'Показать');
+    }
 }
 
 function renderClientPayments(client) {

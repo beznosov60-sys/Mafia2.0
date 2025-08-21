@@ -9,7 +9,7 @@
 </head>
 <body class="client-card-screen">
     <div class="container py-5">
-        <a href="javascript:history.back()" class="btn btn-link mb-3">&larr; Назад</a>
+        <a href="javascript:history.back()" class="btn btn-back mb-3">&larr; Назад</a>
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="client-info-card h-100 d-flex flex-column">
@@ -43,7 +43,7 @@
                 <div class="client-payments-card mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h5 class="mb-0">График платежей</h5>
-                        <button class="btn btn-sm btn-link" data-bs-toggle="collapse" data-bs-target="#paymentScheduleCollapse" type="button">Показать</button>
+                        <button class="btn btn-sm btn-show" data-bs-toggle="collapse" data-bs-target="#paymentScheduleCollapse" type="button">Показать</button>
                     </div>
                     <div class="collapse" id="paymentScheduleCollapse">
                         <table class="table table-sm">
@@ -56,8 +56,8 @@
                 </div>
                 <div class="client-tasks-card mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Задачи</h5>
-                        <button class="btn btn-sm btn-link" data-bs-toggle="collapse" data-bs-target="#clientTasksCollapse" type="button">Показать</button>
+                        <h5 class="mb-0">Текущие задачи</h5>
+                        <button class="btn btn-sm btn-show" data-bs-toggle="collapse" data-bs-target="#clientTasksCollapse" type="button">Показать</button>
                     </div>
                     <div class="collapse" id="clientTasksCollapse">
                         <div class="input-group mb-2">
