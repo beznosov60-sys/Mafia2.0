@@ -1,3 +1,8 @@
+:root {
+    --primary-color: #0d6efd;
+    --primary-color-dark: #0b5ed7;
+}
+
 body {
     font-family: Arial, sans-serif;
 }
@@ -49,13 +54,13 @@ body.home-screen {
     height: 60px;
     border-radius: 50%;
     border: none;
-    background: #fff;
+    background: var(--primary-color);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: #6c757d;
+    color: #fff;
 }
 
 .clickable-item {
@@ -173,7 +178,7 @@ body.home-screen {
 }
 
 .btn-complete {
-    background: #fd7e14; /* Оранжевый */
+    background: var(--primary-color);
     color: #fff;
     border: none;
     padding: 0.25rem 0.75rem;
@@ -185,7 +190,7 @@ body.home-screen {
 }
 
 .btn-complete:hover {
-    background: #e8590c;
+    background: var(--primary-color-dark);
 }
 
 .client-btn {
@@ -197,19 +202,19 @@ body.home-screen {
 }
 
 .client-btn-payments {
-    background-color: #0d6efd;
+    background-color: var(--primary-color);
 }
 
 .client-btn-payments:hover {
-    background-color: #0b5ed7;
+    background-color: var(--primary-color-dark);
 }
 
 .client-btn-complete {
-    background-color: #28a745;
+    background-color: var(--primary-color);
 }
 
 .client-btn-complete:hover {
-    background-color: #218838;
+    background-color: var(--primary-color-dark);
 }
 
 .favorite-icon {
@@ -283,10 +288,7 @@ body.home-screen {
 
 .quick-action:hover {
     background-color: #f1f1f1;
-<<<<<<< HEAD
-}
-=======
-}
+.}
 /* Client card layout */
 .client-card-screen {
     background: #f5f5f5;
@@ -321,7 +323,9 @@ body.home-screen {
 
 .client-info-card,
 .client-court-card,
-.client-notes-card {
+.client-notes-card,
+.client-payments-card,
+.client-tasks-card {
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -329,7 +333,7 @@ body.home-screen {
 }
 
 .court-date-badge {
-    background: #28a745;
+    background: var(--primary-color);
     color: #fff;
     padding: 6px 12px;
     border-radius: 20px;
@@ -337,7 +341,7 @@ body.home-screen {
 }
 
 .btn-save {
-    background-color: #ff5f6d;
+    background-color: var(--primary-color);
     color: #fff;
     border: none;
     border-radius: 20px;
@@ -346,7 +350,8 @@ body.home-screen {
 }
 
 .btn-save:hover {
-    opacity: 0.9;
+    background-color: var(--primary-color-dark);
+    color: #fff;
 }
 
 .client-notes-card textarea {
@@ -383,5 +388,3 @@ body.home-screen {
     padding: 0 2px;
     background: transparent;
 }
-
->>>>>>> a017b4bebb408bc2d69c7a491d910d4a6c2f4cc6
