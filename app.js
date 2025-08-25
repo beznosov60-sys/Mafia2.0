@@ -1042,12 +1042,12 @@ function initCalendar() {
             const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
             const clientEvents = clients
                 .filter(client => client.courtDate)
-                    .map(client => ({
-                        title: `${client.firstName} ${client.lastName} (${client.stage}${client.subStage ? ' - ' + client.subStage : ''})`,
-                        start: client.courtDate,
-                        backgroundColor: '#0d6efd',
-                        extendedProps: { type: 'client', clientId: client.id }
-                    }));
+                .map(client => ({
+                    title: `${client.firstName} ${client.lastName} (${client.stage}${client.subStage ? ' - ' + client.subStage : ''})`,
+                    start: client.courtDate,
+                    backgroundColor: '#6f42c1',
+                    extendedProps: { type: 'client', clientId: client.id }
+                }));
             // --- ДОБАВИТЬ задачи как события ---
             const taskEvents = clients
                 .filter(client => client.tasks && Array.isArray(client.tasks))
@@ -1056,8 +1056,8 @@ function initCalendar() {
                     .map(task => ({
                         title: `Задача: ${task.text} (${client.firstName} ${client.lastName})`,
                         start: task.deadline,
-                        backgroundColor: task.color || '#28a745',
-                        borderColor: task.color || '#28a745',
+                        backgroundColor: task.color || '#dc3545',
+                        borderColor: task.color || '#dc3545',
                         extendedProps: { type: 'task', clientId: client.id, taskId: task.id }
                     }))
                 );
@@ -1100,11 +1100,30 @@ function initCalendar() {
     calendar.on('eventsSet', markDaysWithEvents);
 
     function markDaysWithEvents() {
+        const colorMap = {
+            task: '#dc3545',
+            consultation: '#0d6efd',
+            payment: '#198754',
+            client: '#6f42c1'
+        };
         const dayCells = document.querySelectorAll('.fc-daygrid-day');
         dayCells.forEach(cell => {
             const dateStr = cell.getAttribute('data-date');
-            const hasEvent = calendar.getEvents().some(ev => ev.startStr === dateStr);
-            cell.classList.toggle('fc-has-events', hasEvent);
+            const events = calendar.getEvents().filter(ev => ev.startStr === dateStr);
+            const frame = cell.querySelector('.fc-daygrid-day-frame');
+            const oldDots = frame.querySelector('.event-dots');
+            if (oldDots) oldDots.remove();
+            if (events.length === 0) return;
+            const types = [...new Set(events.map(ev => ev.extendedProps.type))];
+            const container = document.createElement('div');
+            container.className = 'event-dots';
+            types.forEach(type => {
+                const dot = document.createElement('span');
+                dot.className = 'event-dot';
+                dot.style.backgroundColor = colorMap[type] || '#6c757d';
+                container.appendChild(dot);
+            });
+            frame.appendChild(container);
         });
     }
     // Сохраняем ссылку для обновления событий
