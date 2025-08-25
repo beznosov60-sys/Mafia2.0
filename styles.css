@@ -20,6 +20,7 @@
     /* Theme shortcuts */
     --primary-color: var(--purple-600);
     --primary-color-dark: var(--purple-700);
+    --border-radius: 15px;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -641,7 +642,7 @@ body.dark-theme {
 .client-tasks-card {
     background: rgba(255, 255, 255, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 15px;
+    border-radius: var(--border-radius);
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -651,7 +652,7 @@ body.dark-theme {
     background: var(--primary-color);
     color: #fff;
     padding: 6px 12px;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
     font-size: 0.875rem;
 }
 
@@ -659,7 +660,7 @@ body.dark-theme {
     background-color: var(--primary-color);
     color: #fff;
     border: none;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
     padding: 10px 15px;
     transition: opacity 0.2s;
 }
@@ -673,7 +674,7 @@ body.dark-theme {
     background-color: var(--primary-color);
     color: #fff;
     border: none;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
     padding: 6px 12px;
     text-decoration: none;
 }
@@ -707,11 +708,35 @@ body.dark-theme {
 }
 
 .client-notes-card textarea {
-    background: #f8f9fa;
-    border: none;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     resize: none;
-    border-radius: 10px;
+    border-radius: var(--border-radius);
     padding: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.client-info-card .list-group-item,
+.client-tasks-card .list-group-item {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--border-radius);
+}
+
+.client-payments-card table,
+.client-payments-card th,
+.client-payments-card td {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.client-payments-card th,
+.client-payments-card td {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.client-payments-card table {
+    border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
 /* Calendar event styling */
