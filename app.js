@@ -396,11 +396,11 @@ function displayClientsList() {
                 <span>${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</span>
                 <div>
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    <button class="btn btn-sm btn-outline-light toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
+                    <button class="toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
                 </div>
             </div>
-            <div class="client-details mt-2">
-                ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
+            <div class="client-details">
+                ${client.subStage ? `<ul class="task-info mb-0"><li>${client.subStage}</li></ul>` : '<span></span>'}
                 <div class="client-actions">
                     <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
                     ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient(${client.id})">Завершить</button>` : ''}
