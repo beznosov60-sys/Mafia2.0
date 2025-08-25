@@ -274,17 +274,6 @@ body.home-screen {
 }
 
 
-.task-high {
-    border-left: 5px solid #dc3545;
-}
-
-.task-medium {
-    border-left: 5px solid #ffc107;
-}
-
-.task-low {
-    border-left: 5px solid #28a745;
-}
 
 .payment-toggle:checked + .form-check-label {
     color: #28a745;

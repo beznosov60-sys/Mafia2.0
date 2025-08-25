@@ -14,20 +14,25 @@
             <div class="col-md-6">
                 <div class="client-info-card h-100 d-flex flex-column">
                     <h5 class="mb-3">Информация о клиенте</h5>
-                    <p class="mb-1 fw-semibold"><span id="clientName"></span><span id="courtTypeBadge" class="court-badge ms-2"></span></p>
-                    <p class="text-muted small mb-3" id="dealInfo"></p>
-                    <div class="mb-2">
-                        <span class="text-muted small">Телефон</span>
-                        <div id="clientPhone"></div>
-                    </div>
-                    <div class="mb-4">
-                        <span class="text-muted small">Ход дела</span>
-                        <div id="clientStage"></div>
-                    </div>
-                    <div class="mb-4 d-none" id="clientLinkBlock">
-                        <span class="text-muted small">Ссылка</span>
-                        <div><a id="clientLink" href="#" target="_blank"></a></div>
-                    </div>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item">
+                            <span class="fw-semibold" id="clientName"></span>
+                            <span id="courtTypeBadge" class="court-badge ms-2"></span>
+                            <p class="text-muted small mb-0" id="dealInfo"></p>
+                        </li>
+                        <li class="list-group-item">
+                            <span class="text-muted small d-block">Телефон</span>
+                            <span id="clientPhone"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <span class="text-muted small d-block">Ход дела</span>
+                            <span id="clientStage"></span>
+                        </li>
+                        <li class="list-group-item d-none" id="clientLinkBlock">
+                            <span class="text-muted small d-block">Ссылка</span>
+                            <a id="clientLink" href="#" target="_blank"></a>
+                        </li>
+                    </ul>
                     <button class="btn btn-save w-100 mt-auto" id="editClientBtn">Редактировать</button>
                 </div>
             </div>
@@ -63,7 +68,7 @@
                         <div class="input-group mb-2">
                             <input type="text" id="taskText" class="form-control" placeholder="Новая задача">
                             <input type="date" id="taskDeadline" class="form-control">
-                            <input type="hidden" id="taskPriority" value="medium">
+                            <input type="color" id="taskColor" class="form-control form-control-color" value="#28a745" title="Цвет задачи">
                             <button class="btn btn-outline-primary" onclick="addTask()">Добавить</button>
                         </div>
                         <ul class="list-group" id="taskList"></ul>
