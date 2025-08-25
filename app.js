@@ -112,7 +112,31 @@ function updateSubStageOptions(stage, select) {
 
 function exportClientsToExcel() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const worksheet = XLSX.utils.json_to_sheet(clients);
+    const data = clients.map(c => ({
+        'ID': c.id,
+        'Имя': c.firstName,
+        'Отчество': c.middleName,
+        'Фамилия': c.lastName,
+        'Телефон': c.phone,
+        'Серия паспорта': c.passportSeries,
+        'Номер паспорта': c.passportNumber,
+        'Дата выдачи': c.passportIssueDate,
+        'Место выдачи': c.passportIssuePlace,
+        'Общая сумма': c.totalAmount,
+        'Кол-во месяцев': c.paymentMonths,
+        'Дата начала': c.paymentStartDate,
+        'Оплаченные месяцы': (c.paidMonths || []).map(p => p ? 1 : 0).join(','),
+        'Этап': c.stage,
+        'Задача': c.subStage,
+        'Арбитражный суд': c.courtTypes?.arbitration ? 'Да' : 'Нет',
+        'Третейский суд': c.courtTypes?.tret ? 'Да' : 'Нет',
+        'Ссылка на суд': c.arbitrLink,
+        'Дата суда': c.courtDate,
+        'Заметки': c.notes,
+        'Избранный': c.favorite ? 'Да' : 'Нет',
+        'Создан': c.createdAt
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Clients');
     XLSX.writeFile(workbook, 'clients.xlsx');
@@ -126,7 +150,34 @@ function importClientsFromExcel(event) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const clients = XLSX.utils.sheet_to_json(sheet);
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        const clients = rows.map(row => ({
+            id: row['ID'],
+            firstName: row['Имя'] || '',
+            middleName: row['Отчество'] || '',
+            lastName: row['Фамилия'] || '',
+            phone: row['Телефон'] || '',
+            passportSeries: row['Серия паспорта'] || '',
+            passportNumber: row['Номер паспорта'] || '',
+            passportIssueDate: row['Дата выдачи'] || '',
+            passportIssuePlace: row['Место выдачи'] || '',
+            totalAmount: parseFloat(row['Общая сумма']) || 0,
+            paymentMonths: parseInt(row['Кол-во месяцев']) || 0,
+            paymentStartDate: row['Дата начала'] || '',
+            paidMonths: row['Оплаченные месяцы'] ? String(row['Оплаченные месяцы']).split(',').map(v => v.trim() === '1') : [],
+            stage: row['Этап'] || '',
+            subStage: row['Задача'] || '',
+            courtTypes: {
+                arbitration: row['Арбитражный суд'] === 'Да' || row['Арбитражный суд'] === true,
+                tret: row['Третейский суд'] === 'Да' || row['Третейский суд'] === true
+            },
+            arbitrLink: row['Ссылка на суд'] || '',
+            courtDate: row['Дата суда'] || '',
+            notes: row['Заметки'] || '',
+            favorite: row['Избранный'] === 'Да' || row['Избранный'] === true,
+            createdAt: row['Создан'] || new Date().toISOString(),
+            tasks: []
+        }));
         localStorage.setItem('clients', JSON.stringify(clients));
         alert('Импорт завершён');
         window.location.reload();
@@ -166,8 +217,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
         document.getElementById('sidebarClose')?.addEventListener('click', toggleSidebar);
         displayClientsList();
-        document.getElementById('exportBtn')?.addEventListener('click', exportClientsToExcel);
-        document.getElementById('importTrigger')?.addEventListener('click', () => document.getElementById('importFile')?.click());
+        document.getElementById('exportOption')?.addEventListener('click', exportClientsToExcel);
+        document.getElementById('importOption')?.addEventListener('click', () => document.getElementById('importFile')?.click());
         document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
     }
     // Загрузка данных для редактирования (только на edit-client.html)
@@ -848,13 +899,14 @@ function renderDayActions(dateStr) {
     consults.forEach(consult => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>`;
+        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>`;
         list.appendChild(li);
     });
 
     tasks.forEach(task => {
         const li = document.createElement('li');
-        li.className = `list-group-item d-flex justify-content-between align-items-center task-${task.priority}`;
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
         li.innerHTML = `${task.text} (${task.clientName}) <button class="btn btn-sm btn-primary" onclick="completeTaskFromCalendar(${task.clientId}, ${task.id}, '${dateStr}')">Выполнено</button>`;
         list.appendChild(li);
     });
@@ -969,7 +1021,8 @@ function initCalendar() {
                     .map(task => ({
                         title: `Задача: ${task.text} (${client.firstName} ${client.lastName})`,
                         start: task.deadline,
-                        backgroundColor: task.priority === 'high' ? '#ff0000' : (task.priority === 'medium' ? '#ffc107' : '#28a745'),
+                        backgroundColor: task.color || '#28a745',
+                        borderColor: task.color || '#28a745',
                         extendedProps: { type: 'task', clientId: client.id, taskId: task.id }
                     }))
                 );
@@ -1073,8 +1126,9 @@ function showClientsForDate(dateStr) {
         } else {
             filteredTasks.forEach((task, idx) => {
                 const li = document.createElement('li');
-                li.className = `list-group-item d-flex justify-content-between align-items-center task-${task.priority}`;
-                li.innerHTML = `${task.text} (${task.clientName}) <span class="badge bg-${task.priority === 'high' ? 'danger' : (task.priority === 'medium' ? 'warning' : 'success')}">${task.deadline}</span>`;
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
+                li.innerHTML = `${task.text} (${task.clientName}) <span class="badge" style="background-color:${task.color || '#28a745'}">${task.deadline}</span>`;
                 tasksList.appendChild(li);
             });
         }
@@ -1089,7 +1143,7 @@ function showClientsForDate(dateStr) {
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
                     ${consult.name} (Тел: ${consult.phone})
-                    <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')">Преобразовать в клиента</button>
+                    <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
                 `;
                 consultationsList.appendChild(li);
             });
@@ -1185,9 +1239,9 @@ function initTaskList(clientId) {
 }
 function addTask() {
     const text = document.getElementById('taskText').value.trim();
-    const priorityEl = document.getElementById('taskPriority');
-    const priority = priorityEl ? priorityEl.value : 'medium';
     const deadline = document.getElementById('taskDeadline').value;
+    const colorInput = document.getElementById('taskColor');
+    const color = colorInput ? colorInput.value : '#28a745';
     if (!text) {
         alert('Введите текст задачи!');
         return;
@@ -1195,15 +1249,16 @@ function addTask() {
     const task = {
         id: Date.now(),
         text,
-        priority,
+        color,
         deadline,
         completed: false
     };
     window.tasks.push(task);
-      renderTaskList();
-      renderCompletedTasks();
+    renderTaskList();
+    renderCompletedTasks();
     document.getElementById('taskText').value = '';
     document.getElementById('taskDeadline').value = '';
+    if (colorInput) colorInput.value = '#28a745';
     // Сохраняем задачи в клиенте
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = parseInt(urlParams.get('id'));
@@ -1221,7 +1276,8 @@ function renderTaskList() {
     window.tasks.forEach((task, idx) => {
         if (task.completed) return;
         const li = document.createElement('li');
-        li.className = `list-group-item d-flex justify-content-between align-items-center task-${task.priority}`;
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
         li.innerHTML = `
             ${task.text} (${task.deadline ? task.deadline : 'Без срока'})
             <div>
@@ -1285,7 +1341,8 @@ function renderCompletedTasks() {
     list.innerHTML = '';
     window.tasks.filter(t => t.completed).forEach(task => {
         const li = document.createElement('li');
-        li.className = `list-group-item task-${task.priority}`;
+        li.className = 'list-group-item';
+        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
         li.textContent = `${task.text} (${task.completedAt ? new Date(task.completedAt).toLocaleDateString('ru-RU') : ''})`;
         list.appendChild(li);
     });
@@ -1343,7 +1400,7 @@ function completeSubStage() {
         client.tasks.push({
             id: Date.now(),
             text: client.subStage,
-            priority: 'medium',
+            color: '#28a745',
             completed: true,
             completedAt: new Date().toISOString()
         });
@@ -1395,12 +1452,8 @@ function showAddTaskModal(dateStr) {
                         <input type="text" class="form-control" id="calendarTaskText" placeholder="Введите задачу">
                     </div>
                     <div class="mb-3">
-                        <label for="calendarTaskPriority" class="form-label">Приоритет</label>
-                        <select id="calendarTaskPriority" class="form-select">
-                            <option value="low">Низкая</option>
-                            <option value="medium">Средняя</option>
-                            <option value="high">Высокая</option>
-                        </select>
+                        <label for="calendarTaskColor" class="form-label">Цвет</label>
+                        <input type="color" id="calendarTaskColor" class="form-control form-control-color" value="#28a745">
                     </div>
                     <div class="mb-3">
                         <label for="calendarTaskDate" class="form-label">Дата</label>
@@ -1421,7 +1474,7 @@ function showAddTaskModal(dateStr) {
     document.getElementById('calendarTaskSaveBtn').onclick = function() {
         const clientId = parseInt(document.getElementById('calendarTaskClient').value);
         const text = document.getElementById('calendarTaskText').value.trim();
-        const priority = document.getElementById('calendarTaskPriority').value;
+        const color = document.getElementById('calendarTaskColor').value;
         const date = document.getElementById('calendarTaskDate').value || dateStr;
         if (!text) {
             alert('Введите текст задачи!');
@@ -1439,7 +1492,7 @@ function showAddTaskModal(dateStr) {
         let task = {
             id: Date.now(),
             text,
-            priority,
+            color,
             deadline: date,
             completed: false
         };

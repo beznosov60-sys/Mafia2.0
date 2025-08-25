@@ -19,8 +19,15 @@
         <div class="icon-buttons">
             <a href="add-client.html" class="circle-btn"><i class="ri-add-line"></i></a>
             <a href="calendar.html" class="circle-btn"><i class="ri-calendar-event-line"></i></a>
-            <button class="circle-btn" id="exportBtn" title="Экспорт в Excel"><i class="ri-download-2-line"></i></button>
-            <button class="circle-btn" id="importTrigger" title="Импорт из Excel"><i class="ri-upload-2-line"></i></button>
+            <div class="dropdown">
+                <button class="circle-btn dropdown-toggle" id="importExportBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Импорт/Экспорт">
+                    <i class="ri-file-transfer-line"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" id="exportOption">Экспорт в Excel</a></li>
+                    <li><a class="dropdown-item" id="importOption">Импорт из Excel</a></li>
+                </ul>
+            </div>
             <input type="file" id="importFile" accept=".xlsx" style="display:none" />
             <button class="circle-btn" id="sidebarToggle" title="Показать всех клиентов"><i class="ri-more-2-line"></i></button>
         </div>
