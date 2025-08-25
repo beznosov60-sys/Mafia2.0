@@ -247,11 +247,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         displayCourtThisMonth();
         document.getElementById('searchButton')?.addEventListener('click', searchClients);
-        document.getElementById('searchInput')?.addEventListener('keydown', (event) => {
+        const searchInput = document.getElementById('searchInput');
+        searchInput?.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 searchClients();
             }
         });
+        searchInput?.addEventListener('input', searchClients);
         // Инициализация панели
         document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
         document.getElementById('sidebarClose')?.addEventListener('click', toggleSidebar);
@@ -866,11 +868,12 @@ function saveClient() {
 function searchClients() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = '';
+    const list = document.getElementById('searchSuggestions');
+    if (!list) return;
+    list.innerHTML = '';
 
     if (!query) {
-        resultsDiv.innerHTML = '<li class="list-group-item text-center">Введите имя или номер дела</li>';
+        list.classList.add('d-none');
         return;
     }
 
@@ -881,29 +884,18 @@ function searchClients() {
     ).sort((a, b) => Number(b.favorite) - Number(a.favorite));
 
     if (filteredClients.length === 0) {
-        resultsDiv.innerHTML = '<li class="list-group-item text-center">Клиенты не найдены</li>';
+        list.classList.add('d-none');
         return;
     }
 
     filteredClients.forEach(client => {
-        const listItem = document.createElement('li');
-        listItem.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
-        const stageClass = stageColorClasses[client.stage] || '';
-        const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
-        listItem.innerHTML = `
-            ${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}${stageBadge}
-            <div>
-                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal('${client.id}')" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
-                ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-            </div>
-        `;
-        listItem.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.closest('button')) {
-                window.location.href = `client-card.html?id=${client.id}`;
-            }
-        };
-        resultsDiv.appendChild(listItem);
+        const item = document.createElement('li');
+        item.className = 'list-group-item clickable-item';
+        item.innerHTML = `${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}`;
+        item.onclick = () => { window.location.href = `client-card.html?id=${client.id}`; };
+        list.appendChild(item);
     });
+    list.classList.remove('d-none');
 }
 
 // Генерация PDF договора (заглушка)

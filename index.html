@@ -11,9 +11,12 @@
 <body class="home-screen">
     <div class="main-wrapper">
         <!-- Поисковая строка -->
-        <div class="search-bar mb-4">
-            <i class="ri-search-line"></i>
-            <input type="text" id="searchInput" placeholder="Поиск клиентов">
+        <div class="search-wrapper mb-4">
+            <div class="search-bar">
+                <i class="ri-search-line"></i>
+                <input type="text" id="searchInput" placeholder="Поиск клиентов" autocomplete="off">
+            </div>
+            <ul id="searchSuggestions" class="list-group search-suggestions d-none"></ul>
         </div>
         <!-- Кнопки -->
         <div class="icon-buttons">
@@ -31,15 +34,20 @@
             <input type="file" id="importFile" accept=".xlsx" style="display:none" />
             <button class="circle-btn" id="sidebarToggle" title="Показать всех клиентов"><i class="ri-more-2-line"></i></button>
         </div>
-        <!-- Клиенты в этом месяце -->
-        <div class="row w-100 mt-4">
-            <h4 class="text-center">Клиенты в этом месяце</h4>
-            <ul id="courtThisMonth" class="list-group w-100"></ul>
-        </div>
-        <!-- Результаты поиска -->
-        <div class="row w-100 mt-4">
-            <h4 class="text-center">Результаты поиска</h4>
-            <ul id="results" class="list-group w-100"></ul>
+        <!-- Суды в этом месяце -->
+        <div class="accordion w-100 mt-4" id="courtAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="courtHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#courtThisMonthCollapse" aria-expanded="false" aria-controls="courtThisMonthCollapse">
+                        Суды в этом месяце
+                    </button>
+                </h2>
+                <div id="courtThisMonthCollapse" class="accordion-collapse collapse" aria-labelledby="courtHeading" data-bs-parent="#courtAccordion">
+                    <div class="accordion-body p-0">
+                        <ul id="courtThisMonth" class="list-group w-100"></ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Выдвижная панель -->
