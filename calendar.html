@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="calendar-screen">
     <div class="container py-4">
         <div class="row g-4">
             <div class="col-lg-8">
@@ -29,26 +29,6 @@
                     </div>
                     <ul class="list-group mb-3" id="dayActionsList"></ul>
                 </div>
-            </div>
-        </div>
-        <div class="row g-4 mt-1">
-            <div class="col-6 col-md-4">
-                <button class="quick-action w-100" id="quickClientsBtn">
-                    <i class="ri-group-line fs-4 mb-2"></i>
-                    Клиенты
-                </button>
-            </div>
-            <div class="col-6 col-md-4">
-                <button class="quick-action w-100" id="quickTaskBtn">
-                    <i class="ri-task-line fs-4 mb-2"></i>
-                    Задачи
-                </button>
-            </div>
-            <div class="col-6 col-md-4">
-                <button class="quick-action w-100" id="quickConsultBtn">
-                    <i class="ri-chat-3-line fs-4 mb-2"></i>
-                    Консультации
-                </button>
             </div>
         </div>
         <div class="row g-4 mt-1">
@@ -163,25 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (!document.getElementById('calendar')) {
         console.error('Элемент #calendar не найден!');
-    }
-    const quickTask = document.getElementById('quickTaskBtn');
-    if (quickTask) {
-        quickTask.addEventListener('click', () => {
-            showAddTaskModal();
-        });
-    }
-    const quickConsult = document.getElementById('quickConsultBtn');
-    if (quickConsult) {
-        quickConsult.addEventListener('click', () => {
-            const modal = new bootstrap.Modal(document.getElementById('addConsultationModal'));
-            modal.show();
-        });
-    }
-    const quickClients = document.getElementById('quickClientsBtn');
-    if (quickClients) {
-        quickClients.addEventListener('click', () => {
-            openClientsModal();
-        });
     }
     const quickDebtors = document.getElementById('quickDebtorsBtn');
     if (quickDebtors) {
