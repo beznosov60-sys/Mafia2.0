@@ -10,29 +10,31 @@
 </head>
 <body class="home-screen">
     <div class="main-wrapper">
-        <!-- Поисковая строка -->
-        <div class="search-wrapper mb-4">
-            <div class="search-bar">
-                <i class="ri-search-line"></i>
-                <input type="text" id="searchInput" placeholder="Поиск клиентов" autocomplete="off">
+        <div class="control-panel mb-4">
+            <!-- Поисковая строка -->
+            <div class="search-wrapper mb-3">
+                <div class="search-bar">
+                    <i class="ri-search-line"></i>
+                    <input type="text" id="searchInput" placeholder="Поиск клиентов" autocomplete="off">
+                </div>
+                <ul id="searchSuggestions" class="list-group search-suggestions d-none"></ul>
             </div>
-            <ul id="searchSuggestions" class="list-group search-suggestions d-none"></ul>
-        </div>
-        <!-- Кнопки -->
-        <div class="icon-buttons">
-            <a href="add-client.html" class="circle-btn"><i class="ri-add-line"></i></a>
-            <a href="calendar.html" class="circle-btn"><i class="ri-calendar-event-line"></i></a>
-            <div class="dropdown">
-                <button class="circle-btn dropdown-toggle" id="importExportBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Импорт/Экспорт">
-                    <i class="ri-file-transfer-line"></i>
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" id="exportOption">Экспорт в Excel</a></li>
-                    <li><a class="dropdown-item" id="importOption">Импорт из Excel</a></li>
-                </ul>
+            <!-- Кнопки -->
+            <div class="icon-buttons">
+                <a href="add-client.html" class="circle-btn" title="Добавить клиента"><i class="ri-user-add-line"></i></a>
+                <button class="circle-btn" id="sidebarToggle" title="Список клиентов"><i class="ri-group-line"></i></button>
+                <a href="calendar.html" class="circle-btn" title="Календарь"><i class="ri-calendar-event-line"></i></a>
+                <div class="dropdown">
+                    <button class="circle-btn dropdown-toggle" id="importExportBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Импорт/Экспорт">
+                        <i class="ri-file-transfer-line"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" id="exportOption">Экспорт в Excel</a></li>
+                        <li><a class="dropdown-item" id="importOption">Импорт из Excel</a></li>
+                    </ul>
+                </div>
+                <input type="file" id="importFile" accept=".xlsx" style="display:none" />
             </div>
-            <input type="file" id="importFile" accept=".xlsx" style="display:none" />
-            <button class="circle-btn" id="sidebarToggle" title="Показать всех клиентов"><i class="ri-more-2-line"></i></button>
         </div>
         <!-- Суды в этом месяце -->
         <div class="accordion w-100 mt-4" id="courtAccordion">
