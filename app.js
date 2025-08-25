@@ -110,6 +110,30 @@ function updateSubStageOptions(stage, select) {
     });
 }
 
+function ensureUniqueId(baseId, existingIds) {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let id = baseId || 'CLIENT';
+    let prefixIndex = 0;
+    while (existingIds.has(id)) {
+        const prefix = alphabet[prefixIndex] || `X${prefixIndex}`;
+        id = prefix + baseId;
+        prefixIndex++;
+    }
+    existingIds.add(id);
+    return id;
+}
+
+function generateClientId(firstName, middleName, lastName, phone, existingIds) {
+    const letters = [lastName, firstName, middleName]
+        .map(name => (name && name.trim() ? name.trim()[0].toUpperCase() : ''))
+        .join('');
+    const digits = (phone || '').replace(/\D/g, '').slice(-4);
+    const ids = existingIds || new Set((JSON.parse(localStorage.getItem('clients')) || []).map(c => String(c.id)));
+    return ensureUniqueId(letters + digits, ids);
+}
+
+window.generateClientId = generateClientId;
+
 function exportClientsToExcel() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const data = clients.map(c => ({
@@ -151,33 +175,48 @@ function importClientsFromExcel(event) {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet);
-        const clients = rows.map(row => ({
-            id: row['ID'],
-            firstName: row['Имя'] || '',
-            middleName: row['Отчество'] || '',
-            lastName: row['Фамилия'] || '',
-            phone: row['Телефон'] || '',
-            passportSeries: row['Серия паспорта'] || '',
-            passportNumber: row['Номер паспорта'] || '',
-            passportIssueDate: row['Дата выдачи'] || '',
-            passportIssuePlace: row['Место выдачи'] || '',
-            totalAmount: parseFloat(row['Общая сумма']) || 0,
-            paymentMonths: parseInt(row['Кол-во месяцев']) || 0,
-            paymentStartDate: row['Дата начала'] || '',
-            paidMonths: row['Оплаченные месяцы'] ? String(row['Оплаченные месяцы']).split(',').map(v => v.trim() === '1') : [],
-            stage: row['Этап'] || '',
-            subStage: row['Задача'] || '',
-            courtTypes: {
-                arbitration: row['Арбитражный суд'] === 'Да' || row['Арбитражный суд'] === true,
-                tret: row['Третейский суд'] === 'Да' || row['Третейский суд'] === true
-            },
-            arbitrLink: row['Ссылка на суд'] || '',
-            courtDate: row['Дата суда'] || '',
-            notes: row['Заметки'] || '',
-            favorite: row['Избранный'] === 'Да' || row['Избранный'] === true,
-            createdAt: row['Создан'] || new Date().toISOString(),
-            tasks: []
-        }));
+        const usedIds = new Set();
+        const clients = rows.map(row => {
+            let id;
+            if (row['ID']) {
+                id = ensureUniqueId(String(row['ID']), usedIds);
+            } else {
+                id = generateClientId(
+                    row['Имя'] || '',
+                    row['Отчество'] || '',
+                    row['Фамилия'] || '',
+                    row['Телефон'] || '',
+                    usedIds
+                );
+            }
+            return {
+                id,
+                firstName: row['Имя'] || '',
+                middleName: row['Отчество'] || '',
+                lastName: row['Фамилия'] || '',
+                phone: row['Телефон'] || '',
+                passportSeries: row['Серия паспорта'] || '',
+                passportNumber: row['Номер паспорта'] || '',
+                passportIssueDate: row['Дата выдачи'] || '',
+                passportIssuePlace: row['Место выдачи'] || '',
+                totalAmount: parseFloat(row['Общая сумма']) || 0,
+                paymentMonths: parseInt(row['Кол-во месяцев']) || 0,
+                paymentStartDate: row['Дата начала'] || '',
+                paidMonths: row['Оплаченные месяцы'] ? String(row['Оплаченные месяцы']).split(',').map(v => v.trim() === '1') : [],
+                stage: row['Этап'] || '',
+                subStage: row['Задача'] || '',
+                courtTypes: {
+                    arbitration: row['Арбитражный суд'] === 'Да' || row['Арбитражный суд'] === true,
+                    tret: row['Третейский суд'] === 'Да' || row['Третейский суд'] === true
+                },
+                arbitrLink: row['Ссылка на суд'] || '',
+                courtDate: row['Дата суда'] || '',
+                notes: row['Заметки'] || '',
+                favorite: row['Избранный'] === 'Да' || row['Избранный'] === true,
+                createdAt: row['Создан'] || new Date().toISOString(),
+                tasks: []
+            };
+        });
         localStorage.setItem('clients', JSON.stringify(clients));
         alert('Импорт завершён');
         window.location.reload();
@@ -290,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateCompleteBtnVisibility();
         }
         window.completeClientFromEdit = function() {
-            const clientIdVal = parseInt(document.getElementById('clientId').value);
+            const clientIdVal = document.getElementById('clientId').value.trim();
             if (!clientIdVal) return;
             if (confirm('Завершить клиента?')) {
                 if (window.completeClient) {
@@ -410,7 +449,7 @@ function displayCourtThisMonth() {
             <div class="client-details mt-2">
                 ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
                 <div class="client-actions">
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
                     ${client.courtDate ? `<span class="ms-2">${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
                     ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link ms-2">Суд</a>` : ''}
                 </div>
@@ -480,8 +519,8 @@ function displayClientsList() {
             <div class="client-details">
                 ${client.subStage ? `<ul class="task-info mb-0"><li>${client.subStage}</li></ul>` : '<span></span>'}
                 <div class="client-actions">
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal(${client.id})">Платежи</button>
-                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient(${client.id})">Завершить</button>` : ''}
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
+                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
                 </div>
             </div>
         `;
@@ -533,7 +572,7 @@ function initPaymentMonthsCheckboxes(paidMonths) {
 function loadClientForEdit(clientId) {
     console.log('Загрузка клиента с ID:', clientId);
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === parseInt(clientId));
+    const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) {
         console.error('Клиент не найден:', clientId);
         alert('Клиент не найден!');
@@ -582,7 +621,7 @@ function loadClientForEdit(clientId) {
 // Загрузка клиента для карточки
 function loadClientCard(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === parseInt(clientId));
+    const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) {
         alert('Клиент не найден!');
         window.location.href = 'index.html';
@@ -660,7 +699,7 @@ function renderClientPayments(client) {
 function updateClient() {
     console.log('Обновление клиента');
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     if (!clientId) {
         console.error('Клиент не найден: отсутствует ID');
         alert('Клиент не найден!');
@@ -669,7 +708,7 @@ function updateClient() {
     }
 
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const existingClient = clients.find(c => c.id === clientId);
+    const existingClient = clients.find(c => String(c.id) === String(clientId));
     if (!existingClient) {
         console.error('Клиент не найден в localStorage:', clientId);
         alert('Клиент не найден!');
@@ -685,7 +724,7 @@ function updateClient() {
     }
 
     const updatedClient = {
-        id: clientId,
+        id: existingClient.id,
         firstName: document.getElementById('firstName').value.trim(),
         middleName: document.getElementById('middleName').value.trim(),
         lastName: document.getElementById('lastName').value.trim(),
@@ -729,7 +768,7 @@ function updateClient() {
         return;
     }
 
-    const index = clients.findIndex(c => c.id === clientId);
+    const index = clients.findIndex(c => String(c.id) === String(clientId));
     if (index !== -1) {
         clients[index] = updatedClient;
         localStorage.setItem('clients', JSON.stringify(clients));
@@ -748,7 +787,7 @@ function updateClient() {
 function deleteClient() {
     console.log('Удаление клиента');
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     if (!clientId) {
         console.error('Клиент не найден: отсутствует ID');
         alert('Клиент не найден!');
@@ -757,7 +796,7 @@ function deleteClient() {
     }
 
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) {
         console.error('Клиент не найден в localStorage:', clientId);
         alert('Клиент не найден!');
@@ -777,13 +816,17 @@ function deleteClient() {
 // Сохранение клиента
 function saveClient() {
     console.log('Сохранение клиента');
+    const firstName = document.getElementById('firstName').value.trim();
+    const middleName = document.getElementById('middleName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const phone = document.getElementById('phone').value.trim();
     const client = {
-        id: Date.now(),
-        firstName: document.getElementById('firstName').value.trim(),
-        middleName: document.getElementById('middleName').value.trim(),
-        lastName: document.getElementById('lastName').value.trim(),
+        id: generateClientId(firstName, middleName, lastName, phone),
+        firstName,
+        middleName,
+        lastName,
         birthDate: document.getElementById('birthDate').value,
-        phone: document.getElementById('phone').value.trim(),
+        phone,
         passportSeries: document.getElementById('passportSeries').value.trim(),
         passportNumber: document.getElementById('passportNumber').value.trim(),
         passportIssueDate: document.getElementById('passportIssueDate').value,
@@ -850,7 +893,7 @@ function searchClients() {
         listItem.innerHTML = `
             ${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}${stageBadge}
             <div>
-                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal(${client.id})" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
+                <button class="client-btn client-btn-payments me-2" onclick="showPaymentsModal('${client.id}')" title="Общая сумма: ${client.totalAmount || 0} руб.">Платежи</button>
                 ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
             </div>
         `;
@@ -914,7 +957,7 @@ function renderDayActions(dateStr) {
     payments.forEach(p => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `Оплата: ${p.client.firstName} ${p.client.lastName} (${p.payment.amount} ₽) <button class="btn btn-sm btn-primary" onclick="confirmPayment(${p.client.id}, ${p.idx}, '${dateStr}')">Оплатил</button>`;
+        li.innerHTML = `Оплата: ${p.client.firstName} ${p.client.lastName} (${p.payment.amount} ₽) <button class="btn btn-sm btn-primary" onclick="confirmPayment('${p.client.id}', ${p.idx}, '${dateStr}')">Оплатил</button>`;
         list.appendChild(li);
     });
 
@@ -931,7 +974,7 @@ function renderDayActions(dateStr) {
 
 function confirmPayment(clientId, paymentIndex, dateStr) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find(c => String(c.id) === String(clientId));
     if (!client || !client.paidMonths || paymentIndex >= client.paidMonths.length) return;
     client.paidMonths[paymentIndex] = true;
     localStorage.setItem('clients', JSON.stringify(clients));
@@ -964,7 +1007,7 @@ function renderDebtorsList() {
     debtors.forEach(d => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `${d.client.firstName} ${d.client.lastName} — ${new Date(d.payment.date).toLocaleDateString('ru-RU')} <button class="btn btn-sm btn-primary" onclick="confirmPayment(${d.client.id}, ${d.idx}, '${d.payment.date}')">Оплатил</button>`;
+        li.innerHTML = `${d.client.firstName} ${d.client.lastName} — ${new Date(d.payment.date).toLocaleDateString('ru-RU')} <button class="btn btn-sm btn-primary" onclick="confirmPayment('${d.client.id}', ${d.idx}, '${d.payment.date}')">Оплатил</button>`;
         list.appendChild(li);
     });
 }
@@ -1169,7 +1212,7 @@ function completeClient(clientId) {
     var archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
     var clientIndex = -1;
     for (var i = 0; i < clients.length; i++) {
-        if (clients[i].id === clientId) {
+        if (String(clients[i].id) === String(clientId)) {
             clientIndex = i;
             break;
         }
@@ -1232,7 +1275,7 @@ function showToast(message) {
 // Инициализация задач для клиента
 function initTaskList(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === parseInt(clientId));
+    const client = clients.find(c => String(c.id) === String(clientId));
     window.tasks = client && Array.isArray(client.tasks) ? client.tasks : [];
     renderTaskList();
     renderCompletedTasks();
@@ -1261,9 +1304,9 @@ function addTask() {
     if (colorInput) colorInput.value = '#28a745';
     // Сохраняем задачи в клиенте
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex !== -1) {
         clients[clientIndex].tasks = window.tasks;
         localStorage.setItem('clients', JSON.stringify(clients));
@@ -1294,9 +1337,9 @@ function removeTask(idx) {
     renderCompletedTasks();
     // Сохраняем задачи в клиенте
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex !== -1) {
         clients[clientIndex].tasks = window.tasks;
         localStorage.setItem('clients', JSON.stringify(clients));
@@ -1305,9 +1348,9 @@ function removeTask(idx) {
 
 function completeTask(idx) {
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) return;
     const task = window.tasks[idx];
     if (!task) return;
@@ -1331,9 +1374,9 @@ function renderCompletedTasks() {
     const list = document.getElementById('completedTaskList');
     const stageInfo = document.getElementById('currentStageInfo');
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find(c => String(c.id) === String(clientId));
     if (stageInfo && client) {
         stageInfo.textContent = client.stage ? `Этап: ${client.stage}${client.subStage ? ' - ' + client.subStage : ''}` : '';
     }
@@ -1372,7 +1415,7 @@ function advanceClientStage(client) {
 
 window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) return;
     const tasks = clients[clientIndex].tasks || [];
     const tIndex = tasks.findIndex(t => t.id === taskId);
@@ -1390,9 +1433,9 @@ window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
 
 function completeSubStage() {
     const urlParams = new URLSearchParams(window.location.search);
-    const clientId = parseInt(urlParams.get('id'));
+    const clientId = urlParams.get('id');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => c.id === clientId);
+    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) return;
     const client = clients[clientIndex];
     if (!Array.isArray(client.tasks)) client.tasks = [];
@@ -1472,7 +1515,7 @@ function showAddTaskModal(dateStr) {
     modalInstance.show();
 
     document.getElementById('calendarTaskSaveBtn').onclick = function() {
-        const clientId = parseInt(document.getElementById('calendarTaskClient').value);
+        const clientId = document.getElementById('calendarTaskClient').value;
         const text = document.getElementById('calendarTaskText').value.trim();
         const color = document.getElementById('calendarTaskColor').value;
         const date = document.getElementById('calendarTaskDate').value || dateStr;
@@ -1484,7 +1527,7 @@ function showAddTaskModal(dateStr) {
             alert('Выберите дату задачи!');
             return;
         }
-        let client = clients.find(c => c.id === clientId);
+        let client = clients.find(c => String(c.id) === String(clientId));
         if (!client) {
             alert('Клиент не найден!');
             return;
@@ -1517,7 +1560,7 @@ function showAddTaskModal(dateStr) {
 // Показ модального окна платежей
 window.showPaymentsModal = function(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find(c => String(c.id) === String(clientId));
     const paymentsTableBody = document.getElementById('paymentsTableBody');
     if (!client || !paymentsTableBody) return;
 
@@ -1627,8 +1670,9 @@ window.convertToClient = function(consultId, dateStr) {
     const consult = consultations.find(c => c.id === consultId);
     if (!consult) return;
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const existingIds = new Set(clients.map(c => String(c.id)));
     clients.push({
-        id: Date.now(),
+        id: generateClientId(consult.name, '', '', consult.phone, existingIds),
         firstName: consult.name,
         middleName: '',
         lastName: '',

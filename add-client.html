@@ -182,48 +182,53 @@
         }
     });
 
-    window.saveClient = function() {
-        const paidMonths = [];
-        document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
-        const clientData = {
-            id: Date.now(),
-            firstName: document.getElementById('firstName').value.trim(),
-            middleName: document.getElementById('middleName').value.trim(),
-            lastName: document.getElementById('lastName').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            passportSeries: document.getElementById('passportSeries').value.trim(),
-            passportNumber: document.getElementById('passportNumber').value.trim(),
-            passportIssueDate: document.getElementById('passportIssueDate').value,
-            passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
-            totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
-            paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
-            paymentStartDate: document.getElementById('paymentStartDate').value,
-            paidMonths: paidMonths,
-            stage: document.getElementById('stage').value,
-            subStage: document.getElementById('subStage').value,
-            courtTypes: {
-                arbitration: document.getElementById('courtArbitrage').checked,
-                tret: document.getElementById('courtTret').checked
-            },
-            arbitrLink: document.getElementById('arbitrLink').value.trim(),
-            courtDate: document.getElementById('courtDate').value,
-            notes: document.getElementById('notes').value.trim(),
-            favorite: false,
-            createdAt: new Date().toISOString()
-        };
-        if (!clientData.firstName || !clientData.lastName) {
-            alert('Имя и фамилия обязательны!');
-            return;
-        }
-        if (!clientData.phone.match(/^\d{10,12}$/)) {
-            alert('Номер телефона должен содержать 10-12 цифр!');
-            return;
-        }
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
-        clients.push(clientData);
-        localStorage.setItem('clients', JSON.stringify(clients));
-        window.location.href = 'index.html';
-    }
+      window.saveClient = function() {
+          const paidMonths = [];
+          document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
+          const firstName = document.getElementById('firstName').value.trim();
+          const middleName = document.getElementById('middleName').value.trim();
+          const lastName = document.getElementById('lastName').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+          const clients = JSON.parse(localStorage.getItem('clients')) || [];
+          const existingIds = new Set(clients.map(c => String(c.id)));
+          const clientData = {
+              id: generateClientId(firstName, middleName, lastName, phone, existingIds),
+              firstName: firstName,
+              middleName: middleName,
+              lastName: lastName,
+              phone: phone,
+              passportSeries: document.getElementById('passportSeries').value.trim(),
+              passportNumber: document.getElementById('passportNumber').value.trim(),
+              passportIssueDate: document.getElementById('passportIssueDate').value,
+              passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
+              totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
+              paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
+              paymentStartDate: document.getElementById('paymentStartDate').value,
+              paidMonths: paidMonths,
+              stage: document.getElementById('stage').value,
+              subStage: document.getElementById('subStage').value,
+              courtTypes: {
+                  arbitration: document.getElementById('courtArbitrage').checked,
+                  tret: document.getElementById('courtTret').checked
+              },
+              arbitrLink: document.getElementById('arbitrLink').value.trim(),
+              courtDate: document.getElementById('courtDate').value,
+              notes: document.getElementById('notes').value.trim(),
+              favorite: false,
+              createdAt: new Date().toISOString()
+          };
+          if (!clientData.firstName || !clientData.lastName) {
+              alert('Имя и фамилия обязательны!');
+              return;
+          }
+          if (!clientData.phone.match(/^\d{10,12}$/)) {
+              alert('Номер телефона должен содержать 10-12 цифр!');
+              return;
+          }
+          clients.push(clientData);
+          localStorage.setItem('clients', JSON.stringify(clients));
+          window.location.href = 'index.html';
+      }
     </script>
 </body>
 </html>
