@@ -19,9 +19,15 @@
             </div>
             <div class="col-lg-4">
                 <div class="action-card h-100">
-                    <h2 class="h5 mb-3">Задачи на день</h2>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 mb-0">Задачи на день</h2>
+                        <div class="day-action-buttons">
+                            <button class="small-square-btn" id="dayClientBtn" title="Клиенты"><i class="ri-group-line"></i></button>
+                            <button class="small-square-btn" id="dayTaskBtn" title="Задачи"><i class="ri-task-line"></i></button>
+                            <button class="small-square-btn" id="dayConsultBtn" title="Консультации"><i class="ri-chat-3-line"></i></button>
+                        </div>
+                    </div>
                     <ul class="list-group mb-3" id="dayActionsList"></ul>
-                    <button class="btn btn-outline-primary w-100" id="clientsModalBtn">Клиенты</button>
                 </div>
             </div>
         </div>
@@ -183,10 +189,23 @@ document.addEventListener('DOMContentLoaded', function() {
             openDebtorsModal();
         });
     }
-    const clientsBtn = document.getElementById('clientsModalBtn');
-    if (clientsBtn) {
-        clientsBtn.addEventListener('click', () => {
+    const dayClientBtn = document.getElementById('dayClientBtn');
+    if (dayClientBtn) {
+        dayClientBtn.addEventListener('click', () => {
             openClientsModal();
+        });
+    }
+    const dayTaskBtn = document.getElementById('dayTaskBtn');
+    if (dayTaskBtn) {
+        dayTaskBtn.addEventListener('click', () => {
+            showAddTaskModal();
+        });
+    }
+    const dayConsultBtn = document.getElementById('dayConsultBtn');
+    if (dayConsultBtn) {
+        dayConsultBtn.addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('addConsultationModal'));
+            modal.show();
         });
     }
 });
