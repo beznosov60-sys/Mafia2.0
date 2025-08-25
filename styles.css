@@ -239,6 +239,8 @@ body.home-screen {
     padding: 0 0.75rem;
     color: var(--neutral-900);
     transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .client-details.open {
@@ -293,8 +295,11 @@ body.home-screen {
 }
 
 .list-group-item .client-btn,
-.list-group-item .arbitr-icon,
 .list-group-item .btn-complete {
+    margin-bottom: 0;
+}
+
+.list-group-item .arbitr-icon {
     margin-right: 0.5rem;
     margin-bottom: 0;
 }
