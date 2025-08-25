@@ -66,6 +66,8 @@ body.home-screen {
     backdrop-filter: blur(10px);
     border-radius: 25px;
     padding: 20px;
+    position: relative;
+    z-index: 1000;
 }
 
 .home-screen .search-wrapper {
@@ -490,7 +492,7 @@ body.home-screen {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 120px;
+    height: 80px;
     background-color: var(--neutral-100);
     border: 1px solid var(--neutral-400);
     border-radius: 15px;
@@ -554,17 +556,25 @@ body.home-screen {
     color: var(--neutral-500);
 }
 
-#calendar .fc-has-events .fc-daygrid-day-number {
-    background: var(--primary-color);
-    color: var(--neutral-100);
-}
-
 #calendar .fc-daygrid-event {
     display: none;
 }
 
 #calendar .fc-daygrid-more-link {
     display: none;
+}
+
+#calendar .fc-daygrid-day-frame {
+    position: relative;
+}
+
+.event-dots {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3px;
 }
 
 /* Dark theme overrides */
@@ -610,10 +620,6 @@ body.dark-theme {
 }
 .dark-theme .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
     color: var(--neutral-600);
-}
-.dark-theme .fc-has-events .fc-daygrid-day-number {
-    background: var(--primary-color);
-    color: var(--neutral-100);
 }
 .dark-theme .fc-daygrid-event {
     display: none;
