@@ -110,6 +110,30 @@ function updateSubStageOptions(stage, select) {
     });
 }
 
+function exportClientsToExcel() {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const worksheet = XLSX.utils.json_to_sheet(clients);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clients');
+    XLSX.writeFile(workbook, 'clients.xlsx');
+}
+
+function importClientsFromExcel(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const clients = XLSX.utils.sheet_to_json(sheet);
+        localStorage.setItem('clients', JSON.stringify(clients));
+        alert('Импорт завершён');
+        window.location.reload();
+    };
+    reader.readAsArrayBuffer(file);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM загружен, инициализация...');
     document.body.classList.add('loaded');
@@ -142,6 +166,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
         document.getElementById('sidebarClose')?.addEventListener('click', toggleSidebar);
         displayClientsList();
+        document.getElementById('exportBtn')?.addEventListener('click', exportClientsToExcel);
+        document.getElementById('importTrigger')?.addEventListener('click', () => document.getElementById('importFile')?.click());
+        document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
     }
     // Загрузка данных для редактирования (только на edit-client.html)
     if (window.location.pathname.includes('edit-client.html')) {

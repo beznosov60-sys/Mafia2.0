@@ -19,6 +19,9 @@
         <div class="icon-buttons">
             <a href="add-client.html" class="circle-btn"><i class="ri-add-line"></i></a>
             <a href="calendar.html" class="circle-btn"><i class="ri-calendar-event-line"></i></a>
+            <button class="circle-btn" id="exportBtn" title="Экспорт в Excel"><i class="ri-download-2-line"></i></button>
+            <button class="circle-btn" id="importTrigger" title="Импорт из Excel"><i class="ri-upload-2-line"></i></button>
+            <input type="file" id="importFile" accept=".xlsx" style="display:none" />
             <button class="circle-btn" id="sidebarToggle" title="Показать всех клиентов"><i class="ri-more-2-line"></i></button>
         </div>
         <!-- Клиенты в этом месяце -->
@@ -88,6 +91,7 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
