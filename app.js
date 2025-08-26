@@ -209,7 +209,6 @@ function importClientsFromExcel(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM загружен, инициализация...');
     document.body.classList.add('loaded');
     document.querySelectorAll('a').forEach(link => {
         const href = link.getAttribute('href');
@@ -556,7 +555,6 @@ function initPaymentMonthsCheckboxes(paidMonths) {
 
 // Загрузка клиента для редактирования
 function loadClientForEdit(clientId) {
-    console.log('Загрузка клиента с ID:', clientId);
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) {
@@ -683,7 +681,6 @@ function renderClientPayments(client) {
 
 // Обновление клиента
 function updateClient() {
-    console.log('Обновление клиента');
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
     if (!clientId) {
@@ -758,7 +755,6 @@ function updateClient() {
     if (index !== -1) {
         clients[index] = updatedClient;
         localStorage.setItem('clients', JSON.stringify(clients));
-        console.log('Клиент обновлен:', updatedClient);
         const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
         window.location.href = returnUrl;
     } else {
@@ -771,7 +767,6 @@ function updateClient() {
 
 // Удаление клиента
 function deleteClient() {
-    console.log('Удаление клиента');
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
     if (!clientId) {
@@ -793,7 +788,6 @@ function deleteClient() {
     if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
         clients.splice(clientIndex, 1);
         localStorage.setItem('clients', JSON.stringify(clients));
-        console.log('Клиент удален:', clientId);
         const returnUrl = document.referrer || 'index.html';
         window.location.href = returnUrl;
     }
@@ -801,7 +795,6 @@ function deleteClient() {
 
 // Сохранение клиента
 function saveClient() {
-    console.log('Сохранение клиента');
     const firstName = document.getElementById('firstName').value.trim();
     const middleName = document.getElementById('middleName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
@@ -844,7 +837,6 @@ function saveClient() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     clients.push(client);
     localStorage.setItem('clients', JSON.stringify(clients));
-    console.log('Клиент сохранен:', client);
     window.location.href = 'index.html';
 }
 
@@ -884,7 +876,6 @@ function searchClients() {
 
 // Генерация PDF договора (заглушка)
 function generateContractPDF() {
-    console.log('Функция generateContractPDF временно на заглушке');
     alert('Генерация договора временно недоступна. Функционал будет доработан позже.');
 }
 
@@ -1241,8 +1232,11 @@ function showArchivedClients() {
     } else {
         archivedClients.forEach(client => {
             const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = `${client.firstName} ${client.lastName}`;
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <span>${client.firstName} ${client.lastName}</span>
+                <button class="btn btn-sm btn-danger" onclick="deleteArchivedClient('${client.id}')">Удалить</button>
+            `;
             listEl.appendChild(li);
         });
     }
@@ -1252,6 +1246,19 @@ function showArchivedClients() {
         modal.show();
     }
 }
+
+function deleteArchivedClient(clientId) {
+    const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    const index = archivedClients.findIndex(c => String(c.id) === String(clientId));
+    if (index === -1) return;
+    if (confirm('Удалить этого клиента из архива?')) {
+        archivedClients.splice(index, 1);
+        localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
+        showArchivedClients();
+        showToast('Клиент удалён из архива');
+    }
+}
+window.deleteArchivedClient = deleteArchivedClient;
 
 function showToast(message) {
     const toast = document.createElement('div');

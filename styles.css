@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
     /* Purple hue */
     --purple-700: #4339F2;
@@ -22,8 +24,6 @@
     --primary-color-dark: var(--purple-700);
     --border-radius: 15px;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 body {
     font-family: 'Inter', sans-serif;
