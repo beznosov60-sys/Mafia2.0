@@ -872,3 +872,7 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
 .floating-option:hover {
     background: var(--neutral-200);
 }
+
+.consultation-item {
+    cursor: pointer;
+}

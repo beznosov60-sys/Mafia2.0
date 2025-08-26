@@ -948,7 +948,7 @@ function renderDayActions(dateStr) {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
         li.innerHTML = `
-            <div>Консультация: ${consult.name} (Тел: ${consult.phone})${consult.notes ? ' - ' + consult.notes : ''}</div>
+            <span class="consultation-item" onclick="showConsultationDetails(${consult.id})">Консультация: ${consult.name}</span>
             <div>
                 <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
                 <button class="small-square-btn btn-delete ms-1" onclick="deleteConsultation(${consult.id}, '${dateStr}')" title="Удалить консультацию"><i class="ri-close-line"></i></button>
@@ -1214,7 +1214,7 @@ function showClientsForDate(dateStr) {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
-                    ${consult.name} (Тел: ${consult.phone})${consult.notes ? ' - ' + consult.notes : ''}
+                    <span class="consultation-item" onclick="showConsultationDetails(${consult.id})">Консультация: ${consult.name}</span>
                     <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
                 `;
                 consultationsList.appendChild(li);
@@ -1772,6 +1772,23 @@ window.deleteConsultation = function(consultId, dateStr) {
         if (document.getElementById('calendar')?._fullCalendar) {
             document.getElementById('calendar')._fullCalendar.refetchEvents();
         }
+    }
+};
+
+window.showConsultationDetails = function(consultId) {
+    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const consult = consultations.find(c => c.id === consultId);
+    if (!consult) return;
+    const nameEl = document.getElementById('consultDetailName');
+    const phoneEl = document.getElementById('consultDetailPhone');
+    const notesEl = document.getElementById('consultDetailNotes');
+    if (nameEl) nameEl.textContent = consult.name;
+    if (phoneEl) phoneEl.textContent = consult.phone;
+    if (notesEl) notesEl.textContent = consult.notes || '';
+    const modalEl = document.getElementById('consultDetailsModal');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 };
 
