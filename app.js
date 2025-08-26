@@ -262,7 +262,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const subStageSelect = document.getElementById('subStage');
         const historyToggle = document.getElementById('historyToggle');
         const completeSubStageBtn = document.getElementById('completeSubStageBtn');
-        const paymentMonthsInput = document.getElementById('paymentMonths');
         const favoriteBtn = document.getElementById('favoriteBtn');
         const completeBtn = document.getElementById('completeClientBtn');
         arbitrButton.addEventListener('click', openArbitrLink);
@@ -284,18 +283,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             subStageSelect.addEventListener('change', updateSubStageButton);
             updateSubStageButton();
         }
-        paymentMonthsInput?.addEventListener('input', function() {
-            const months = parseInt(this.value) || 0;
-            const container = document.getElementById('paidMonthsContainer');
-            container.innerHTML = '';
-            for (let i = 1; i <= months; i++) {
-                container.innerHTML += `
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="paidMonth${i}">
-                    <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
-                </div>`;
-            }
-        });
         favoriteBtn?.addEventListener('click', function() {
             const fav = favoriteBtn.dataset.favorite === 'true';
             favoriteBtn.dataset.favorite = (!fav).toString();
@@ -538,21 +525,6 @@ function displayClientsList() {
     listDiv.appendChild(ul);
 }
 
-// Инициализация чекбоксов оплаты для edit-client.html
-function initPaymentMonthsCheckboxes(paidMonths) {
-    const paymentMonths = paidMonths ? paidMonths.length : 0;
-    const container = document.getElementById('paidMonthsContainer');
-    container.innerHTML = '';
-    for (let i = 1; i <= paymentMonths; i++) {
-        container.innerHTML += `
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="paidMonth${i}" ${paidMonths[i-1] ? 'checked' : ''}>
-                <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
-            </div>
-        `;
-    }
-}
-
 // Загрузка клиента для редактирования
 function loadClientForEdit(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
@@ -596,7 +568,6 @@ function loadClientForEdit(clientId) {
     arbitrButton.disabled = !arbitrInput.value.trim();
     updateArbitrButtonTitle(arbitrButton, client.courtDate);
 
-    initPaymentMonthsCheckboxes(client.paidMonths);
     // Инициализация задач
     window.tasks = client.tasks || [];
     renderTaskList();
@@ -667,16 +638,81 @@ function renderClientPayments(client) {
     const tbody = document.getElementById('paymentScheduleBody');
     if (!tbody) return;
     const schedule = getPaymentSchedule(client);
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clientIndex = clients.findIndex(c => String(c.id) === String(client.id));
     tbody.innerHTML = '';
     if (schedule.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" class="text-center">Нет данных</td></tr>';
-        return;
+    } else {
+        schedule.forEach((p, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(p.date).toLocaleDateString('ru-RU')}</td>
+                <td>${p.amount}</td>
+                <td>
+                    <input type="checkbox" id="paidMonth${idx}" ${p.paid ? 'checked' : ''}>
+                    <label for="paidMonth${idx}">${p.paid ? 'Оплачен' : 'Не оплачен'}</label>
+                </td>`;
+            tbody.appendChild(tr);
+        });
     }
-    schedule.forEach(p => {
+
+    // Добавляем прочие платежи
+    const extraHeader = document.createElement('tr');
+    extraHeader.className = 'table-secondary';
+    extraHeader.innerHTML = '<td colspan="3" class="text-center">Прочие платежи</td>';
+    tbody.appendChild(extraHeader);
+
+    const extraRow = (label, id, checked, amount) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${p.amount}</td><td>${p.paid ? 'Оплачен' : 'Не оплачен'}</td>`;
+        tr.innerHTML = `
+            <td>${label}</td>
+            <td>${amount}</td>
+            <td>
+                <input type="checkbox" id="${id}" ${checked ? 'checked' : ''}>
+                <label for="${id}">${checked ? 'Оплачен' : 'Не оплачен'}</label>
+            </td>`;
         tbody.appendChild(tr);
+    };
+    extraRow('Финансовый управляющий', 'finManagerPaid', client.finManagerPaid, 17000);
+    extraRow('Депозит в суд', 'courtDepositPaid', client.courtDepositPaid, 25000);
+
+    // Обработчики чекбоксов
+    schedule.forEach((p, idx) => {
+        const cb = document.getElementById(`paidMonth${idx}`);
+        if (cb) {
+            cb.onchange = function() {
+                client.paidMonths[idx] = this.checked;
+                if (clientIndex !== -1) {
+                    clients[clientIndex].paidMonths = client.paidMonths;
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                }
+                this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
+            };
+        }
     });
+    const finCb = document.getElementById('finManagerPaid');
+    if (finCb) {
+        finCb.onchange = function() {
+            client.finManagerPaid = this.checked;
+            if (clientIndex !== -1) {
+                clients[clientIndex].finManagerPaid = this.checked;
+                localStorage.setItem('clients', JSON.stringify(clients));
+            }
+            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
+        };
+    }
+    const depositCb = document.getElementById('courtDepositPaid');
+    if (depositCb) {
+        depositCb.onchange = function() {
+            client.courtDepositPaid = this.checked;
+            if (clientIndex !== -1) {
+                clients[clientIndex].courtDepositPaid = this.checked;
+                localStorage.setItem('clients', JSON.stringify(clients));
+            }
+            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
+        };
+    }
 }
 
 // Обновление клиента
@@ -700,10 +736,11 @@ function updateClient() {
     }
 
     const paymentMonths = parseInt(document.getElementById('paymentMonths').value) || 0;
-    const paidMonths = [];
-    for (let i = 1; i <= paymentMonths; i++) {
-        const checkbox = document.getElementById(`paidMonth${i}`);
-        paidMonths.push(checkbox ? checkbox.checked : false);
+    let paidMonths = existingClient.paidMonths || [];
+    if (paidMonths.length > paymentMonths) {
+        paidMonths = paidMonths.slice(0, paymentMonths);
+    } else if (paidMonths.length < paymentMonths) {
+        paidMonths = paidMonths.concat(new Array(paymentMonths - paidMonths.length).fill(false));
     }
 
     const updatedClient = {
@@ -788,8 +825,7 @@ function deleteClient() {
     if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
         clients.splice(clientIndex, 1);
         localStorage.setItem('clients', JSON.stringify(clients));
-        const returnUrl = document.referrer || 'index.html';
-        window.location.href = returnUrl;
+        window.location.href = 'index.html';
     }
 }
 
@@ -1222,7 +1258,7 @@ function completeClient(clientId) {
 }
 
 // Отображение завершённых клиентов в модальном окне
-function showArchivedClients() {
+function populateArchivedClientsList() {
     const listEl = document.getElementById('archivedClientsList');
     if (!listEl) return;
     const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
@@ -1240,9 +1276,13 @@ function showArchivedClients() {
             listEl.appendChild(li);
         });
     }
+}
+
+function showArchivedClients() {
+    populateArchivedClientsList();
     const modalEl = document.getElementById('archivedClientsModal');
     if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         modal.show();
     }
 }
@@ -1254,7 +1294,7 @@ function deleteArchivedClient(clientId) {
     if (confirm('Удалить этого клиента из архива?')) {
         archivedClients.splice(index, 1);
         localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
-        showArchivedClients();
+        populateArchivedClientsList();
         showToast('Клиент удалён из архива');
     }
 }
