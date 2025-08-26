@@ -65,10 +65,14 @@ localStorage.setItem = function(key, value) {
     originalSetItem(key, value);
     if (key === 'clients') {
         const clients = JSON.parse(value);
-        supabaseClient
-            .from(TABLE)
-            .upsert(clients, { onConflict: 'id' })
-            .catch(err => console.error('Не удалось сохранить клиентов в Supabase', err));
+        (async () => {
+            const { error } = await supabaseClient
+                .from(TABLE)
+                .upsert(clients, { onConflict: 'id' });
+            if (error) {
+                console.error('Не удалось сохранить клиентов в Supabase', error);
+            }
+        })();
     }
 };
 
