@@ -248,10 +248,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         const floatingMenu = document.querySelector('.floating-menu');
         const floatingToggle = document.querySelector('.floating-toggle');
         if (floatingMenu && floatingToggle) {
-            floatingToggle.addEventListener('click', () => {
-                floatingMenu.classList.toggle('open');
+            let hideTimeout;
+            const showMenu = () => {
+                clearTimeout(hideTimeout);
+                floatingMenu.classList.add('open');
+            };
+            const hideMenu = () => {
+                hideTimeout = setTimeout(() => floatingMenu.classList.remove('open'), 100);
+            };
+            [floatingToggle, floatingMenu].forEach(el => {
+                el.addEventListener('mouseenter', showMenu);
+                el.addEventListener('mouseleave', hideMenu);
             });
         }
+
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !e.target.closest('#sidebarToggle')) {
+                sidebar.classList.remove('open');
+            }
+        });
     }
     // Загрузка данных для редактирования (только на edit-client.html)
     if (window.location.pathname.includes('edit-client.html')) {
@@ -1136,12 +1153,6 @@ function initCalendar() {
     calendar.on('eventsSet', markDaysWithEvents);
 
     function markDaysWithEvents() {
-        const colorMap = {
-            task: '#dc3545',
-            consultation: '#0d6efd',
-            payment: '#198754',
-            client: '#6f42c1'
-        };
         const dayCells = document.querySelectorAll('.fc-daygrid-day');
         dayCells.forEach(cell => {
             const dateStr = cell.getAttribute('data-date');
@@ -1150,13 +1161,13 @@ function initCalendar() {
             const oldDots = frame.querySelector('.event-dots');
             if (oldDots) oldDots.remove();
             if (events.length === 0) return;
-            const types = [...new Set(events.map(ev => ev.extendedProps.type))];
+            const colors = [...new Set(events.map(ev => ev.backgroundColor))];
             const container = document.createElement('div');
             container.className = 'event-dots';
-            types.forEach(type => {
+            colors.forEach(color => {
                 const dot = document.createElement('span');
                 dot.className = 'event-dot';
-                dot.style.backgroundColor = colorMap[type] || '#6c757d';
+                dot.style.backgroundColor = color;
                 container.appendChild(dot);
             });
             frame.appendChild(container);
