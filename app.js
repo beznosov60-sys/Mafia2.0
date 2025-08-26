@@ -42,30 +42,14 @@ function getCourtTypeBadge(client) {
     return '';
 }
 
-const originalSetItem = localStorage.setItem.bind(localStorage);
+// Ранее клиенты синхронизировались с сервером. Теперь хранение происходит
+// только в localStorage, поэтому при первом запуске инициализируем пустой
+// список клиентов, если он отсутствует.
 async function syncClientsFromServer() {
-    try {
-        const res = await fetch('/api/clients');
-        const clients = await res.json();
-        originalSetItem('clients', JSON.stringify(clients));
-    } catch (e) {
-        console.error('Не удалось загрузить клиентов с сервера', e);
-        if (!localStorage.getItem('clients')) {
-            originalSetItem('clients', JSON.stringify([]));
-        }
+    if (!localStorage.getItem('clients')) {
+        localStorage.setItem('clients', JSON.stringify([]));
     }
 }
-
-localStorage.setItem = function(key, value) {
-    originalSetItem(key, value);
-    if (key === 'clients') {
-        fetch('/api/clients', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: value
-        }).catch(err => console.error('Не удалось сохранить клиентов на сервер', err));
-    }
-};
 
 
 function getPaymentSchedule(client) {
