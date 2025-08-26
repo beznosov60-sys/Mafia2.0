@@ -46,6 +46,13 @@ const originalSetItem = localStorage.setItem.bind(localStorage);
 async function syncClientsFromServer() {
     try {
         const res = await fetch('/api/clients');
+        if (!res.ok) {
+            throw new Error(`Unexpected response ${res.status}`);
+        }
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
         const clients = await res.json();
         originalSetItem('clients', JSON.stringify(clients));
     } catch (e) {
