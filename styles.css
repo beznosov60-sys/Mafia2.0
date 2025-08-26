@@ -317,11 +317,6 @@ body.home-screen {
     color: #dc3545;
 }
 
-.event-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
 
 .accordion-button:not(.collapsed) {
     color: #0d6efd;
@@ -584,7 +579,7 @@ body.home-screen {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 3px;
+    gap: 5px;
 }
 
 /* Dark theme overrides */
@@ -763,10 +758,13 @@ body.dark-theme {
 }
 
 .event-dot {
-    width: 8px;
-    height: 8px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    margin-right: 4px;
+}
+
+.calendar-event .event-dot {
+    margin-right: 6px;
 }
 
 .fc-daygrid-event {
@@ -847,16 +845,26 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
 }
 
 .floating-options {
-    display: none;
     position: absolute;
     bottom: 50px;
     right: 0;
     flex-direction: column;
     align-items: flex-end;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 10px;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.floating-menu:hover .floating-options {
-    display: flex;
+.floating-menu.open .floating-options {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .floating-option {
@@ -864,15 +872,28 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
     padding: 6px 10px;
     border: none;
     border-radius: 6px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.6);
+    color: #000;
     font-size: 0.9rem;
 }
 
 .floating-option:hover {
-    background: var(--neutral-200);
+    background: rgba(255,255,255,0.8);
 }
 
 .consultation-item {
     cursor: pointer;
+}
+
+.task-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.task-text.expanded {
+    white-space: normal;
 }
