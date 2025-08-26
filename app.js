@@ -42,10 +42,14 @@ function getCourtTypeBadge(client) {
     return '';
 }
 
+const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
 const originalSetItem = localStorage.setItem.bind(localStorage);
 async function syncClientsFromServer() {
     try {
-        const res = await fetch('/api/clients');
+        const res = await fetch(`${API_BASE}/api/clients`);
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+            throw new Error(`Unexpected response: ${res.status}`);
+        }
         const clients = await res.json();
         originalSetItem('clients', JSON.stringify(clients));
     } catch (e) {
@@ -59,7 +63,7 @@ async function syncClientsFromServer() {
 localStorage.setItem = function(key, value) {
     originalSetItem(key, value);
     if (key === 'clients') {
-        fetch('/api/clients', {
+        fetch(`${API_BASE}/api/clients`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: value
