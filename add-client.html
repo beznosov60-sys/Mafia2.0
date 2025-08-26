@@ -183,7 +183,7 @@
         }
     });
 
-      window.saveClient = function() {
+      window.saveClient = async function() {
           const paidMonths = [];
           document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
           const firstName = document.getElementById('firstName').value.trim();
@@ -228,6 +228,7 @@
           }
           clients.push(clientData);
           localStorage.setItem('clients', JSON.stringify(clients));
+          await refreshClients();
           window.location.href = 'index.html';
       }
     </script>
