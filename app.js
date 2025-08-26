@@ -295,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ? 'block'
                     : 'none';
         }
+        window.updateCompleteBtnVisibility = updateCompleteBtnVisibility;
         if (stageSelect && completeBtn && subStageSelect) {
             stageSelect.addEventListener('change', updateCompleteBtnVisibility);
             subStageSelect.addEventListener('change', updateCompleteBtnVisibility);
@@ -306,6 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (confirm('Завершить клиента?')) {
                 if (window.completeClient) {
                     window.completeClient(clientIdVal);
+                    window.location.href = 'index.html';
                 } else {
                     alert('Функция завершения не найдена!');
                 }
@@ -945,7 +947,12 @@ function renderDayActions(dateStr) {
     consults.forEach(consult => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `Консультация: ${consult.name} <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>`;
+        li.innerHTML = `
+            <div>Консультация: ${consult.name} (Тел: ${consult.phone})${consult.notes ? ' - ' + consult.notes : ''}</div>
+            <div>
+                <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
+                <button class="small-square-btn btn-delete ms-1" onclick="deleteConsultation(${consult.id}, '${dateStr}')" title="Удалить консультацию"><i class="ri-close-line"></i></button>
+            </div>`;
         list.appendChild(li);
     });
 
@@ -1207,8 +1214,8 @@ function showClientsForDate(dateStr) {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
-                    ${consult.name} (Тел: ${consult.phone})
-                    <button class="btn btn-sm btn-primary" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
+                    ${consult.name} (Тел: ${consult.phone})${consult.notes ? ' - ' + consult.notes : ''}
+                    <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
                 `;
                 consultationsList.appendChild(li);
             });
@@ -1498,6 +1505,9 @@ function completeSubStage() {
         stageSelect.value = client.stage;
         updateSubStageOptions(client.stage, subStageSelect);
         subStageSelect.value = client.subStage || '';
+        if (window.updateCompleteBtnVisibility) {
+            window.updateCompleteBtnVisibility();
+        }
     }
     window.tasks = client.tasks;
     renderTaskList();
@@ -1672,10 +1682,12 @@ window.saveConsultation = function() {
     const nameInput = document.getElementById('consultName');
     const phoneInput = document.getElementById('consultPhone');
     const dateInput = document.getElementById('consultDate');
+    const notesInput = document.getElementById('consultNotes');
 
     const name = nameInput.value.trim();
     const phone = phoneInput.value.trim();
     const date = dateInput.value;
+    const notes = notesInput.value.trim();
 
     if (!name || !phone || !date) {
         alert('Заполните все поля и выберите дату консультации!');
@@ -1683,7 +1695,7 @@ window.saveConsultation = function() {
     }
 
     const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
-    consultations.push({ id: Date.now(), name, phone, date });
+    consultations.push({ id: Date.now(), name, phone, date, notes });
     localStorage.setItem('consultations', JSON.stringify(consultations));
 
     const modalEl = document.getElementById('addConsultationModal');
@@ -1704,6 +1716,7 @@ window.saveConsultation = function() {
 
     nameInput.value = '';
     phoneInput.value = '';
+    notesInput.value = '';
 };
 
 // --- вернуть функцию назначения консультации ---
@@ -1747,6 +1760,19 @@ window.convertToClient = function(consultId, dateStr) {
         localStorage.setItem('consultations', JSON.stringify(consultations));
     }
     renderDayActions(dateStr);
+};
+
+window.deleteConsultation = function(consultId, dateStr) {
+    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const idx = consultations.findIndex(c => c.id === consultId);
+    if (idx !== -1) {
+        consultations.splice(idx, 1);
+        localStorage.setItem('consultations', JSON.stringify(consultations));
+        renderDayActions(dateStr);
+        if (document.getElementById('calendar')?._fullCalendar) {
+            document.getElementById('calendar')._fullCalendar.refetchEvents();
+        }
+    }
 };
 
 window.openClientsModal = function() {
