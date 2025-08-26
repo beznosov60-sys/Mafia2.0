@@ -61,16 +61,24 @@ async function syncClientsFromSupabase() {
     }
 }
 
+async function refreshClients() {
+    await syncClientsFromSupabase();
+    displayClientsList();
+}
+
 localStorage.setItem = function(key, value) {
     originalSetItem(key, value);
     if (key === 'clients') {
         const clients = JSON.parse(value);
         (async () => {
-            const { error } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from(TABLE)
-                .upsert(clients, { onConflict: 'id' });
+                .upsert(clients, { onConflict: 'id' })
+                .select();
             if (error) {
                 console.error('Не удалось сохранить клиентов в Supabase', error);
+            } else {
+                await refreshClients();
             }
         })();
     }
@@ -707,7 +715,7 @@ function renderClientPayments(client) {
 }
 
 // Обновление клиента
-function updateClient() {
+async function updateClient() {
     console.log('Обновление клиента');
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
@@ -783,6 +791,7 @@ function updateClient() {
     if (index !== -1) {
         clients[index] = updatedClient;
         localStorage.setItem('clients', JSON.stringify(clients));
+        await refreshClients();
         console.log('Клиент обновлен:', updatedClient);
         const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
         window.location.href = returnUrl;
@@ -825,7 +834,7 @@ function deleteClient() {
 }
 
 // Сохранение клиента
-function saveClient() {
+async function saveClient() {
     console.log('Сохранение клиента');
     const firstName = document.getElementById('firstName').value.trim();
     const middleName = document.getElementById('middleName').value.trim();
@@ -869,6 +878,7 @@ function saveClient() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     clients.push(client);
     localStorage.setItem('clients', JSON.stringify(clients));
+    await refreshClients();
     console.log('Клиент сохранен:', client);
     window.location.href = 'index.html';
 }
