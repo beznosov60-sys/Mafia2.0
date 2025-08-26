@@ -34,6 +34,11 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+const SUPABASE_URL = 'https://qsyzvhykblrkouvemcmg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzeXp2aHlrYmxya291dmVtY21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTg0MDcsImV4cCI6MjA3MTc3NDQwN30.e6sj8qlITUxXLI9twwRCme5ubyf-lFEHLhA1lNHjPB0';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const TABLE = 'clients';
+
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
     if (types.arbitration && types.tret) return '<span class="court-badge">АС/ТС</span>';
@@ -43,13 +48,13 @@ function getCourtTypeBadge(client) {
 }
 
 const originalSetItem = localStorage.setItem.bind(localStorage);
-async function syncClientsFromServer() {
+async function syncClientsFromSupabase() {
     try {
-        const res = await fetch('/api/clients');
-        const clients = await res.json();
-        originalSetItem('clients', JSON.stringify(clients));
+        const { data, error } = await supabaseClient.from(TABLE).select('*');
+        if (error) throw error;
+        originalSetItem('clients', JSON.stringify(data));
     } catch (e) {
-        console.error('Не удалось загрузить клиентов с сервера', e);
+        console.error('Не удалось загрузить клиентов из Supabase', e);
         if (!localStorage.getItem('clients')) {
             originalSetItem('clients', JSON.stringify([]));
         }
@@ -59,11 +64,11 @@ async function syncClientsFromServer() {
 localStorage.setItem = function(key, value) {
     originalSetItem(key, value);
     if (key === 'clients') {
-        fetch('/api/clients', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: value
-        }).catch(err => console.error('Не удалось сохранить клиентов на сервер', err));
+        const clients = JSON.parse(value);
+        supabaseClient
+            .from(TABLE)
+            .upsert(clients, { onConflict: 'id' })
+            .catch(err => console.error('Не удалось сохранить клиентов в Supabase', err));
     }
 };
 
@@ -239,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     document.getElementById('showArchivedBtn')?.addEventListener('click', showArchivedClients);
-    await syncClientsFromServer();
+    await syncClientsFromSupabase();
     if (!localStorage.getItem('consultations')) {
         localStorage.setItem('consultations', JSON.stringify([]));
     }
