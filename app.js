@@ -244,6 +244,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('exportOption')?.addEventListener('click', exportClientsToExcel);
         document.getElementById('importOption')?.addEventListener('click', () => document.getElementById('importFile')?.click());
         document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
+
+        const floatingMenu = document.querySelector('.floating-menu');
+        const floatingToggle = document.querySelector('.floating-toggle');
+        if (floatingMenu && floatingToggle) {
+            floatingToggle.addEventListener('click', () => {
+                floatingMenu.classList.toggle('open');
+            });
+        }
     }
     // Загрузка данных для редактирования (только на edit-client.html)
     if (window.location.pathname.includes('edit-client.html')) {
@@ -947,11 +955,12 @@ function renderDayActions(dateStr) {
     consults.forEach(consult => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.style.borderLeft = '5px solid #0d6efd';
         li.innerHTML = `
             <span class="consultation-item" onclick="showConsultationDetails(${consult.id})">Консультация: ${consult.name}</span>
-            <div>
+            <div class="d-flex gap-1">
                 <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
-                <button class="small-square-btn btn-delete ms-1" onclick="deleteConsultation(${consult.id}, '${dateStr}')" title="Удалить консультацию"><i class="ri-close-line"></i></button>
+                <button class="small-square-btn btn-delete" onclick="deleteConsultation(${consult.id}, '${dateStr}')" title="Удалить консультацию"><i class="ri-close-line"></i></button>
             </div>`;
         list.appendChild(li);
     });
@@ -960,7 +969,16 @@ function renderDayActions(dateStr) {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
         li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
-        li.innerHTML = `${task.text} (${task.clientName}) <button class="btn btn-sm btn-primary" onclick="completeTaskFromCalendar(${task.clientId}, ${task.id}, '${dateStr}')">Выполнено</button>`;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'task-text';
+        textSpan.textContent = `${task.text} (${task.clientName})`;
+        textSpan.onclick = function() { this.classList.toggle('expanded'); };
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-primary';
+        btn.textContent = 'Выполнено';
+        btn.onclick = () => completeTaskFromCalendar(task.clientId, task.id, `${dateStr}`);
+        li.appendChild(textSpan);
+        li.appendChild(btn);
         list.appendChild(li);
     });
 
@@ -1213,9 +1231,13 @@ function showClientsForDate(dateStr) {
             filteredConsultations.forEach(consult => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.style.borderLeft = '5px solid #0d6efd';
                 li.innerHTML = `
                     <span class="consultation-item" onclick="showConsultationDetails(${consult.id})">Консультация: ${consult.name}</span>
-                    <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
+                    <div class="d-flex gap-1">
+                        <button class="small-square-btn" onclick="convertToClient(${consult.id}, '${dateStr}')" title="Преобразовать в клиента"><i class="ri-add-line"></i></button>
+                        <button class="small-square-btn btn-delete" onclick="deleteConsultation(${consult.id}, '${dateStr}')" title="Удалить консультацию"><i class="ri-close-line"></i></button>
+                    </div>
                 `;
                 consultationsList.appendChild(li);
             });
