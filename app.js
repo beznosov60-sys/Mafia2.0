@@ -246,20 +246,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
 
         const floatingMenu = document.querySelector('.floating-menu');
-        const floatingToggle = document.querySelector('.floating-toggle');
-        if (floatingMenu && floatingToggle) {
+        if (floatingMenu) {
             let hideTimeout;
             const showMenu = () => {
                 clearTimeout(hideTimeout);
                 floatingMenu.classList.add('open');
             };
             const hideMenu = () => {
-                hideTimeout = setTimeout(() => floatingMenu.classList.remove('open'), 100);
+                hideTimeout = setTimeout(() => floatingMenu.classList.remove('open'), 200);
             };
-            [floatingToggle, floatingMenu].forEach(el => {
-                el.addEventListener('mouseenter', showMenu);
-                el.addEventListener('mouseleave', hideMenu);
-            });
+            floatingMenu.addEventListener('mouseenter', showMenu);
+            floatingMenu.addEventListener('mouseleave', hideMenu);
         }
 
         document.addEventListener('click', (e) => {
@@ -1401,10 +1398,11 @@ function renderTaskList() {
     window.tasks.forEach((task, idx) => {
         if (task.completed) return;
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.className = 'list-group-item d-flex justify-content-between align-items-start task-item';
         li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
+        const textWithDeadline = `${task.text} (${task.deadline ? task.deadline : 'Без срока'})`;
         li.innerHTML = `
-            ${task.text} (${task.deadline ? task.deadline : 'Без срока'})
+            <span class="task-text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</span>
             <div>
                 <button class="client-btn client-btn-complete me-2" onclick="completeTask(${idx})">Выполнено</button>
                 <button class="btn btn-sm btn-danger" onclick="removeTask(${idx})">Удалить</button>
