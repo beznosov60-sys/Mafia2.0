@@ -259,6 +259,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             floatingMenu.addEventListener('mouseleave', hideMenu);
         }
 
+        const floatingOptions = document.querySelectorAll('.floating-option');
+        floatingOptions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                alert('Эта функция будет скоро доработана');
+            });
+        });
+
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
@@ -513,11 +520,12 @@ function displayClientsList() {
                 </div>
             </div>
             <div class="client-details">
-                ${client.subStage ? `<ul class="task-info mb-0"><li>${client.subStage}</li></ul>` : '<span></span>'}
-                <div class="client-actions">
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
-                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
+                <div class="w-100">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <span>${client.subStage || ''}</span>
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платёж</button>
                 </div>
+                ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete mt-2" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
             </div>
         `;
         li.onclick = (event) => {
@@ -1006,6 +1014,7 @@ function renderDayActions(dateStr) {
     courts.forEach(client => {
         const li = document.createElement('li');
         li.className = 'list-group-item clickable-item d-flex justify-content-between align-items-center';
+        li.style.borderLeft = '5px solid #fd7e14';
         const stageClass = stageColorClasses[client.stage] || '';
         const stageBadge = client.stage ? `<span class="stage-badge ${stageClass}">${client.stage}${client.subStage ? ' - ' + client.subStage : ''}</span>` : '';
         li.innerHTML = `${client.firstName} ${client.lastName}${stageBadge}`;
@@ -1095,7 +1104,8 @@ function initCalendar() {
                 .map(client => ({
                     title: `${client.firstName} ${client.lastName} (${client.stage}${client.subStage ? ' - ' + client.subStage : ''})`,
                     start: client.courtDate,
-                    backgroundColor: '#6f42c1',
+                    backgroundColor: '#fd7e14',
+                    borderColor: '#fd7e14',
                     extendedProps: { type: 'client', clientId: client.id }
                 }));
             // --- ДОБАВИТЬ задачи как события ---
