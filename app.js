@@ -505,30 +505,25 @@ function displayClientsList() {
     }
 
     const ul = document.createElement('ul');
-    ul.className = 'list-group';
+    ul.className = 'list-group client-list';
 
     clients.forEach(client => {
         const li = document.createElement('li');
-        li.className = 'list-group-item clickable-item';
+        li.className = 'list-group-item client-item clickable-item';
         li.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <span>${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</span>
-                <div>
-                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="arbitr-icon" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</a>` : `<span class="arbitr-icon disabled" title="${client.courtDate ? `Дата суда: ${new Date(client.courtDate).toLocaleDateString('ru-RU')}` : ''}">◉</span>`}
-                    <button class="toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
-                </div>
+            <div class="client-summary">
+                <span class="client-fio">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</span>
+                <button class="toggle-details" data-client="${client.id}"><i class="ri-arrow-right-s-line"></i></button>
             </div>
-            <div class="client-details">
-                <div class="w-100">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
-                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
-                    <span class="task-info">${client.subStage || ''}</span>
-                    <button class="client-btn client-btn-payments ms-auto" onclick="showPaymentsModal('${client.id}')">Платежи</button>
-                </div>
-                ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete mt-2" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
+            <div class="client-info">
+                <div class="stage">${client.stage || ''}</div>
+                <div class="court-date">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
+                <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платеж</button>
+                ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
             </div>
         `;
         li.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.closest('.toggle-details') && !event.target.closest('.client-details')) {
+            if (!event.target.closest('.toggle-details') && !event.target.closest('.client-info') && !event.target.closest('.client-btn')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
         };
@@ -539,17 +534,9 @@ function displayClientsList() {
         const toggleBtn = event.target.closest('.toggle-details');
         if (toggleBtn) {
             event.stopPropagation();
-            const details = toggleBtn.closest('li').querySelector('.client-details');
-            const isOpen = details.classList.toggle('open');
-            toggleBtn.classList.toggle('open', isOpen);
-            if (isOpen) {
-                details.style.maxHeight = '0px';
-                requestAnimationFrame(() => {
-                    details.style.maxHeight = details.scrollHeight + 'px';
-                });
-            } else {
-                details.style.maxHeight = '0';
-            }
+            const item = toggleBtn.closest('.client-item');
+            item.classList.toggle('expanded');
+            toggleBtn.classList.toggle('open');
         }
     });
 

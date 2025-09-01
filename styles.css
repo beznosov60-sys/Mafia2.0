@@ -267,43 +267,50 @@ body.home-screen {
     transform: rotate(180deg);
 }
 
+.client-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
 
-.client-details {
+.client-item {
+    display: flex;
+    overflow: hidden;
+    padding: 0;
+}
+
+.client-summary {
+    flex: 1 1 100%;
+    background: var(--neutral-300);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    transition: flex-basis 0.3s ease;
+}
+
+.client-info {
+    flex: 0 0 0%;
+    opacity: 0;
+    padding: 0.75rem;
+    background: var(--neutral-100);
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
-    background: var(--neutral-100);
-    border: 1px solid var(--neutral-400);
-    border-radius: 8px;
-    padding: 0 0.75rem;
-    color: var(--neutral-900);
-    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
-    width: 100%;
-    box-sizing: border-box;
+    gap: 0.25rem;
+    transition: flex-basis 0.3s ease, opacity 0.3s ease;
 }
 
-.client-details.open {
-    max-height: 500px;
+.client-item.expanded .client-summary {
+    flex: 0 0 40%;
+}
+
+.client-item.expanded .client-info {
+    flex: 1 1 60%;
     opacity: 1;
-    padding: 0.75rem;
 }
 
-.client-details .task-info {
-    flex: 1 1 auto;
-    word-break: break-word;
-}
-
-.client-details .d-flex {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.client-details .client-btn {
-    flex-shrink: 0;
+.client-info .client-btn {
+    align-self: flex-start;
 }
 
 .client-actions {
