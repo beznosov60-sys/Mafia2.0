@@ -520,7 +520,7 @@ function displayClientsList() {
                 <div class="w-100">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <span>${client.subStage || ''}</span>
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платёж</button>
+                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
                 </div>
                 ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete mt-2" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
             </div>
@@ -1109,7 +1109,7 @@ function initCalendar() {
             const taskEvents = clients
                 .filter(client => client.tasks && Array.isArray(client.tasks))
                 .flatMap(client => client.tasks
-                    .filter(task => task.deadline)
+                    .filter(task => task.deadline && !task.completed)
                     .map(task => ({
                         title: `Задача: ${task.text} (${client.firstName} ${client.lastName})`,
                         start: task.deadline,
@@ -1782,6 +1782,7 @@ window.convertToClient = function(consultId, dateStr) {
         localStorage.setItem('consultations', JSON.stringify(consultations));
     }
     renderDayActions(dateStr);
+    refetchCalendarEvents();
 };
 
 window.deleteConsultation = function(consultId, dateStr) {
@@ -1791,9 +1792,7 @@ window.deleteConsultation = function(consultId, dateStr) {
         consultations.splice(idx, 1);
         localStorage.setItem('consultations', JSON.stringify(consultations));
         renderDayActions(dateStr);
-        if (document.getElementById('calendar')?._fullCalendar) {
-            document.getElementById('calendar')._fullCalendar.refetchEvents();
-        }
+        refetchCalendarEvents();
     }
 };
 
