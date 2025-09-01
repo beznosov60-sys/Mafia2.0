@@ -293,7 +293,24 @@ body.home-screen {
 }
 
 .client-details .task-info {
-    flex: 1;
+    flex: 1 1 auto;
+    word-break: break-word;
+}
+
+.client-details .d-flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.client-details .client-btn {
+    flex-shrink: 0;
+}
+
+.client-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 
@@ -561,6 +578,27 @@ body.home-screen {
 
 #calendar .fc-daygrid-day-frame {
     position: relative;
+}
+
+#calendar .fc-daygrid-day {
+    transition: background-color 0.2s ease;
+}
+
+#calendar .fc-daygrid-day:hover {
+    background-color: var(--neutral-200);
+}
+
+#calendar .fc-day-past {
+    background-color: var(--neutral-400);
+}
+
+#calendar .fc-day-past .fc-daygrid-day-number {
+    color: var(--neutral-700);
+}
+
+#calendar .fc-daygrid-day.selected-day {
+    box-shadow: inset 0 0 0 2px var(--primary-color);
+    border-radius: 4px;
 }
 
 .event-dots {

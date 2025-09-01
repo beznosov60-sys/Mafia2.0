@@ -447,11 +447,13 @@ function displayCourtThisMonth() {
                 <button class="btn btn-sm btn-outline-primary toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
             </div>
             <div class="client-details mt-2">
-                ${client.subStage ? `<div class="task-info mb-2">${client.subStage}</div>` : ''}
-                <div class="client-actions">
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
-                    ${client.courtDate ? `<span class="ms-2">${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
-                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link ms-2">Суд</a>` : ''}
+                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
+                    <div class="task-info">${client.subStage || ''}</div>
+                    <button class="client-btn client-btn-payments ms-auto" onclick="showPaymentsModal('${client.id}')">Платежи</button>
+                </div>
+                <div class="client-actions mt-2">
+                    ${client.courtDate ? `<span>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
+                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
                 </div>
             </div>
         `;
@@ -518,9 +520,9 @@ function displayClientsList() {
             </div>
             <div class="client-details">
                 <div class="w-100">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <span>${client.subStage || ''}</span>
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платежи</button>
+                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
+                    <span class="task-info">${client.subStage || ''}</span>
+                    <button class="client-btn client-btn-payments ms-auto" onclick="showPaymentsModal('${client.id}')">Платежи</button>
                 </div>
                 ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete mt-2" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
             </div>
@@ -1078,6 +1080,7 @@ function initCalendar() {
         console.error('FullCalendar не загружен!');
         return;
     }
+    let selectedDayEl = null;
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'ru',
@@ -1146,15 +1149,29 @@ function initCalendar() {
             };
         },
         dateClick: function(info) {
+            highlightDay(info.dayEl);
             renderDayActions(info.dateStr);
         },
         eventClick: function(info) {
+            const dayEl = info.el.closest('.fc-daygrid-day');
+            if (dayEl) highlightDay(dayEl);
             renderDayActions(info.event.startStr);
         }
     });
     calendar.render();
+    highlightDay(calendarEl.querySelector('.fc-daygrid-day.fc-day-today'));
     markDaysWithEvents();
     calendar.on('eventsSet', markDaysWithEvents);
+
+    function highlightDay(dayEl) {
+        if (selectedDayEl) {
+            selectedDayEl.classList.remove('selected-day');
+        }
+        selectedDayEl = dayEl;
+        if (selectedDayEl) {
+            selectedDayEl.classList.add('selected-day');
+        }
+    }
 
     function markDaysWithEvents() {
         const dayCells = document.querySelectorAll('.fc-daygrid-day');
