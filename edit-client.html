@@ -16,7 +16,6 @@
                 <div class="d-flex gap-2">
                     <button id="favoriteBtn" class="btn icon-btn" data-favorite="false" title="Избранный клиент"><i class="ri-star-line"></i></button>
                     <button class="btn btn-primary icon-btn" onclick="generateContractPDF()" title="Скачать договор"><i class="ri-file-download-line"></i></button>
-                    <button class="btn btn-secondary icon-btn" id="historyToggle" title="История задач"><i class="ri-time-line"></i></button>
                 </div>
             </div>
             <div class="card-body">
@@ -112,9 +111,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Задачи -->
-                <h5 class="mb-3 mt-3">Задачи</h5>
-                <ul class="list-group" id="taskList"></ul>
                 <!-- Дело -->
                 <div class="accordion mt-3" id="accordionCase">
                     <div class="accordion-item">
@@ -177,25 +173,6 @@
                     <button class="btn btn-danger w-25" onclick="deleteClient()">Удалить</button>
                     <a href="javascript:history.back()" class="btn btn-secondary w-25">Отмена</a>
                     <button id="completeClientBtn" class="btn btn-complete w-100 mt-2" style="display:none;" onclick="completeClientFromEdit()">Завершить клиента</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно истории задач -->
-    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="historyModalLabel">История задач</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="currentStageInfo" class="mb-2"></div>
-                    <ul class="list-group" id="completedTaskList"></ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                 </div>
             </div>
         </div>

@@ -239,14 +239,16 @@ body.home-screen {
 }
 
 .sidebar .list-group-item {
-    background: transparent;
-    color: var(--neutral-100);
-    border: none;
+    background: var(--neutral-100);
+    color: var(--neutral-900);
+    border: 1px solid var(--neutral-400);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .sidebar .toggle-details {
-    background: var(--neutral-100);
-    color: var(--primary-color);
+    background: var(--primary-color);
+    color: var(--neutral-100);
     border: none;
     border-radius: 50%;
     width: 24px;
@@ -730,10 +732,27 @@ body.dark-theme {
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
+    min-width: 0;
 }
 
 #taskList .task-item .task-text.expanded {
     white-space: normal;
+    word-break: break-word;
+}
+
+#dayActionsList .task-text {
+    flex: 1;
+    margin-right: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    min-width: 0;
+}
+
+#dayActionsList .task-text.expanded {
+    white-space: normal;
+    word-break: break-word;
 }
 
 .client-payments-card table,
@@ -760,6 +779,8 @@ body.dark-theme {
 }
 
 .calendar-event .event-text {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

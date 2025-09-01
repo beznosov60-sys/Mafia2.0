@@ -289,7 +289,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const courtDateInput = document.getElementById('courtDate');
         const stageSelect = document.getElementById('stage');
         const subStageSelect = document.getElementById('subStage');
-        const historyToggle = document.getElementById('historyToggle');
         const completeSubStageBtn = document.getElementById('completeSubStageBtn');
         const favoriteBtn = document.getElementById('favoriteBtn');
         const completeBtn = document.getElementById('completeClientBtn');
@@ -303,7 +302,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
         updateSubStageOptions(stageSelect.value, subStageSelect);
-        historyToggle?.addEventListener('click', openHistoryModal);
         completeSubStageBtn?.addEventListener('click', completeSubStage);
         if (completeSubStageBtn) {
             function updateSubStageButton() {
@@ -342,7 +340,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         };
-        initTaskList(clientId);
     }
     // Инициализация кнопки арбитр и чекбокса документов на add-client.html
     if (window.location.pathname.includes('add-client.html')) {
@@ -1360,15 +1357,7 @@ function showToast(message) {
     }, 3000);
 }
 
-// --- Для edit-client.html ---
-// Инициализация задач для клиента
-function initTaskList(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => String(c.id) === String(clientId));
-    window.tasks = client && Array.isArray(client.tasks) ? client.tasks : [];
-    renderTaskList();
-    renderCompletedTasks();
-}
+// --- Управление задачами ---
 function addTask() {
     const text = document.getElementById('taskText').value.trim();
     const deadline = document.getElementById('taskDeadline').value;
@@ -1479,14 +1468,6 @@ function renderCompletedTasks() {
         li.textContent = `${task.text} (${task.completedAt ? new Date(task.completedAt).toLocaleDateString('ru-RU') : ''})`;
         list.appendChild(li);
     });
-}
-
-function openHistoryModal() {
-    renderCompletedTasks();
-    const modalEl = document.getElementById('historyModal');
-    if (!modalEl) return;
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
 }
 
 function advanceClientStage(client) {
