@@ -267,6 +267,14 @@ body.home-screen {
     transform: rotate(180deg);
 }
 
+.toggle-details:hover i {
+    transform: scale(1.2);
+}
+
+.toggle-details.open:hover i {
+    transform: rotate(180deg) scale(1.2);
+}
+
 .client-list {
     list-style: none;
     padding: 0;
@@ -275,42 +283,61 @@ body.home-screen {
 
 .client-item {
     display: flex;
+    flex-direction: column;
     overflow: hidden;
     padding: 0;
 }
 
 .client-summary {
-    flex: 1 1 100%;
     background: var(--neutral-300);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    transition: flex-basis 0.3s ease;
+    width: 100%;
 }
 
 .client-info {
-    flex: 0 0 0%;
-    opacity: 0;
-    padding: 0.75rem;
     background: var(--neutral-100);
+    padding: 0 0.75rem 0.75rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    transition: flex-basis 0.3s ease, opacity 0.3s ease;
-}
-
-.client-item.expanded .client-summary {
-    flex: 0 0 40%;
+    gap: 0.5rem;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 .client-item.expanded .client-info {
-    flex: 1 1 60%;
+    max-height: 500px;
     opacity: 1;
+}
+
+.client-info .info-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .client-info .client-btn {
     align-self: flex-start;
+}
+
+.info-divider {
+    border: none;
+    border-top: 1px solid var(--neutral-300);
+    margin: 0.25rem 0;
+}
+
+.creation-date {
+    align-self: flex-start;
+    background: #6f42c1;
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
 }
 
 .client-actions {
@@ -318,6 +345,16 @@ body.home-screen {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+}
+
+#courtThisMonth .client-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+#courtThisMonth .client-details.open {
+    max-height: 500px;
 }
 
 
@@ -879,11 +916,12 @@ body.dark-theme {
 }
 
 button, .btn, .circle-btn, .client-btn, .btn-complete {
-    transition: transform 0.1s ease, background-color 0.2s;
+    transition: transform 0.1s ease, background-color 0.2s, box-shadow 0.2s;
 }
 
 button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complete:active {
     transform: scale(0.95);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar .btn-archived {
