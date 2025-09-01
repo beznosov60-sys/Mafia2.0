@@ -497,44 +497,32 @@ function displayClientsList() {
     }
 
     const ul = document.createElement('ul');
-    ul.className = 'list-group client-list';
+    ul.className = 'client-list';
 
     clients.forEach(client => {
         const li = document.createElement('li');
-        li.className = 'list-group-item client-item clickable-item';
-        const createdDate = client.createdAt ? new Date(client.createdAt).toLocaleDateString('ru-RU') : '';
+        li.className = 'client-card clickable-item';
         li.innerHTML = `
-            <div class="client-summary">
-                <span class="client-fio">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</span>
-                <button class="toggle-details" data-client="${client.id}"><i class="ri-arrow-right-s-line"></i></button>
-            </div>
             <div class="client-info">
-                <div class="info-top">
-                    <div class="stage">${client.stage || ''}</div>
-                    <div class="court-date">Дата суда: ${client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'не назначена'}</div>
-                    <button class="client-btn client-btn-payments" onclick="showPaymentsModal('${client.id}')">Платеж</button>
-                    ${client.stage === 'Завершение' && client.subStage === 'ждем доки от суда' ? `<button class="client-btn client-btn-complete" onclick="completeClient('${client.id}')">Завершить</button>` : ''}
+                <div class="client-name">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</div>
+                <div class="client-meta">
+                    <span class="client-stage">${client.stage || ''}</span>
+                    ${client.courtDate ? `<span class="client-date"><i class="ri-calendar-line"></i>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
                 </div>
-                <hr class="info-divider">
-                <div class="creation-date">${createdDate}</div>
             </div>
+            <button class="client-btn client-btn-payments">Платеж</button>
         `;
-        li.onclick = (event) => {
-            if (!event.target.closest('.toggle-details') && !event.target.closest('.client-info') && !event.target.closest('.client-btn')) {
-                window.location.href = `client-card.html?id=${client.id}`;
-            }
-        };
-        ul.appendChild(li);
-    });
 
-    ul.addEventListener('click', (event) => {
-        const toggleBtn = event.target.closest('.toggle-details');
-        if (toggleBtn) {
-            event.stopPropagation();
-            const item = toggleBtn.closest('.client-item');
-            item.classList.toggle('expanded');
-            toggleBtn.classList.toggle('open');
-        }
+        li.querySelector('.client-btn-payments').addEventListener('click', (e) => {
+            e.stopPropagation();
+            showPaymentsModal(client.id);
+        });
+
+        li.addEventListener('click', () => {
+            window.location.href = `client-card.html?id=${client.id}`;
+        });
+
+        ul.appendChild(li);
     });
 
     listDiv.appendChild(ul);

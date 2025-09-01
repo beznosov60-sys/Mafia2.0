@@ -281,63 +281,60 @@ body.home-screen {
     margin: 0;
 }
 
-.client-item {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 0;
-}
 
-.client-summary {
-    background: var(--neutral-300);
+
+.client-card {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    width: 100%;
-}
-
-.client-info {
     background: var(--neutral-100);
-    padding: 0 0.75rem 0.75rem 0.75rem;
+    border: 1px solid var(--neutral-400);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.client-card .client-info {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    gap: 0.25rem;
+    flex: 1;
 }
 
-.client-item.expanded .client-info {
-    max-height: 500px;
-    opacity: 1;
+.client-card .client-name {
+    font-weight: 700;
+    font-size: 1rem;
 }
 
-.client-info .info-top {
+.client-card .client-meta {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.85rem;
 }
 
-.client-info .client-btn {
-    align-self: flex-start;
+.client-card .client-stage {
+    color: var(--neutral-700);
 }
 
-.info-divider {
-    border: none;
-    border-top: 1px solid var(--neutral-300);
-    margin: 0.25rem 0;
+.client-card .client-date {
+    display: inline-flex;
+    align-items: center;
+    background: var(--neutral-300);
+    border-radius: 12px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.85rem;
+    color: var(--neutral-800);
 }
 
-.creation-date {
-    align-self: flex-start;
-    background: #6f42c1;
-    color: #fff;
-    border-radius: 0.5rem;
-    padding: 0.15rem 0.5rem;
-    font-size: 0.8rem;
+.client-card .client-date i {
+    color: var(--primary-color);
+    margin-right: 4px;
+}
+
+.client-card .client-btn-payments {
+    margin-left: auto;
 }
 
 .client-actions {
