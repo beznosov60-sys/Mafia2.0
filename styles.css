@@ -275,6 +275,30 @@ body.home-screen {
     transform: rotate(180deg) scale(1.2);
 }
 
+.sidebar .client-card {
+    color: var(--neutral-900);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.sidebar .client-card .client-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.sidebar .client-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.sidebar .client-details.open {
+    max-height: 500px;
+}
+
 .client-list {
     list-style: none;
     padding: 0;
