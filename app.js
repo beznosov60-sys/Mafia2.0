@@ -503,19 +503,34 @@ function displayClientsList() {
         const li = document.createElement('li');
         li.className = 'client-card clickable-item';
         li.innerHTML = `
-            <div class="client-info">
-                <div class="client-name">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</div>
-                <div class="client-meta">
-                    <span class="client-stage">${client.stage || ''}</span>
+            <div class="client-summary">
+                <div class="client-info">
+                    <div class="client-name">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary toggle-details"><i class="ri-arrow-down-s-line"></i></button>
+            </div>
+            <div class="client-details">
+                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
+                    <div class="task-info">${client.subStage || ''}</div>
+                    <button class="client-btn client-btn-payments ms-auto">Платеж</button>
+                </div>
+                <div class="client-actions mt-2">
                     ${client.courtDate ? `<span class="client-date"><i class="ri-calendar-line"></i>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
+                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
                 </div>
             </div>
-            <button class="client-btn client-btn-payments">Платеж</button>
         `;
 
         li.querySelector('.client-btn-payments').addEventListener('click', (e) => {
             e.stopPropagation();
             showPaymentsModal(client.id);
+        });
+
+        li.querySelector('.toggle-details').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const details = li.querySelector('.client-details');
+            const isOpen = details.classList.toggle('open');
+            e.currentTarget.classList.toggle('open', isOpen);
         });
 
         li.addEventListener('click', () => {
