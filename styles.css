@@ -383,9 +383,9 @@ body.home-screen {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
     align-items: center;
-    height: 88px;
-    padding: 16px;
-    column-gap: 16px;
+    height: 72px;
+    padding: 12px;
+    column-gap: 12px;
     transition: background-color 0.2s, border-color 0.2s;
 }
 
@@ -407,6 +407,8 @@ body.home-screen {
 }
 
 #courtThisMonth .court-name {
+    display: flex;
+    align-items: center;
     font-size: 16px;
     font-weight: 600;
     color: #0F172A;
@@ -568,7 +570,7 @@ body.home-screen {
 
 .favorite-icon {
     color: var(--primary-color);
-    margin-right: 0.1rem;
+    margin-right: 0.5rem;
     font-size: 1rem;
 }
 

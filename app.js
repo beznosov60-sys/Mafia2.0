@@ -445,7 +445,7 @@ function displayCourtThisMonth() {
         const dateText = courtDate ? courtDate.toLocaleDateString('ru-RU') : '';
         li.innerHTML = `
             <div class="court-row">
-                <div class="court-name">${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}${getCourtTypeBadge(client)}</div>
+                <div class="court-name">${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}<span class="court-client-name">${fullName}</span>${getCourtTypeBadge(client)}</div>
                 <div class="court-task">${client.subStage || ''}</div>
                 <div class="court-date-pay">
                     <span class="court-date">${dateText}</span>
@@ -482,11 +482,7 @@ function displayCourtThisMonth() {
         const toggleBtn = event.target.closest('.court-toggle');
         if (toggleBtn) {
             event.stopPropagation();
-            const item = toggleBtn.closest('.court-item');
-            const details = item.querySelector('.court-details');
-            const isOpen = details.classList.toggle('open');
-            item.classList.toggle('active', isOpen);
-            toggleBtn.innerHTML = isOpen ? '<i class="ri-arrow-down-s-line"></i>' : '<i class="ri-more-2-line"></i>';
+            alert('Функция временно недоступна. Ведутся технические работы');
         }
     });
 }
