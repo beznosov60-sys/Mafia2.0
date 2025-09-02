@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджеры</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="manager-screen">
+    <div class="container py-5">
+        <a href="index.html" class="btn btn-back mb-3">&larr; Назад</a>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Менеджеры</h3>
+            <button class="btn btn-primary" id="createManagerBtn" title="Создать менеджера"><span class="me-1">👤➕</span>Создать менеджера</button>
+        </div>
+        <div id="managersList"></div>
+    </div>
+
+    <!-- Модальное окно создания менеджера -->
+    <div class="modal fade" id="managerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новый менеджер</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="managerName" class="form-label">Имя</label>
+                        <input type="text" id="managerName" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerContacts" class="form-label">Контакты</label>
+                        <input type="text" id="managerContacts" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Условия оплаты</label>
+                        <div class="mb-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="managerPayType" id="payTypePercent" value="percent" checked>
+                                <label class="form-check-label" for="payTypePercent">%</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="managerPayType" id="payTypeFixed" value="fixed">
+                                <label class="form-check-label" for="payTypeFixed">Фикс</label>
+                            </div>
+                        </div>
+                        <input type="number" id="managerPayValue" class="form-control" placeholder="Значение">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" id="saveManagerBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно закрепления клиента -->
+    <div class="modal fade" id="assignClientModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="assignClientSelect" class="form-label">Клиент</label>
+                        <select id="assignClientSelect" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignClientPercent" class="form-label">Процент вознаграждения</label>
+                        <input type="number" id="assignClientPercent" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="assignClientFU" class="form-check-input">
+                        <label class="form-check-label" for="assignClientFU">Финансовый управляющий</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" id="saveAssignedClientBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

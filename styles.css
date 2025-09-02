@@ -41,6 +41,22 @@ body.loaded {
     color: var(--purple-700);
 }
 
+.red-dot, .green-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.red-dot {
+    background: #dc3545;
+}
+
+.green-dot {
+    background: #28a745;
+}
+
 /* Главный экран */
 body.home-screen {
     background: linear-gradient(135deg, var(--purple-100), var(--purple-300));

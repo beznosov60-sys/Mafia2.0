@@ -34,6 +34,9 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+let currentManagerId = null;
+let currentClientId = null;
+
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
     if (types.arbitration && types.tret) return '<span class="court-badge">АС/ТС</span>';
@@ -49,6 +52,20 @@ async function syncClientsFromServer() {
     if (!localStorage.getItem('clients')) {
         localStorage.setItem('clients', JSON.stringify([]));
     }
+}
+
+async function syncManagersFromServer() {
+    if (!localStorage.getItem('managers')) {
+        localStorage.setItem('managers', JSON.stringify([]));
+    }
+}
+
+function getManagers() {
+    return JSON.parse(localStorage.getItem('managers')) || [];
+}
+
+function saveManagers(managers) {
+    localStorage.setItem('managers', JSON.stringify(managers));
 }
 
 
@@ -381,12 +398,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         initCalendar();
         renderDayActions(new Date().toISOString().split('T')[0]);
     }
+    if (window.location.pathname.includes('managers.html')) {
+        renderManagersPage();
+        document.getElementById('createManagerBtn')?.addEventListener('click', openCreateManagerModal);
+        document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
+        document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
+    }
     // Загрузка карточки клиента (только на client-card.html)
     if (window.location.pathname.includes('client-card.html')) {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
         if (clientId) {
+            currentClientId = clientId;
             loadClientCard(clientId);
+            document.getElementById('assignManagerBtn')?.addEventListener('click', () => openAssignManagerForClient(clientId));
+            document.getElementById('saveClientManager')?.addEventListener('click', () => saveClientManager(clientId));
         } else {
             alert('Клиент не найден!');
             window.location.href = 'index.html';
@@ -644,6 +670,7 @@ function loadClientCard(clientId) {
     document.getElementById('dealInfo').textContent = client.caseNumber ? `Дело №${client.caseNumber}` : '';
     document.getElementById('clientPhone').textContent = client.phone || '';
     document.getElementById('clientStage').textContent = client.stage || '';
+    renderClientManager(client);
     document.getElementById('nextCourtDate').textContent = client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : '—';
     document.getElementById('activeAccount').textContent = client.totalAmount ? `${client.totalAmount} ₽` : '0 ₽';
     const monthly = client.paymentMonths ? Math.round((client.totalAmount || 0) / client.paymentMonths) : 0;
@@ -2032,6 +2059,142 @@ window.deleteConsultation = function(consultId, dateStr) {
         renderDayActions(dateStr);
         refetchCalendarEvents();
     }
+};
+
+// ------------------ Работа с менеджерами ------------------
+function renderClientManager(client) {
+    const block = document.getElementById('clientManagerBlock');
+    if (!block) return;
+    const managers = getManagers();
+    if (client.managerId) {
+        const m = managers.find(m => String(m.id) === String(client.managerId));
+        if (m) {
+            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${client.managerPercent ? ' (' + client.managerPercent + '%)' : ''}${client.isFinManager ? ' ФУ' : ''}</span>`;
+            return;
+        }
+    }
+    block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-danger"><span class="red-dot"></span> Менеджер не назначен</span>`;
+}
+
+window.openAssignManagerForClient = function(clientId) {
+    const select = document.getElementById('managerSelect');
+    if (!select) return;
+    select.innerHTML = '';
+    const managers = getManagers();
+    managers.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.id;
+        option.textContent = m.name;
+        select.appendChild(option);
+    });
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    document.getElementById('managerPercent').value = client?.managerPercent || '';
+    document.getElementById('isFinManager').checked = client?.isFinManager || false;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('assignManagerModal'));
+    modal.show();
+};
+
+window.saveClientManager = function(clientId) {
+    const managerId = document.getElementById('managerSelect').value;
+    const percent = document.getElementById('managerPercent').value;
+    const isFU = document.getElementById('isFinManager').checked;
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (client) {
+        client.managerId = managerId;
+        client.managerPercent = percent;
+        client.isFinManager = isFU;
+        localStorage.setItem('clients', JSON.stringify(clients));
+        renderClientManager(client);
+    }
+    renderManagersPage();
+    bootstrap.Modal.getInstance(document.getElementById('assignManagerModal')).hide();
+};
+
+function renderManagersPage() {
+    const list = document.getElementById('managersList');
+    if (!list) return;
+    const managers = getManagers();
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    list.innerHTML = '';
+    managers.forEach(manager => {
+        const card = document.createElement('div');
+        card.className = 'mb-4 p-3 border rounded';
+        const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
+        const rows = managerClients.length
+            ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.isFinManager ? '✔' : ''}</td></tr>`).join('')
+            : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
+        card.innerHTML = `
+            <div class="d-flex align-items-center mb-2">
+                <i class="ri-user-line me-2"></i>
+                <h5 class="mb-0">${manager.name}</h5>
+            </div>
+            <table class="table mb-2">
+                <thead><tr><th>Клиент</th><th>%</th><th>ФУ</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+window.openCreateManagerModal = function() {
+    document.getElementById('managerName').value = '';
+    document.getElementById('managerContacts').value = '';
+    document.getElementById('managerPayValue').value = '';
+    document.getElementById('payTypePercent').checked = true;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerModal'));
+    modal.show();
+};
+
+window.saveManager = function() {
+    const name = document.getElementById('managerName').value.trim();
+    const contacts = document.getElementById('managerContacts').value.trim();
+    const type = document.querySelector('input[name="managerPayType"]:checked').value;
+    const value = document.getElementById('managerPayValue').value.trim();
+    if (!name) return;
+    const managers = getManagers();
+    managers.push({ id: Date.now(), name, contacts, paymentType: type, paymentValue: value });
+    saveManagers(managers);
+    renderManagersPage();
+    bootstrap.Modal.getInstance(document.getElementById('managerModal')).hide();
+};
+
+window.openAssignClientToManager = function(managerId) {
+    currentManagerId = managerId;
+    const select = document.getElementById('assignClientSelect');
+    if (!select) return;
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    select.innerHTML = '';
+    clients.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = `${c.firstName} ${c.lastName}`;
+        select.appendChild(option);
+    });
+    document.getElementById('assignClientPercent').value = '';
+    document.getElementById('assignClientFU').checked = false;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('assignClientModal'));
+    modal.show();
+};
+
+window.saveAssignedClient = function() {
+    const clientId = document.getElementById('assignClientSelect').value;
+    const percent = document.getElementById('assignClientPercent').value;
+    const isFU = document.getElementById('assignClientFU').checked;
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (client) {
+        client.managerId = currentManagerId;
+        client.managerPercent = percent;
+        client.isFinManager = isFU;
+        localStorage.setItem('clients', JSON.stringify(clients));
+    }
+    renderManagersPage();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('assignClientModal'));
+    modal.hide();
 };
 
 window.showConsultationDetails = function(consultId) {
