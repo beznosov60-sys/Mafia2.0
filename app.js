@@ -1911,7 +1911,7 @@ function showFinanceSummary() {
             const d = new Date(p.date);
             const status = p.paid ? 'paid' : (d < today ? 'overdue' : 'pending');
             details.push({
-                client: `${client.firstName} ${client.lastName}`.trim(),
+                clientId: client.id,
                 date: p.date,
                 amount: p.amount,
                 status
@@ -1938,27 +1938,53 @@ function showFinanceSummary() {
     document.getElementById('unpaidAmount').textContent = unpaidAmount;
     document.getElementById('finManagerExpense').textContent = finManagerExpense;
     document.getElementById('courtDepositExpense').textContent = courtDepositExpense;
-    document.getElementById('totalIncome').textContent = totalIncome;
+    document.getElementById('globalTotalIncome').textContent = totalIncome;
     document.getElementById('totalRemaining').textContent = totalRemaining;
 
-    const renderDetails = (filter = 'all') => {
+    const clientSelect = document.getElementById('financeClientSelect');
+    clientSelect.innerHTML = '<option value="">Выберите клиента</option>';
+    clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.firstName} ${c.lastName}`.trim();
+        clientSelect.appendChild(opt);
+    });
+
+    const renderDetails = (filter = 'all', clientId = '') => {
         const tbody = document.getElementById('financeDetailsBody');
+        const debtWrapper = document.getElementById('clientDebtWrapper');
+        const debtEl = document.getElementById('clientDebt');
         tbody.innerHTML = '';
-        details.filter(d => filter === 'all' || d.status === filter).forEach(d => {
-            const statusText = d.status === 'paid' ? 'Оплачено' : d.status === 'pending' ? 'Ожидается' : 'Просрочено';
-            const statusClass = d.status === 'paid' ? 'text-success' : d.status === 'pending' ? 'text-primary' : 'text-danger';
-            tbody.innerHTML += `<tr><td>${d.client}</td><td>${new Date(d.date).toLocaleDateString('ru-RU')}</td><td>${d.amount}</td><td class="${statusClass}">${statusText}</td></tr>`;
-        });
-        if (!tbody.innerHTML) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Нет данных</td></tr>';
+        if (!clientId) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center">Выберите клиента</td></tr>';
+            debtWrapper.style.display = 'none';
+            return;
         }
+        details
+            .filter(d => (filter === 'all' || d.status === filter) && String(d.clientId) === String(clientId))
+            .forEach(d => {
+                const statusText = d.status === 'paid' ? 'Оплачено' : d.status === 'pending' ? 'Ожидается' : 'Просрочено';
+                const statusClass = d.status === 'paid' ? 'text-success' : d.status === 'pending' ? 'text-primary' : 'text-danger';
+                tbody.innerHTML += `<tr><td>${new Date(d.date).toLocaleDateString('ru-RU')}</td><td>${d.amount}</td><td class="${statusClass}">${statusText}</td></tr>`;
+            });
+        if (!tbody.innerHTML) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center">Нет данных</td></tr>';
+        }
+        const client = clients.find(c => String(c.id) === String(clientId));
+        let remaining = client.totalAmount || 0;
+        const schedule = getPaymentSchedule(client);
+        schedule.forEach(p => { if (p.paid) remaining -= p.amount; });
+        debtEl.textContent = remaining;
+        debtWrapper.style.display = 'block';
     };
 
-    renderDetails();
     const filterEl = document.getElementById('financeFilter');
+    const handleRender = () => renderDetails(filterEl ? filterEl.value : 'all', clientSelect.value);
     if (filterEl) {
-        filterEl.onchange = function() { renderDetails(this.value); };
+        filterEl.onchange = handleRender;
     }
+    clientSelect.onchange = handleRender;
+    handleRender();
 
     const modal = new bootstrap.Modal(document.getElementById('financeSummaryModal'));
     modal.show();
@@ -2122,6 +2148,17 @@ function renderManagersPage() {
         const card = document.createElement('div');
         card.className = 'mb-4 p-3 border rounded';
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
+        let monthlyIncome = 0;
+        let totalIncome = 0;
+        managerClients.forEach(c => {
+            const months = c.paymentMonths || 0;
+            const total = c.totalAmount || 0;
+            const monthly = months ? total / months : 0;
+            const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
+            const incomePerMonth = monthly * percent / 100;
+            monthlyIncome += incomePerMonth;
+            totalIncome += incomePerMonth * months;
+        });
         const rows = managerClients.length
             ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.isFinManager ? '✔' : ''}</td></tr>`).join('')
             : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
@@ -2130,6 +2167,7 @@ function renderManagersPage() {
                 <i class="ri-user-line me-2"></i>
                 <h5 class="mb-0">${manager.name}</h5>
             </div>
+            <div class="text-muted small mb-2">Ежемесячно: ${monthlyIncome.toFixed(2)} | Всего: ${totalIncome.toFixed(2)}</div>
             <table class="table mb-2">
                 <thead><tr><th>Клиент</th><th>%</th><th>ФУ</th></tr></thead>
                 <tbody>${rows}</tbody>
