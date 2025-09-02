@@ -22,7 +22,7 @@
             <!-- Кнопки -->
             <div class="icon-buttons">
                 <a href="add-client.html" class="circle-btn" title="Добавить клиента"><i class="ri-user-add-line"></i></a>
-                <a href="managers.html" class="circle-btn" title="Менеджеры"><span>👤➕</span></a>
+                <a href="managers.html" class="circle-btn" title="Менеджеры"><i class="ri-user-star-line"></i></a>
                 <button class="circle-btn" id="sidebarToggle" title="Список клиентов"><i class="ri-group-line"></i></button>
                 <a href="calendar.html" class="circle-btn" title="Календарь"><i class="ri-calendar-event-line"></i></a>
                 <div class="dropdown">
@@ -127,6 +127,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-3">Общая сумма заработка: <span id="globalTotalIncome">0</span></div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <div class="finance-metric-card text-success text-center">
@@ -163,23 +164,31 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center mb-2">
+                        <label for="financeClientSelect" class="me-2">Клиент:</label>
+                        <select id="financeClientSelect" class="form-select w-auto">
+                            <option value="">Выберите клиента</option>
+                        </select>
+                    </div>
+                    <div class="mb-2" id="clientDebtWrapper" style="display:none;">
+                        Задолженность клиента: <span id="clientDebt">0</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
                         <label for="financeFilter" class="me-2">Фильтр:</label>
                         <select id="financeFilter" class="form-select w-auto">
                             <option value="all">Все</option>
                             <option value="paid">Оплачено</option>
-                            <option value="pending">Ожидается</option>
+                        <option value="pending">Ожидается</option>
                             <option value="overdue">Просрочено</option>
                         </select>
                     </div>
                     <table class="table table-sm">
                         <thead>
-                            <tr><th>Клиент</th><th>Дата платежа</th><th>Сумма</th><th>Статус</th></tr>
+                            <tr><th>Дата платежа</th><th>Сумма</th><th>Статус</th></tr>
                         </thead>
                         <tbody id="financeDetailsBody"></tbody>
                     </table>
-                    <div class="d-flex justify-content-between mt-3">
-                        <div>Общая сумма заработка за всё время: <span id="totalIncome">0</span></div>
-                        <div>Осталось к оплате от всех клиентов: <span id="totalRemaining">0</span></div>
+                    <div class="d-flex justify-content-end mt-3">
+                        Осталось к оплате от всех клиентов: <span id="totalRemaining">0</span>
                     </div>
                 </div>
                 <div class="modal-footer">
