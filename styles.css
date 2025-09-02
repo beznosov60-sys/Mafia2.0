@@ -368,13 +368,115 @@ body.home-screen {
     gap: 0.5rem;
 }
 
-#courtThisMonth .client-details {
+#courtThisMonth {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#courtThisMonth .court-item {
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+#courtThisMonth .court-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    height: 88px;
+    padding: 16px;
+    column-gap: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+#courtThisMonth .court-item:hover .court-row {
+    background: #F8FAFC;
+}
+
+#courtThisMonth .court-item.active .court-row {
+    background: #EEF2FF;
+    border: 1px solid #C7D2FE;
+}
+
+#courtThisMonth .court-item.overdue .court-row {
+    border-left: 4px solid #EF4444;
+}
+
+#courtThisMonth .court-item.today .court-row {
+    border-left: 4px solid #F59E0B;
+}
+
+#courtThisMonth .court-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+#courtThisMonth .court-task {
+    font-size: 14px;
+    font-weight: 400;
+    color: #475569;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+#courtThisMonth .court-date-pay {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#courtThisMonth .court-date {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+}
+
+.court-payments-btn {
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: #5850EC;
+    color: #fff;
+    border: none;
+    transition: background 0.2s;
+}
+
+.court-payments-btn:hover {
+    background: #4F46E5;
+}
+
+.court-payments-btn:disabled {
+    background: #A5B4FC;
+}
+
+.court-toggle {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #5850EC;
+    border-radius: 10px;
+    background: transparent;
+    color: #5850EC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.court-toggle:hover {
+    background: #EEF2FF;
+}
+
+#courtThisMonth .court-details {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+    padding: 0 16px 16px;
 }
 
-#courtThisMonth .client-details.open {
+#courtThisMonth .court-details.open {
     max-height: 500px;
 }
 

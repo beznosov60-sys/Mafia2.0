@@ -439,39 +439,54 @@ function displayCourtThisMonth() {
 
     filteredClients.forEach(client => {
         const li = document.createElement('li');
-        li.className = 'list-group-item clickable-item';
+        li.className = 'court-item';
         const fullName = `${client.firstName} ${client.lastName}`;
+        const courtDate = client.courtDate ? new Date(client.courtDate) : null;
+        const dateText = courtDate ? courtDate.toLocaleDateString('ru-RU') : '';
         li.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <div>${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}${getCourtTypeBadge(client)}</div>
-                <button class="btn btn-sm btn-outline-primary toggle-details" data-client="${client.id}"><i class="ri-arrow-down-s-line"></i></button>
+            <div class="court-row">
+                <div class="court-name">${client.favorite ? '<i class="ri-star-fill favorite-icon"></i>' : ''}${fullName}${getCourtTypeBadge(client)}</div>
+                <div class="court-task">${client.subStage || ''}</div>
+                <div class="court-date-pay">
+                    <span class="court-date">${dateText}</span>
+                    <button class="court-payments-btn" onclick="event.stopPropagation(); showPaymentsModal('${client.id}')">Платежи</button>
+                    <button class="court-toggle" data-client="${client.id}"><i class="ri-more-2-line"></i></button>
+                </div>
             </div>
-            <div class="client-details mt-2">
-                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
-                    <div class="task-info">${client.subStage || ''}</div>
-                    <button class="client-btn client-btn-payments ms-auto" onclick="showPaymentsModal('${client.id}')">Платежи</button>
-                </div>
-                <div class="client-actions mt-2">
-                    ${client.courtDate ? `<span>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
-                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
-                </div>
+            <div class="court-details">
+                ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link" onclick="event.stopPropagation();">Суд</a>` : ''}
             </div>
         `;
-        li.onclick = (event) => {
-            if (!event.target.closest('a') && !event.target.closest('.toggle-details') && !event.target.closest('.client-details')) {
+
+        if (courtDate) {
+            const today = new Date();
+            const courtDateNoTime = new Date(courtDate.getFullYear(), courtDate.getMonth(), courtDate.getDate());
+            const todayNoTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            if (courtDateNoTime.getTime() === todayNoTime.getTime()) {
+                li.classList.add('today');
+            } else if (courtDateNoTime < todayNoTime) {
+                li.classList.add('overdue');
+            }
+        }
+
+        li.addEventListener('click', (event) => {
+            if (!event.target.closest('.court-toggle') && !event.target.closest('.court-payments-btn') && !event.target.closest('a')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
-        };
+        });
+
         courtThisMonthDiv.appendChild(li);
     });
 
     courtThisMonthDiv.addEventListener('click', (event) => {
-        const toggleBtn = event.target.closest('.toggle-details');
+        const toggleBtn = event.target.closest('.court-toggle');
         if (toggleBtn) {
             event.stopPropagation();
-            const details = toggleBtn.closest('li').querySelector('.client-details');
+            const item = toggleBtn.closest('.court-item');
+            const details = item.querySelector('.court-details');
             const isOpen = details.classList.toggle('open');
-            toggleBtn.classList.toggle('open', isOpen);
+            item.classList.toggle('active', isOpen);
+            toggleBtn.innerHTML = isOpen ? '<i class="ri-arrow-down-s-line"></i>' : '<i class="ri-more-2-line"></i>';
         }
     });
 }
