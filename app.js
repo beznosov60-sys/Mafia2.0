@@ -264,10 +264,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const floatingOptions = document.querySelectorAll('.floating-option');
         floatingOptions.forEach(btn => {
-            btn.addEventListener('click', () => {
-                alert('Эта функция будет скоро доработана');
-            });
+            if (btn.id !== 'globalFinanceBtn') {
+                btn.addEventListener('click', () => {
+                    alert('Эта функция будет скоро доработана');
+                });
+            }
         });
+        document.getElementById('globalFinanceBtn')?.addEventListener('click', showFinanceSummary);
 
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
@@ -1853,9 +1856,86 @@ window.showPaymentsModal = function(clientId) {
         };
     }, 100);
 
-    const modal = new bootstrap.Modal(document.getElementById('paymentsModal'));
+const modal = new bootstrap.Modal(document.getElementById('paymentsModal'));
     modal.show();
 };
+
+function showFinanceSummary() {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+    const nextMonth = nextMonthDate.getMonth();
+    const nextYear = nextMonthDate.getFullYear();
+
+    let currentMonthIncome = 0;
+    let nextMonthIncome = 0;
+    let totalIncome = 0;
+    let totalRemaining = 0;
+    let finManagerExpense = 0;
+    let courtDepositExpense = 0;
+    const details = [];
+
+    clients.forEach(client => {
+        const schedule = getPaymentSchedule(client);
+        let paidSum = 0;
+        schedule.forEach(p => {
+            const d = new Date(p.date);
+            const status = p.paid ? 'paid' : (d < today ? 'overdue' : 'pending');
+            details.push({
+                client: `${client.firstName} ${client.lastName}`.trim(),
+                date: p.date,
+                amount: p.amount,
+                status
+            });
+            if (p.paid) {
+                totalIncome += p.amount;
+                paidSum += p.amount;
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    currentMonthIncome += p.amount;
+                }
+            } else if (d.getMonth() === nextMonth && d.getFullYear() === nextYear) {
+                nextMonthIncome += p.amount;
+            }
+        });
+        totalRemaining += (client.totalAmount || 0) - paidSum;
+        if (client.finManagerPaid) finManagerExpense += 17000;
+        if (client.courtDepositPaid) courtDepositExpense += 25000;
+    });
+
+    const unpaidAmount = totalRemaining;
+
+    document.getElementById('currentMonthIncome').textContent = currentMonthIncome;
+    document.getElementById('nextMonthIncome').textContent = nextMonthIncome;
+    document.getElementById('unpaidAmount').textContent = unpaidAmount;
+    document.getElementById('finManagerExpense').textContent = finManagerExpense;
+    document.getElementById('courtDepositExpense').textContent = courtDepositExpense;
+    document.getElementById('totalIncome').textContent = totalIncome;
+    document.getElementById('totalRemaining').textContent = totalRemaining;
+
+    const renderDetails = (filter = 'all') => {
+        const tbody = document.getElementById('financeDetailsBody');
+        tbody.innerHTML = '';
+        details.filter(d => filter === 'all' || d.status === filter).forEach(d => {
+            const statusText = d.status === 'paid' ? 'Оплачено' : d.status === 'pending' ? 'Ожидается' : 'Просрочено';
+            const statusClass = d.status === 'paid' ? 'text-success' : d.status === 'pending' ? 'text-primary' : 'text-danger';
+            tbody.innerHTML += `<tr><td>${d.client}</td><td>${new Date(d.date).toLocaleDateString('ru-RU')}</td><td>${d.amount}</td><td class="${statusClass}">${statusText}</td></tr>`;
+        });
+        if (!tbody.innerHTML) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Нет данных</td></tr>';
+        }
+    };
+
+    renderDetails();
+    const filterEl = document.getElementById('financeFilter');
+    if (filterEl) {
+        filterEl.onchange = function() { renderDetails(this.value); };
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('financeSummaryModal'));
+    modal.show();
+}
 
 // Сохранение консультации
 window.saveConsultation = function() {
