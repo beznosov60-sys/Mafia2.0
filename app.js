@@ -57,8 +57,11 @@ function getPaymentSchedule(client) {
     if (!client.paymentMonths || !client.paymentStartDate) return schedule;
     const amount = client.totalAmount ? Math.round(client.totalAmount / client.paymentMonths) : 0;
     for (let i = 0; i < client.paymentMonths; i++) {
-        const date = new Date(client.paymentStartDate);
+        let date = new Date(client.paymentStartDate);
         date.setMonth(date.getMonth() + i);
+        if (client.paymentAdjustments && client.paymentAdjustments[i]) {
+            date = new Date(client.paymentAdjustments[i]);
+        }
         schedule.push({
             date: date.toISOString().split('T')[0],
             amount,
@@ -273,6 +276,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sidebar.classList.remove('open');
             }
         });
+    }
+    // Страница финансов клиента
+    if (window.location.pathname.includes('finance.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('id');
+        if (clientId) {
+            loadFinancePage(clientId);
+        } else {
+            alert('Клиент не найден!');
+            window.location.href = 'index.html';
+        }
     }
     // Загрузка данных для редактирования (только на edit-client.html)
     if (window.location.pathname.includes('edit-client.html')) {
@@ -642,6 +656,10 @@ function loadClientCard(clientId) {
     document.getElementById('editClientBtn').onclick = () => {
         window.location.href = `edit-client.html?id=${client.id}`;
     };
+    const financeBtn = document.getElementById('financeBtn');
+    if (financeBtn) {
+        financeBtn.href = `finance.html?id=${client.id}`;
+    }
     window.tasks = client.tasks || [];
     renderTaskList();
     renderClientPayments(client);
@@ -744,6 +762,127 @@ function renderClientPayments(client) {
     }
 }
 
+function saveClientData(client) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const idx = clients.findIndex(c => String(c.id) === String(client.id));
+    if (idx !== -1) {
+        clients[idx] = client;
+        localStorage.setItem('clients', JSON.stringify(clients));
+    }
+}
+
+function renderFinanceMetrics(client) {
+    const schedule = getPaymentSchedule(client);
+    const extra = (client.extraPayments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const paidSchedule = schedule.reduce((sum, p) => p.paid ? sum + p.amount : sum, 0);
+    const total = client.totalAmount || 0;
+    const paid = paidSchedule + extra;
+    const remaining = total - paidSchedule;
+    const overdue = schedule
+        .filter(p => !p.paid && new Date(p.date) < new Date())
+        .reduce((sum, p) => sum + p.amount, 0);
+    const percent = total ? Math.round((paid / total) * 100) : 0;
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    setText('totalAmount', total);
+    setText('paidAmount', paid);
+    setText('remainingAmount', remaining);
+    setText('overdueAmount', overdue);
+    setText('remainingTotal', remaining);
+    setText('paidPercent', percent);
+}
+
+function renderFinanceHistory(client) {
+    const tbody = document.getElementById('historyBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const schedule = getPaymentSchedule(client);
+    schedule.forEach(p => {
+        const status = p.paid ? 'проведён' : (new Date(p.date) < new Date() ? 'просрочен' : 'ожидается');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${p.amount}</td><td class="${statusClass(status)}">${status}</td><td></td>`;
+        tbody.appendChild(tr);
+    });
+    (client.extraPayments || []).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${p.amount}</td><td class="${statusClass('проведён')}">проведён</td><td>${p.comment || ''}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function statusClass(status) {
+    if (status === 'проведён') return 'text-success';
+    if (status === 'ожидается') return 'text-warning';
+    if (status === 'просрочен') return 'text-danger';
+    return '';
+}
+
+function renderPlannedPayments(client) {
+    const tbody = document.getElementById('plannedBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const schedule = getPaymentSchedule(client);
+    schedule.forEach((p, idx) => {
+        if (!p.paid && new Date(p.date) >= new Date()) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-success" data-action="pay" data-idx="${idx}">Оплачено</button> <button class="btn btn-sm btn-secondary ms-2" data-action="delay" data-idx="${idx}">Перенос</button></td>`;
+            tbody.appendChild(tr);
+        }
+    });
+    tbody.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.idx);
+            if (this.dataset.action === 'pay') {
+                client.paidMonths[idx] = true;
+            } else if (this.dataset.action === 'delay') {
+                const current = new Date(schedule[idx].date);
+                current.setMonth(current.getMonth() + 1);
+                if (!client.paymentAdjustments) client.paymentAdjustments = {};
+                client.paymentAdjustments[idx] = current.toISOString().split('T')[0];
+            }
+            saveClientData(client);
+            renderFinanceMetrics(client);
+            renderFinanceHistory(client);
+            renderPlannedPayments(client);
+        });
+    });
+}
+
+function loadFinancePage(clientId) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (!client) {
+        alert('Клиент не найден!');
+        window.location.href = 'index.html';
+        return;
+    }
+    const name = [client.firstName, client.lastName].filter(Boolean).join(' ');
+    const titleEl = document.getElementById('financeTitle');
+    if (titleEl) titleEl.textContent = `Финансы - ${name}`;
+    const back = document.getElementById('backBtn');
+    if (back) back.href = `client-card.html?id=${client.id}`;
+    renderFinanceMetrics(client);
+    renderFinanceHistory(client);
+    renderPlannedPayments(client);
+    const addBtn = document.getElementById('addPaymentBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            const date = prompt('Дата платежа (ГГГГ-ММ-ДД):', new Date().toISOString().split('T')[0]);
+            if (!date) return;
+            const amount = parseFloat(prompt('Сумма:', '0'));
+            if (isNaN(amount)) return;
+            const comment = prompt('Комментарий:', '') || '';
+            if (!client.extraPayments) client.extraPayments = [];
+            client.extraPayments.push({ date, amount, paid: true, comment });
+            saveClientData(client);
+            renderFinanceMetrics(client);
+            renderFinanceHistory(client);
+            renderPlannedPayments(client);
+        });
+    }
+}
 // Обновление клиента
 function updateClient() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -797,6 +936,8 @@ function updateClient() {
         tasks: window.tasks || existingClient.tasks || [],
         finManagerPaid: existingClient.finManagerPaid || false,
         courtDepositPaid: existingClient.courtDepositPaid || false,
+        paymentAdjustments: existingClient.paymentAdjustments || {},
+        extraPayments: existingClient.extraPayments || [],
         createdAt: existingClient.createdAt // Сохраняем исходную дату создания
     };
 
@@ -889,7 +1030,9 @@ function saveClient() {
         createdAt: new Date().toISOString(),
         tasks: window.tasks || [],
         finManagerPaid: false,
-        courtDepositPaid: false
+        courtDepositPaid: false,
+        paymentAdjustments: {},
+        extraPayments: []
     };
 
     // Валидация
