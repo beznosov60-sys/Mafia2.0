@@ -28,6 +28,13 @@
                             <span class="text-muted small d-block">Ход дела</span>
                             <span id="clientStage"></span>
                         </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div id="clientManagerBlock">
+                                <span class="text-muted small d-block">Ответственный менеджер</span>
+                                <span class="text-danger"><span class="red-dot"></span> Менеджер не назначен</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" id="assignManagerBtn" title="Закрепить менеджера">👤➕</button>
+                        </li>
                         <li class="list-group-item d-none" id="clientLinkBlock">
                             <span class="text-muted small d-block">Ссылка</span>
                             <a id="clientLink" href="#" target="_blank"></a>
@@ -78,6 +85,35 @@
                 <div class="client-notes-card flex-grow-1 d-flex flex-column">
                     <h5 class="mb-3">Заметки</h5>
                     <textarea class="form-control flex-grow-1" id="clientNotes" placeholder="Заметки..." readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно закрепления менеджера -->
+    <div class="modal fade" id="assignManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Закрепить менеджера</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="managerSelect" class="form-label">Менеджер</label>
+                        <select id="managerSelect" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerPercent" class="form-label">Процент вознаграждения</label>
+                        <input type="number" id="managerPercent" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="isFinManager" class="form-check-input">
+                        <label class="form-check-label" for="isFinManager">Финансовый управляющий</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" id="saveClientManager">Сохранить</button>
                 </div>
             </div>
         </div>
