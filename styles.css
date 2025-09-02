@@ -37,6 +37,10 @@ body.loaded {
     opacity: 1;
 }
 
+.text-purple {
+    color: var(--purple-700);
+}
+
 /* Главный экран */
 body.home-screen {
     background: linear-gradient(135deg, var(--purple-100), var(--purple-300));

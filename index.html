@@ -111,10 +111,80 @@
     <div class="floating-menu">
         <button class="floating-toggle"><i class="ri-menu-line"></i></button>
         <div class="floating-options">
-            <button class="floating-option">Финансы</button>
+            <button class="floating-option" id="globalFinanceBtn">Финансы</button>
             <button class="floating-option">Статистика</button>
             <button class="floating-option">Настройки</button>
             <button class="floating-option">Цели</button>
+        </div>
+    </div>
+    <!-- Модальное окно общей финансовой сводки -->
+    <div class="modal fade" id="financeSummaryModal" tabindex="-1" aria-labelledby="financeSummaryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="financeSummaryModalLabel">Финансовая сводка</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="finance-metric-card text-success text-center">
+                                <div>💰 Заработок в этом месяце</div>
+                                <div id="currentMonthIncome" class="fs-4">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="finance-metric-card text-primary text-center">
+                                <div>📅 Предварительный заработок</div>
+                                <div id="nextMonthIncome" class="fs-4">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="finance-metric-card text-danger text-center">
+                                <div>🔴 Неоплачено</div>
+                                <div id="unpaidAmount" class="fs-4">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-2">Обязательные расходы</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="finance-metric-card text-purple text-center">
+                                <div>👤 Финансовый управляющий</div>
+                                <div id="finManagerExpense" class="fs-5">0</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="finance-metric-card text-purple text-center">
+                                <div>⚖️ Депозит в суд</div>
+                                <div id="courtDepositExpense" class="fs-5">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <label for="financeFilter" class="me-2">Фильтр:</label>
+                        <select id="financeFilter" class="form-select w-auto">
+                            <option value="all">Все</option>
+                            <option value="paid">Оплачено</option>
+                            <option value="pending">Ожидается</option>
+                            <option value="overdue">Просрочено</option>
+                        </select>
+                    </div>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Клиент</th><th>Дата платежа</th><th>Сумма</th><th>Статус</th></tr>
+                        </thead>
+                        <tbody id="financeDetailsBody"></tbody>
+                    </table>
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>Общая сумма заработка за всё время: <span id="totalIncome">0</span></div>
+                        <div>Осталось к оплате от всех клиентов: <span id="totalRemaining">0</span></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
