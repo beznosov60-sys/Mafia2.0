@@ -813,7 +813,16 @@ function recordManagerPayment(client, amount, date, info = {}) {
     if (!client || !client.managerId || !client.managerPercent) return;
     const percent = parseFloat(client.managerPercent);
     if (isNaN(percent) || percent <= 0) return;
-    const salary = Math.round((amount * percent) / 100);
+    const totalDue = Math.round((client.totalAmount || 0) * percent / 100);
+    client.managerPaidTotal = client.managerPaidTotal || 0;
+    const remaining = totalDue - client.managerPaidTotal;
+    if (remaining <= 0) {
+        client.managerFullyPaid = true;
+        saveClientData(client);
+        return;
+    }
+    let salary = Math.round((amount * percent) / 100);
+    if (salary > remaining) salary = remaining;
     const store = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const managerData = store[client.managerId] || {};
     const history = managerData.history || [];
@@ -823,6 +832,11 @@ function recordManagerPayment(client, amount, date, info = {}) {
 
     client.managerPayments = client.managerPayments || [];
     client.managerPayments.push({ ...info, date, amount: salary });
+    client.managerPaidTotal += salary;
+    if (client.managerPaidTotal >= totalDue) {
+        client.managerFullyPaid = true;
+    }
+    saveClientData(client);
 }
 
 function removeManagerPayment(client, info = {}) {
@@ -840,6 +854,14 @@ function removeManagerPayment(client, info = {}) {
         store[client.managerId] = { ...managerData, history };
         localStorage.setItem('managerPayments', JSON.stringify(store));
     }
+    client.managerPaidTotal = (client.managerPaidTotal || 0) - (payment.amount || 0);
+    if (client.managerPaidTotal < 0) client.managerPaidTotal = 0;
+    const percent = parseFloat(client.managerPercent);
+    const totalDue = isNaN(percent) ? 0 : Math.round((client.totalAmount || 0) * percent / 100);
+    if (client.managerPaidTotal < totalDue) {
+        client.managerFullyPaid = false;
+    }
+    saveClientData(client);
 }
 
 function renderFinanceMetrics(client) {
@@ -1160,7 +1182,9 @@ function saveClient() {
         courtDepositPaid: false,
         paymentAdjustments: {},
         extraPayments: [],
-        managerPayments: []
+        managerPayments: [],
+        managerPaidTotal: 0,
+        managerFullyPaid: false
     };
 
     // Валидация
@@ -2148,7 +2172,9 @@ window.convertToClient = function(consultId, dateStr) {
         finManagerPaid: false,
         courtDepositPaid: false,
         extraPayments: [],
-        managerPayments: []
+        managerPayments: [],
+        managerPaidTotal: 0,
+        managerFullyPaid: false
     });
     localStorage.setItem('clients', JSON.stringify(clients));
     // Удалить консультацию
@@ -2180,7 +2206,8 @@ function renderClientManager(client) {
     if (client.managerId) {
         const m = managers.find(m => String(m.id) === String(client.managerId));
         if (m) {
-            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${client.managerPercent ? ' (' + client.managerPercent + '%)' : ''}${client.finManagerName ? ' ФУ: ' + client.finManagerName : (client.isFinManager ? ' ФУ' : '')}</span>`;
+            const percentText = client.managerFullyPaid ? ' (оплачен)' : (client.managerPercent ? ' (' + client.managerPercent + '%)' : '');
+            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${percentText}${client.finManagerName ? ' ФУ: ' + client.finManagerName : (client.isFinManager ? ' ФУ' : '')}</span>`;
             return;
         }
     }
@@ -2216,6 +2243,8 @@ window.saveClientManager = function(clientId) {
         client.managerId = managerId;
         client.managerPercent = percent;
         client.isFinManager = isFU;
+        client.managerPaidTotal = 0;
+        client.managerFullyPaid = false;
         localStorage.setItem('clients', JSON.stringify(clients));
         renderClientManager(client);
     }
@@ -2238,14 +2267,19 @@ function renderManagersPage() {
         managerClients.forEach(c => {
             const months = c.paymentMonths || 0;
             const total = c.totalAmount || 0;
-            const monthly = months ? total / months : 0;
             const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
-            const incomePerMonth = monthly * percent / 100;
-            monthlyIncome += incomePerMonth;
-            totalIncome += incomePerMonth * months;
+            if (!c.managerFullyPaid && percent > 0) {
+                const monthly = months ? total / months : 0;
+                const incomePerMonth = monthly * percent / 100;
+                monthlyIncome += incomePerMonth;
+                totalIncome += incomePerMonth * months;
+            }
         });
         const rows = managerClients.length
-            ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.finManagerName || ''}</td></tr>`).join('')
+            ? managerClients.map(c => {
+                const percentCell = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
+                return `<tr><td>${c.firstName} ${c.lastName}</td><td>${percentCell}</td><td>${c.finManagerName || ''}</td></tr>`;
+            }).join('')
             : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
         card.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -2323,6 +2357,8 @@ window.saveAssignedClient = function() {
         client.managerPercent = percent;
         client.isFinManager = isFU;
         client.finManagerName = fuName;
+        client.managerPaidTotal = 0;
+        client.managerFullyPaid = false;
         localStorage.setItem('clients', JSON.stringify(clients));
     }
     renderManagersPage();
@@ -2350,10 +2386,6 @@ window.issueManagerSalary = function() {
     };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
-    const modal = bootstrap.Modal.getInstance(document.getElementById('managerPaymentsModal'));
-    if (modal) {
-        modal.hide();
-    }
 };
 
 window.openManagerPayments = function(managerId) {
@@ -2405,12 +2437,21 @@ window.openAddManagerPayment = function() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     if (select) {
         select.innerHTML = '';
-        clients.filter(c => String(c.managerId) === String(currentManagerId)).forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = `${c.firstName} ${c.lastName}`;
-            select.appendChild(opt);
-        });
+        clients
+            .filter(c => String(c.managerId) === String(currentManagerId))
+            .filter(c => {
+                const percent = parseFloat(c.managerPercent);
+                if (isNaN(percent) || percent <= 0) return false;
+                const totalDue = Math.round((c.totalAmount || 0) * percent / 100);
+                const paid = c.managerPaidTotal || 0;
+                return paid < totalDue;
+            })
+            .forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.firstName} ${c.lastName}`;
+                select.appendChild(opt);
+            });
     }
     const dateInput = document.getElementById('managerPaymentDate');
     if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
@@ -2424,12 +2465,29 @@ window.saveManagerPayment = function() {
     const amount = document.getElementById('managerPaymentAmount').value;
     const date = document.getElementById('managerPaymentDate').value;
     if (!clientId || !amount || !date) return;
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (!client) return;
+    const percent = parseFloat(client.managerPercent);
+    const totalDue = isNaN(percent) ? 0 : Math.round((client.totalAmount || 0) * percent / 100);
+    client.managerPaidTotal = client.managerPaidTotal || 0;
+    let amt = parseFloat(amount);
+    const remaining = totalDue - client.managerPaidTotal;
+    if (amt > remaining) amt = remaining;
+    if (amt <= 0) return;
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
-    history.push({ clientId, amount: parseFloat(amount), date });
+    history.push({ clientId, amount: amt, date });
     payments[currentManagerId] = { ...existing, history };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
+    client.managerPaidTotal += amt;
+    if (client.managerPaidTotal >= totalDue) {
+        client.managerFullyPaid = true;
+    }
+    client.managerPayments = client.managerPayments || [];
+    client.managerPayments.push({ date, amount: amt });
+    saveClientData(client);
     bootstrap.Modal.getInstance(document.getElementById('addManagerPaymentModal')).hide();
     renderManagerPayments();
 };
@@ -2438,9 +2496,25 @@ window.deleteManagerPayment = function(index) {
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const data = payments[currentManagerId] || {};
     if (!data.history) return;
-    data.history.splice(index, 1);
+    const removed = data.history.splice(index, 1)[0];
     payments[currentManagerId] = data;
     localStorage.setItem('managerPayments', JSON.stringify(payments));
+    if (removed && removed.clientId) {
+        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const client = clients.find(c => String(c.id) === String(removed.clientId));
+        if (client) {
+            client.managerPaidTotal = (client.managerPaidTotal || 0) - (removed.amount || 0);
+            if (client.managerPaidTotal < 0) client.managerPaidTotal = 0;
+            const percent = parseFloat(client.managerPercent);
+            const totalDue = isNaN(percent) ? 0 : Math.round((client.totalAmount || 0) * percent / 100);
+            client.managerFullyPaid = client.managerPaidTotal >= totalDue;
+            if (client.managerPayments) {
+                const pIdx = client.managerPayments.findIndex(p => p.date === removed.date && p.amount === removed.amount);
+                if (pIdx !== -1) client.managerPayments.splice(pIdx, 1);
+            }
+            saveClientData(client);
+        }
+    }
     renderManagerPayments();
 };
 
