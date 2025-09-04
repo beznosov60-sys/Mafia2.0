@@ -2254,11 +2254,8 @@ function renderManagersPage() {
                     <h5 class="mb-0">${manager.name}</h5>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Платежи">
-                        <i class="ri-calendar-check-line"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerSalaryModal(${manager.id})" title="Зарплата">
-                        <i class="ri-money-dollar-circle-line"></i>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты">
+                        <i class="ri-wallet-line"></i>
                     </button>
                 </div>
             </div>
@@ -2333,17 +2330,6 @@ window.saveAssignedClient = function() {
     modal.hide();
 };
 
-window.openManagerSalaryModal = function(managerId) {
-    currentManagerId = managerId;
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
-    const data = payments[managerId] || {};
-    document.getElementById('managerSalary').value = data.salary || '';
-    document.getElementById('managerBonus').value = data.bonus || '';
-    document.getElementById('managerPaid').checked = !!data.paid;
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerSalaryModal'));
-    modal.show();
-};
-
 window.saveManagerSalary = function() {
     const salary = document.getElementById('managerSalary').value;
     const bonus = document.getElementById('managerBonus').value;
@@ -2352,11 +2338,15 @@ window.saveManagerSalary = function() {
     const existing = payments[currentManagerId] || {};
     payments[currentManagerId] = { ...existing, salary, bonus, paid, month: new Date().toISOString().slice(0,7) };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
-    bootstrap.Modal.getInstance(document.getElementById('managerSalaryModal')).hide();
 };
 
 window.openManagerPayments = function(managerId) {
     currentManagerId = managerId;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const data = payments[managerId] || {};
+    document.getElementById('managerSalary').value = data.salary || '';
+    document.getElementById('managerBonus').value = data.bonus || '';
+    document.getElementById('managerPaid').checked = !!data.paid;
     renderManagerPayments();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
     modal.show();
