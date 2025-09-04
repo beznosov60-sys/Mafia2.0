@@ -144,10 +144,12 @@ window.generateClientId = generateClientId;
 
 function exportClientsToExcel() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    const allClients = clients.concat(archivedClients.map(c => ({ ...c, archived: true })));
     const managers = getManagers();
     const managerPayments = JSON.parse(localStorage.getItem('managerPayments')) || {};
 
-    const clientData = clients.map(c => ({
+    const clientData = allClients.map(c => ({
         'ID': c.id,
         'Имя': c.firstName,
         'Отчество': c.middleName,
@@ -170,15 +172,29 @@ function exportClientsToExcel() {
         'Заметки': c.notes,
         'Избранный': c.favorite ? 'Да' : 'Нет',
         'Создан': c.createdAt,
+        'Архивный': c.archived ? 'Да' : 'Нет',
+        'Дата завершения': c.completedAt || '',
         'ID менеджера': c.managerId || '',
         'Процент менеджера': c.managerPercent || '',
         'Менеджер выплачено': c.managerPaidTotal || 0,
         'Менеджер оплачен полностью': c.managerFullyPaid ? 'Да' : 'Нет'
     }));
 
-    const tasksData = clients.flatMap(c =>
+    const tasksData = allClients.flatMap(c =>
         (c.tasks || []).map(t => ({
             'ID клиента': c.id,
+            'ID задачи': t.id,
+            'Текст': t.text,
+            'Дедлайн': t.deadline,
+            'Выполнено': t.completed ? 'Да' : 'Нет',
+            'Дата выполнения': t.completedAt || '',
+            'Цвет': t.color || ''
+        }))
+    );
+
+    const managerTasksData = managers.flatMap(m =>
+        (m.tasks || []).map(t => ({
+            'ID менеджера': m.id,
             'ID задачи': t.id,
             'Текст': t.text,
             'Дедлайн': t.deadline,
@@ -220,6 +236,11 @@ function exportClientsToExcel() {
         XLSX.utils.book_append_sheet(workbook, wsTasks, 'Tasks');
     }
 
+    if (managerTasksData.length > 0) {
+        const wsMTasks = XLSX.utils.json_to_sheet(managerTasksData);
+        XLSX.utils.book_append_sheet(workbook, wsMTasks, 'ManagerTasks');
+    }
+
     if (managersData.length > 0) {
         const wsManagers = XLSX.utils.json_to_sheet(managersData);
         XLSX.utils.book_append_sheet(workbook, wsManagers, 'Managers');
@@ -244,7 +265,9 @@ function importClientsFromExcel(event) {
         const clientsSheet = workbook.Sheets['Clients'] || workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(clientsSheet);
         const usedIds = new Set();
-        const clients = rows.map(row => {
+        const clients = [];
+        const archivedClients = [];
+        rows.forEach(row => {
             let id;
             if (row['ID']) {
                 id = ensureUniqueId(String(row['ID']), usedIds);
@@ -257,7 +280,7 @@ function importClientsFromExcel(event) {
                     usedIds
                 );
             }
-            return {
+            const obj = {
                 id,
                 firstName: row['Имя'] || '',
                 middleName: row['Отчество'] || '',
@@ -287,12 +310,18 @@ function importClientsFromExcel(event) {
                 managerPaidTotal: parseFloat(row['Менеджер выплачено']) || 0,
                 managerFullyPaid: row['Менеджер оплачен полностью'] === 'Да' || row['Менеджер оплачен полностью'] === true,
                 managerPayments: [],
-                tasks: []
+                tasks: [],
+                completedAt: row['Дата завершения'] || ''
             };
+            if (row['Архивный'] === 'Да') {
+                archivedClients.push(obj);
+            } else {
+                clients.push(obj);
+            }
         });
 
         const clientsById = {};
-        clients.forEach(c => { clientsById[c.id] = c; });
+        [...clients, ...archivedClients].forEach(c => { clientsById[c.id] = c; });
 
         const tasksSheet = workbook.Sheets['Tasks'];
         if (tasksSheet) {
@@ -324,7 +353,8 @@ function importClientsFromExcel(event) {
                     name: row['Имя'] || '',
                     contacts: row['Контакты'] || '',
                     paymentType: row['Тип оплаты'] || '',
-                    paymentValue: row['Значение оплаты'] || ''
+                    paymentValue: row['Значение оплаты'] || '',
+                    tasks: []
                 });
                 managerPayments[row['ID']] = {
                     salary: row['Зарплата'] || '',
@@ -332,6 +362,25 @@ function importClientsFromExcel(event) {
                     paid: row['Оплачено'] === 'Да' || row['Оплачено'] === true,
                     history: []
                 };
+            });
+        }
+
+        const managerTasksSheet = workbook.Sheets['ManagerTasks'];
+        if (managerTasksSheet) {
+            const mtaskRows = XLSX.utils.sheet_to_json(managerTasksSheet);
+            mtaskRows.forEach(row => {
+                const mId = row['ID менеджера'];
+                const manager = managers.find(m => String(m.id) === String(mId));
+                if (!manager) return;
+                manager.tasks = manager.tasks || [];
+                manager.tasks.push({
+                    id: row['ID задачи'] || Date.now() + Math.random(),
+                    text: row['Текст'] || '',
+                    deadline: row['Дедлайн'] || '',
+                    completed: row['Выполнено'] === 'Да' || row['Выполнено'] === true,
+                    completedAt: row['Дата выполнения'] || '',
+                    color: row['Цвет'] || '#28a745'
+                });
             });
         }
 
@@ -358,6 +407,7 @@ function importClientsFromExcel(event) {
         }
 
         localStorage.setItem('clients', JSON.stringify(clients));
+        localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
         if (managers.length > 0) {
             localStorage.setItem('managers', JSON.stringify(managers));
         }
@@ -1388,13 +1438,21 @@ function renderDayActions(dateStr) {
 
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const managers = getManagers();
 
-    const tasks = clients
+    const clientTasks = clients
         .filter(client => client.tasks && Array.isArray(client.tasks))
         .flatMap(client => client.tasks
             .filter(task => task.deadline === dateStr && !task.completed)
-            .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}` }))
+            .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}`, type: 'client' }))
         );
+    const managerTasks = managers
+        .filter(m => m.tasks && Array.isArray(m.tasks))
+        .flatMap(m => m.tasks
+            .filter(task => task.deadline === dateStr && !task.completed)
+            .map(task => ({ ...task, managerId: m.id, managerName: m.name, type: 'manager' }))
+        );
+    const tasks = [...clientTasks, ...managerTasks];
     const payments = clients
         .flatMap(client => getPaymentSchedule(client)
             .map((p, idx) => ({ client, payment: p, idx }))
@@ -1428,12 +1486,20 @@ function renderDayActions(dateStr) {
         li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
         const textSpan = document.createElement('span');
         textSpan.className = 'task-text';
-        textSpan.textContent = `${task.text} (${task.clientName})`;
+        textSpan.textContent = task.type === 'manager'
+            ? `${task.text} (${task.managerName})`
+            : `${task.text} (${task.clientName})`;
         textSpan.onclick = function() { this.classList.toggle('expanded'); };
         const btn = document.createElement('button');
         btn.className = 'btn btn-sm btn-primary';
         btn.textContent = 'Выполнено';
-        btn.onclick = () => completeTaskFromCalendar(task.clientId, task.id, `${dateStr}`);
+        btn.onclick = () => {
+            if (task.type === 'manager') {
+                completeManagerTaskFromCalendar(task.managerId, task.id, `${dateStr}`);
+            } else {
+                completeTaskFromCalendar(task.clientId, task.id, `${dateStr}`);
+            }
+        };
         li.appendChild(textSpan);
         li.appendChild(btn);
         list.appendChild(li);
@@ -1544,7 +1610,7 @@ function initCalendar() {
                     borderColor: '#fd7e14',
                     extendedProps: { type: 'client', clientId: client.id }
                 }));
-            // --- ДОБАВИТЬ задачи как события ---
+            // --- задачи клиентов ---
             const taskEvents = clients
                 .filter(client => client.tasks && Array.isArray(client.tasks))
                 .flatMap(client => client.tasks
@@ -1555,6 +1621,20 @@ function initCalendar() {
                         backgroundColor: task.color || '#dc3545',
                         borderColor: task.color || '#dc3545',
                         extendedProps: { type: 'task', clientId: client.id, taskId: task.id }
+                    }))
+                );
+            // --- задачи менеджеров ---
+            const managers = getManagers();
+            const managerTaskEvents = managers
+                .filter(m => m.tasks && Array.isArray(m.tasks))
+                .flatMap(m => m.tasks
+                    .filter(task => task.deadline && !task.completed)
+                    .map(task => ({
+                        title: `Задача менеджеру: ${task.text} (${m.name})`,
+                        start: task.deadline,
+                        backgroundColor: task.color || '#dc3545',
+                        borderColor: task.color || '#dc3545',
+                        extendedProps: { type: 'manager-task', managerId: m.id, taskId: task.id }
                     }))
                 );
             const consultationEvents = consultations
@@ -1576,7 +1656,7 @@ function initCalendar() {
                         extendedProps: { type: 'payment', clientId: p.client.id, paymentIndex: p.idx }
                     }))
                 );
-            const allEvents = [...clientEvents, ...taskEvents, ...consultationEvents, ...paymentEvents];
+            const allEvents = [...clientEvents, ...taskEvents, ...managerTaskEvents, ...consultationEvents, ...paymentEvents];
             successCallback(allEvents);
         },
         eventContent: function(arg) {
@@ -1639,12 +1719,20 @@ function showClientsForDate(dateStr) {
     const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
     const filteredClients = clients.filter(client => client.courtDate === dateStr);
     const filteredConsultations = consultations.filter(consult => consult.date === dateStr);
-    const filteredTasks = clients
+    const managerList = getManagers();
+    const clientTasks = clients
         .filter(client => client.tasks && Array.isArray(client.tasks))
         .flatMap(client => client.tasks
             .filter(task => task.deadline === dateStr && !task.completed)
-            .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}` }))
+            .map(task => ({ ...task, clientId: client.id, clientName: `${client.firstName} ${client.lastName}`, type: 'client' }))
         );
+    const managerTasks = managerList
+        .filter(m => m.tasks && Array.isArray(m.tasks))
+        .flatMap(m => m.tasks
+            .filter(task => task.deadline === dateStr && !task.completed)
+            .map(task => ({ ...task, managerId: m.id, managerName: m.name, type: 'manager' }))
+        );
+    const filteredTasks = [...clientTasks, ...managerTasks];
 
     const modal = document.getElementById('dayClientsModal');
     const modalTitle = document.getElementById('dayClientsModalLabel');
@@ -1686,7 +1774,8 @@ function showClientsForDate(dateStr) {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
-                li.innerHTML = `${task.text} (${task.clientName}) <span class="badge" style="background-color:${task.color || '#28a745'}">${task.deadline}</span>`;
+                const owner = task.type === 'manager' ? task.managerName : task.clientName;
+                li.innerHTML = `${task.text} (${owner}) <span class="badge" style="background-color:${task.color || '#28a745'}">${task.deadline}</span>`;
                 tasksList.appendChild(li);
             });
         }
@@ -1955,6 +2044,85 @@ window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
     }
 };
 
+window.addManagerTask = function(managerId) {
+    const textEl = document.getElementById(`managerTaskText${managerId}`);
+    const deadlineEl = document.getElementById(`managerTaskDeadline${managerId}`);
+    const colorEl = document.getElementById(`managerTaskColor${managerId}`);
+    const text = textEl.value.trim();
+    const deadline = deadlineEl.value;
+    const color = colorEl.value;
+    if (!text) return;
+    const managers = getManagers();
+    const manager = managers.find(m => String(m.id) === String(managerId));
+    if (!manager) return;
+    const task = { id: Date.now(), text, deadline, color, completed: false };
+    manager.tasks = manager.tasks || [];
+    manager.tasks.push(task);
+    saveManagers(managers);
+    textEl.value = '';
+    deadlineEl.value = '';
+    renderManagerTaskList(managerId);
+};
+
+function renderManagerTaskList(managerId) {
+    const managers = getManagers();
+    const manager = managers.find(m => String(m.id) === String(managerId));
+    const list = document.getElementById(`managerTaskList${managerId}`);
+    if (!list || !manager) return;
+    list.innerHTML = '';
+    (manager.tasks || []).forEach(task => {
+        if (task.completed) return;
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-start task-item';
+        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
+        const textWithDeadline = `${task.text}${task.deadline ? ' (' + task.deadline + ')' : ''}`;
+        li.innerHTML = `<span class="task-text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</span>
+            <div class="d-flex">
+                <button class="client-btn client-btn-complete me-2" onclick="completeManagerTask(${managerId}, ${task.id})">Выполнено</button>
+                <button class="btn btn-sm btn-danger" onclick="removeManagerTask(${managerId}, ${task.id})">Удалить</button>
+            </div>`;
+        list.appendChild(li);
+    });
+}
+
+window.removeManagerTask = function(managerId, taskId) {
+    const managers = getManagers();
+    const manager = managers.find(m => String(m.id) === String(managerId));
+    if (!manager || !manager.tasks) return;
+    const idx = manager.tasks.findIndex(t => t.id === taskId);
+    if (idx !== -1) manager.tasks.splice(idx, 1);
+    saveManagers(managers);
+    renderManagerTaskList(managerId);
+};
+
+window.completeManagerTask = function(managerId, taskId) {
+    const managers = getManagers();
+    const manager = managers.find(m => String(m.id) === String(managerId));
+    if (!manager || !manager.tasks) return;
+    const task = manager.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    task.completed = true;
+    task.completedAt = new Date().toISOString();
+    saveManagers(managers);
+    renderManagerTaskList(managerId);
+};
+
+window.completeManagerTaskFromCalendar = function(managerId, taskId, dateStr) {
+    const managers = getManagers();
+    const mIndex = managers.findIndex(m => String(m.id) === String(managerId));
+    if (mIndex === -1) return;
+    const tasks = managers[mIndex].tasks || [];
+    const tIndex = tasks.findIndex(t => t.id === taskId);
+    if (tIndex === -1) return;
+    tasks[tIndex].completed = true;
+    tasks[tIndex].completedAt = new Date().toISOString();
+    saveManagers(managers);
+    renderDayActions(dateStr);
+    if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
+        document.getElementById('calendar')._fullCalendar.refetchEvents();
+    }
+};
+
 function completeSubStage() {
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
@@ -1996,13 +2164,18 @@ function completeSubStage() {
 // Модальное окно для добавления задачи через select
 function showAddTaskModal(dateStr) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    if (clients.length === 0) {
-        alert('Нет клиентов для добавления задачи!');
+    const managers = getManagers();
+    if (clients.length === 0 && managers.length === 0) {
+        alert('Нет объектов для добавления задачи!');
         return;
     }
     let modalDiv = document.createElement('div');
     modalDiv.className = 'modal fade';
     const dateTitle = dateStr ? ` на ${new Date(dateStr).toLocaleDateString('ru-RU')}` : '';
+    const ownerOptions = [
+        clients.length ? `<optgroup label="Клиенты">${clients.map(c => `<option value="client-${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}</optgroup>` : '',
+        managers.length ? `<optgroup label="Менеджеры">${managers.map(m => `<option value="manager-${m.id}">${m.name}</option>`).join('')}</optgroup>` : ''
+    ].join('');
     modalDiv.innerHTML = `
         <div class="modal-dialog">
             <div class="modal-content">
@@ -2012,9 +2185,9 @@ function showAddTaskModal(dateStr) {
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="calendarTaskClient" class="form-label">Клиент</label>
-                        <select id="calendarTaskClient" class="form-select">
-                            ${clients.map(c => `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}
+                        <label for="calendarTaskOwner" class="form-label">Кому</label>
+                        <select id="calendarTaskOwner" class="form-select">
+                            ${ownerOptions}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -2042,7 +2215,8 @@ function showAddTaskModal(dateStr) {
     modalInstance.show();
 
     document.getElementById('calendarTaskSaveBtn').onclick = function() {
-        const clientId = document.getElementById('calendarTaskClient').value;
+        const ownerValue = document.getElementById('calendarTaskOwner').value;
+        const [ownerType, ownerId] = ownerValue.split('-');
         const text = document.getElementById('calendarTaskText').value.trim();
         const color = document.getElementById('calendarTaskColor').value;
         const date = document.getElementById('calendarTaskDate').value || dateStr;
@@ -2054,21 +2228,20 @@ function showAddTaskModal(dateStr) {
             alert('Выберите дату задачи!');
             return;
         }
-        let client = clients.find(c => String(c.id) === String(clientId));
-        if (!client) {
-            alert('Клиент не найден!');
-            return;
+        const task = { id: Date.now(), text, color, deadline: date, completed: false };
+        if (ownerType === 'client') {
+            const client = clients.find(c => String(c.id) === String(ownerId));
+            if (!client) { alert('Клиент не найден!'); return; }
+            if (!Array.isArray(client.tasks)) client.tasks = [];
+            client.tasks.push(task);
+            localStorage.setItem('clients', JSON.stringify(clients));
+        } else if (ownerType === 'manager') {
+            const manager = managers.find(m => String(m.id) === String(ownerId));
+            if (!manager) { alert('Менеджер не найден!'); return; }
+            manager.tasks = manager.tasks || [];
+            manager.tasks.push(task);
+            saveManagers(managers);
         }
-        let task = {
-            id: Date.now(),
-            text,
-            color,
-            deadline: date,
-            completed: false
-        };
-        if (!Array.isArray(client.tasks)) client.tasks = [];
-        client.tasks.push(task);
-        localStorage.setItem('clients', JSON.stringify(clients));
         modalInstance.hide();
         renderDayActions(date);
         if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
@@ -2403,7 +2576,7 @@ function renderManagersPage() {
     list.innerHTML = '';
     managers.forEach(manager => {
         const card = document.createElement('div');
-        card.className = 'mb-4 p-3 border rounded';
+        card.className = 'manager-card mb-4';
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
         let monthlyIncome = 0;
         let totalIncome = 0;
@@ -2436,6 +2609,22 @@ function renderManagersPage() {
                     </button>
                 </div>
             </div>
+            <div class="text-muted small mb-2">${manager.contacts || ''}</div>
+            <div class="manager-tasks-card mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Задачи</strong>
+                    <button class="btn btn-show btn-sm" data-bs-toggle="collapse" data-bs-target="#managerTasks${manager.id}">Показать</button>
+                </div>
+                <div class="collapse" id="managerTasks${manager.id}">
+                    <div class="mb-2">
+                        <input type="text" id="managerTaskText${manager.id}" class="form-control mb-1" placeholder="Новая задача">
+                        <input type="date" id="managerTaskDeadline${manager.id}" class="form-control mb-1">
+                        <input type="color" id="managerTaskColor${manager.id}" class="form-control form-control-color mb-1" value="#28a745">
+                        <button class="btn btn-outline-primary btn-sm" onclick="addManagerTask(${manager.id})">Добавить</button>
+                    </div>
+                    <ul class="list-group manager-task-list" id="managerTaskList${manager.id}"></ul>
+                </div>
+            </div>
             <div class="text-muted small mb-2">Ежемесячно: ${monthlyIncome.toFixed(2)} | Всего: ${totalIncome.toFixed(2)}</div>
             <table class="table mb-2">
                 <thead><tr><th>Клиент</th><th>%</th><th>ФУ</th></tr></thead>
@@ -2444,6 +2633,7 @@ function renderManagersPage() {
             <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
         `;
         list.appendChild(card);
+        renderManagerTaskList(manager.id);
     });
 }
 
