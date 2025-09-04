@@ -826,6 +826,10 @@ function loadClientCard(clientId) {
     document.getElementById('editClientBtn').onclick = () => {
         window.location.href = `edit-client.html?id=${client.id}`;
     };
+    const deleteBtn = document.getElementById('deleteClientBtn');
+    if (deleteBtn) {
+        deleteBtn.onclick = deleteClient;
+    }
     const financeBtn = document.getElementById('financeBtn');
     if (financeBtn) {
         financeBtn.classList.add('disabled');
