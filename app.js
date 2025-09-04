@@ -2331,13 +2331,24 @@ window.saveAssignedClient = function() {
 };
 
 window.saveManagerSalary = function() {
-    const salary = document.getElementById('managerSalary').value;
-    const bonus = document.getElementById('managerBonus').value;
+    const salary = parseFloat(document.getElementById('managerSalary').value) || 0;
+    const bonus = parseFloat(document.getElementById('managerBonus').value) || 0;
     const paid = document.getElementById('managerPaid').checked;
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
-    payments[currentManagerId] = { ...existing, salary, bonus, paid, month: new Date().toISOString().slice(0,7) };
+    payments[currentManagerId] = {
+        ...existing,
+        salary,
+        bonus,
+        paid,
+        month: new Date().toISOString().slice(0, 7)
+    };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
+    renderManagerPayments();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('managerPaymentsModal'));
+    if (modal) {
+        modal.hide();
+    }
 };
 
 window.openManagerPayments = function(managerId) {
