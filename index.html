@@ -127,41 +127,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">Общая сумма заработка: <span id="globalTotalIncome">0</span></div>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="finance-metric-card text-success text-center">
-                                <div>💰 Заработок в этом месяце</div>
-                                <div id="currentMonthIncome" class="fs-4">0</div>
+                        <div class="col-md-6">
+                            <div class="finance-summary-card p-4 h-100">
+                                <p class="text-muted mb-1">Total balance</p>
+                                <h2 id="totalBalance" class="mb-2">0</h2>
+                                <span id="balanceChange" class="text-success small"></span>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="finance-metric-card text-primary text-center">
-                                <div>📅 Предварительный заработок</div>
-                                <div id="nextMonthIncome" class="fs-4">0</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="finance-metric-card text-danger text-center">
-                                <div>🔴 Неоплачено</div>
-                                <div id="unpaidAmount" class="fs-4">0</div>
+                        <div class="col-md-6">
+                            <div class="finance-summary-card p-4 h-100 d-flex flex-column align-items-center">
+                                <h6 class="mb-3">Expenses</h6>
+                                <canvas id="summaryExpenseChart" width="200" height="200"></canvas>
                             </div>
                         </div>
                     </div>
-                    <h6 class="mb-2">Обязательные расходы</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="finance-metric-card text-purple text-center">
-                                <div>👤 Финансовый управляющий</div>
-                                <div id="finManagerExpense" class="fs-5">0</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="finance-metric-card text-purple text-center">
-                                <div>⚖️ Депозит в суд</div>
-                                <div id="courtDepositExpense" class="fs-5">0</div>
-                            </div>
-                        </div>
+                    <div class="finance-summary-card p-4 mb-4">
+                        <h6 class="mb-3">Transactions Overview</h6>
+                        <canvas id="summaryTransactionsChart"></canvas>
                     </div>
                     <div class="d-flex align-items-center mb-2">
                         <label for="financeClientSelect" class="me-2">Клиент:</label>
@@ -199,6 +182,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
