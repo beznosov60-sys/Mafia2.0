@@ -1181,3 +1181,19 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
     background-color: var(--primary-color-dark);
     color: #fff;
 }
+
+.btn-finance.disabled {
+    background-color: #f8d7da;
+    color: #6c757d;
+    border: 2px dashed #dc3545;
+    cursor: not-allowed;
+}
+
+.finance-menu-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.finance-menu-card:hover {
+    transform: scale(1.02);
+}
