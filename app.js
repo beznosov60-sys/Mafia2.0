@@ -2617,6 +2617,13 @@ function renderManagersPage() {
                 }
             }
         });
+        const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        const history = paymentsStore[manager.id]?.history || [];
+        const currentMonth = new Date().toISOString().slice(0,7);
+        const paidThisMonth = history
+            .filter(p => p.date && p.date.slice(0,7) === currentMonth)
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+        monthlyIncome = Math.max(0, monthlyIncome - paidThisMonth);
         const clientItems = managerClients.length
             ? managerClients.map(c => {
                 const percentText = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
@@ -2801,7 +2808,8 @@ window.issueManagerSalary = function() {
     const bonus = parseFloat(document.getElementById('managerBonus').value) || 0;
     const amount = salary + bonus;
     if (amount <= 0) return;
-    const date = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('managerSalaryDate');
+    const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
@@ -2812,6 +2820,7 @@ window.issueManagerSalary = function() {
         bonus,
         paid: true,
         month: date.slice(0, 7),
+        salaryDate: date,
         history
     };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
@@ -2824,7 +2833,10 @@ window.openManagerPayments = function(managerId) {
     const data = payments[managerId] || {};
     document.getElementById('managerSalary').value = data.salary || '';
     document.getElementById('managerBonus').value = data.bonus || '';
-    document.getElementById('managerPaid').checked = !!data.paid;
+    const dateInput = document.getElementById('managerSalaryDate');
+    if (dateInput) {
+        dateInput.value = data.salaryDate || new Date().toISOString().split('T')[0];
+    }
     renderManagerPayments();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
     modal.show();
@@ -2837,18 +2849,15 @@ function renderManagerPayments() {
     const data = payments[currentManagerId] || {};
     const history = data.history || [];
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const month = new Date().toISOString().slice(0,7);
     body.innerHTML = '';
     let hasPayments = false;
     history.forEach((p, idx) => {
-        if (p.date && p.date.slice(0,7) === month) {
-            hasPayments = true;
-            const client = clients.find(c => String(c.id) === String(p.clientId));
-            const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
-            body.appendChild(tr);
-        }
+        hasPayments = true;
+        const client = clients.find(c => String(c.id) === String(p.clientId));
+        const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
+        body.appendChild(tr);
     });
     if (!hasPayments) {
         body.innerHTML = '<tr><td colspan="4" class="text-center">Нет платежей</td></tr>';
