@@ -821,6 +821,8 @@ function loadClientForEdit(clientId) {
     document.getElementById('stage').value = client.stage;
     updateSubStageOptions(client.stage, document.getElementById('subStage'));
     document.getElementById('subStage').value = client.subStage || '';
+    document.getElementById('courtArbitrage').checked = client.courtTypes?.arbitration || false;
+    document.getElementById('courtTret').checked = client.courtTypes?.tret || false;
     document.getElementById('courtDate').value = client.courtDate || '';
     document.getElementById('notes').value = client.notes || '';
 
@@ -1277,10 +1279,21 @@ function updateClient() {
         caseNumber: document.getElementById('caseNumber').value.trim(),
         stage: document.getElementById('stage').value,
         subStage: document.getElementById('subStage').value,
+        courtTypes: {
+            arbitration: document.getElementById('courtArbitrage').checked,
+            tret: document.getElementById('courtTret').checked
+        },
         courtDate: document.getElementById('courtDate').value,
         notes: document.getElementById('notes').value.trim(),
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         tasks: window.tasks || existingClient.tasks || [],
+        managerId: existingClient.managerId,
+        managerPercent: existingClient.managerPercent,
+        managerPaidTotal: existingClient.managerPaidTotal,
+        managerFullyPaid: existingClient.managerFullyPaid,
+        isFinManager: existingClient.isFinManager,
+        finManagerName: existingClient.finManagerName,
+        managerPayments: existingClient.managerPayments || [],
         finManagerPaid: existingClient.finManagerPaid || false,
         courtDepositPaid: existingClient.courtDepositPaid || false,
         paymentAdjustments: existingClient.paymentAdjustments || {},
@@ -2607,9 +2620,10 @@ function renderManagersPage() {
         const clientItems = managerClients.length
             ? managerClients.map(c => {
                 const percentText = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
-                return `<li class="list-group-item"><a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link">${c.firstName} ${c.lastName}</a><div class="small text-muted">Процент: ${percentText}</div><div class="small text-muted">ФУ: ${c.finManagerName || ''}</div></li>`;
+                return `<li class="list-group-item d-flex justify-content-between align-items-start"><div><a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link">${c.firstName} ${c.lastName}</a><div class="small text-muted">Процент: ${percentText}</div><div class="small text-muted">ФУ: ${c.finManagerName || ''}</div></div><div class="btn-group btn-group-sm"><button class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button><button class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button></div></li>`;
             }).join('')
             : '<li class="list-group-item text-center">Нет клиентов</li>';
+        const clientsLine = managerClients.map(c => `${c.firstName} ${c.lastName}`).join(', ') || 'Нет клиентов';
         card.innerHTML = `
             <div class="row g-3">
                 <div class="col-md-4 manager-block">
@@ -2622,8 +2636,9 @@ function renderManagersPage() {
                     <div class="text-muted small">Остаток: ${totalRemaining.toFixed(2)}</div>
                 </div>
                 <div class="col-md-4 manager-block">
-                    <strong>Клиенты</strong>
-                    <ul class="list-group mb-2">${clientItems}</ul>
+                    <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
+                    <ul class="list-group mb-2" id="managerClientsList${manager.id}">${clientItems}</ul>
+                    <div class="clients-collapsed" id="managerClientsCollapsed${manager.id}" style="display:none;">${clientsLine}</div>
                     <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
                 </div>
                 <div class="col-md-4 manager-block">
@@ -2670,6 +2685,7 @@ window.saveManager = function() {
 
 window.openAssignClientToManager = function(managerId) {
     currentManagerId = managerId;
+    currentClientId = null;
     const select = document.getElementById('assignClientSelect');
     if (!select) return;
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
@@ -2680,15 +2696,36 @@ window.openAssignClientToManager = function(managerId) {
         option.textContent = `${c.firstName} ${c.lastName}`;
         select.appendChild(option);
     });
+    select.disabled = false;
     document.getElementById('assignClientPercent').value = '';
     document.getElementById('assignClientFU').checked = false;
     document.getElementById('assignClientFUName').value = '';
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('assignClientModal'));
+    const modalEl = document.getElementById('assignClientModal');
+    modalEl.querySelector('.modal-title').textContent = 'Добавить клиента';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+};
+
+window.openEditAssignedClient = function(managerId, clientId) {
+    currentManagerId = managerId;
+    currentClientId = clientId;
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (!client) return;
+    const select = document.getElementById('assignClientSelect');
+    select.innerHTML = `<option value="${client.id}">${client.firstName} ${client.lastName}</option>`;
+    select.disabled = true;
+    document.getElementById('assignClientPercent').value = client.managerPercent || '';
+    document.getElementById('assignClientFU').checked = !!client.isFinManager;
+    document.getElementById('assignClientFUName').value = client.finManagerName || '';
+    const modalEl = document.getElementById('assignClientModal');
+    modalEl.querySelector('.modal-title').textContent = 'Редактировать клиента';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 };
 
 window.saveAssignedClient = function() {
-    const clientId = document.getElementById('assignClientSelect').value;
+    const clientId = currentClientId || document.getElementById('assignClientSelect').value;
     const percent = document.getElementById('assignClientPercent').value;
     const isFU = document.getElementById('assignClientFU').checked;
     const fuName = document.getElementById('assignClientFUName').value.trim();
@@ -2699,13 +2736,56 @@ window.saveAssignedClient = function() {
         client.managerPercent = percent;
         client.isFinManager = isFU;
         client.finManagerName = fuName;
-        client.managerPaidTotal = 0;
-        client.managerFullyPaid = false;
+        if (!currentClientId) {
+            client.managerPaidTotal = 0;
+            client.managerFullyPaid = false;
+        }
         localStorage.setItem('clients', JSON.stringify(clients));
     }
     renderManagersPage();
     const modal = bootstrap.Modal.getInstance(document.getElementById('assignClientModal'));
     modal.hide();
+    currentClientId = null;
+};
+
+window.removeClientFromManager = function(managerId, clientId) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (client && String(client.managerId) === String(managerId)) {
+        delete client.managerId;
+        delete client.managerPercent;
+        client.managerPaidTotal = 0;
+        client.managerFullyPaid = false;
+        client.isFinManager = false;
+        client.finManagerName = '';
+        client.managerPayments = [];
+        localStorage.setItem('clients', JSON.stringify(clients));
+        const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        const mp = payments[managerId];
+        if (mp && mp.history) {
+            mp.history = mp.history.filter(p => p.clientId !== clientId);
+            payments[managerId] = mp;
+            localStorage.setItem('managerPayments', JSON.stringify(payments));
+        }
+    }
+    renderManagersPage();
+};
+
+window.toggleManagerClients = function(managerId) {
+    const list = document.getElementById(`managerClientsList${managerId}`);
+    const collapsed = document.getElementById(`managerClientsCollapsed${managerId}`);
+    const btn = document.getElementById(`toggleClientsBtn${managerId}`);
+    if (!list || !collapsed || !btn) return;
+    const isHidden = list.style.display === 'none';
+    if (isHidden) {
+        list.style.display = '';
+        collapsed.style.display = 'none';
+        btn.textContent = 'Скрыть';
+    } else {
+        list.style.display = 'none';
+        collapsed.style.display = '';
+        btn.textContent = 'Показать';
+    }
 };
 
 window.issueManagerSalary = function() {
