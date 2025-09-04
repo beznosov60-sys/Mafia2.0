@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
         document.getElementById('saveManagerSalaryBtn')?.addEventListener('click', saveManagerSalary);
+        document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
     }
     // Загрузка карточки клиента (только на client-card.html)
     if (window.location.pathname.includes('client-card.html')) {
@@ -2209,9 +2210,14 @@ function renderManagersPage() {
                     <i class="ri-user-line me-2"></i>
                     <h5 class="mb-0">${manager.name}</h5>
                 </div>
-                <button class="btn btn-outline-secondary btn-sm" onclick="openManagerSalaryModal(${manager.id})" title="Зарплата">
-                    <i class="ri-money-dollar-circle-line"></i>
-                </button>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Платежи">
+                        <i class="ri-calendar-check-line"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerSalaryModal(${manager.id})" title="Зарплата">
+                        <i class="ri-money-dollar-circle-line"></i>
+                    </button>
+                </div>
             </div>
             <div class="text-muted small mb-2">Ежемесячно: ${monthlyIncome.toFixed(2)} | Всего: ${totalIncome.toFixed(2)}</div>
             <table class="table mb-2">
@@ -2300,9 +2306,74 @@ window.saveManagerSalary = function() {
     const bonus = document.getElementById('managerBonus').value;
     const paid = document.getElementById('managerPaid').checked;
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
-    payments[currentManagerId] = { salary, bonus, paid, month: new Date().toISOString().slice(0,7) };
+    const existing = payments[currentManagerId] || {};
+    payments[currentManagerId] = { ...existing, salary, bonus, paid, month: new Date().toISOString().slice(0,7) };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     bootstrap.Modal.getInstance(document.getElementById('managerSalaryModal')).hide();
+};
+
+window.openManagerPayments = function(managerId) {
+    currentManagerId = managerId;
+    renderManagerPayments();
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
+    modal.show();
+};
+
+function renderManagerPayments() {
+    const body = document.getElementById('managerPaymentsBody');
+    if (!body) return;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const data = payments[currentManagerId] || {};
+    const history = data.history || [];
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const month = new Date().toISOString().slice(0,7);
+    const filtered = history.filter(p => p.date && p.date.slice(0,7) === month);
+    body.innerHTML = '';
+    if (filtered.length === 0) {
+        body.innerHTML = '<tr><td colspan="3" class="text-center">Нет платежей</td></tr>';
+        return;
+    }
+    filtered.forEach(p => {
+        const client = clients.find(c => String(c.id) === String(p.clientId));
+        const name = client ? `${client.firstName} ${client.lastName}` : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td>`;
+        body.appendChild(tr);
+    });
+}
+
+window.openAddManagerPayment = function() {
+    const select = document.getElementById('managerPaymentClient');
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    if (select) {
+        select.innerHTML = '';
+        clients.filter(c => String(c.managerId) === String(currentManagerId)).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.firstName} ${c.lastName}`;
+            select.appendChild(opt);
+        });
+    }
+    const dateInput = document.getElementById('managerPaymentDate');
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    document.getElementById('managerPaymentAmount').value = '';
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addManagerPaymentModal'));
+    modal.show();
+};
+
+window.saveManagerPayment = function() {
+    const clientId = document.getElementById('managerPaymentClient').value;
+    const amount = document.getElementById('managerPaymentAmount').value;
+    const date = document.getElementById('managerPaymentDate').value;
+    if (!clientId || !amount || !date) return;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const existing = payments[currentManagerId] || {};
+    const history = existing.history || [];
+    history.push({ clientId, amount: parseFloat(amount), date });
+    payments[currentManagerId] = { ...existing, history };
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    bootstrap.Modal.getInstance(document.getElementById('addManagerPaymentModal')).hide();
+    renderManagerPayments();
 };
 
 window.showConsultationDetails = function(consultId) {
