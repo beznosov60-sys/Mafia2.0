@@ -91,7 +91,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Модальное окно зарплаты менеджера -->
     <div class="modal fade" id="managerSalaryModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -117,6 +117,57 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button class="btn btn-primary" id="saveManagerSalaryBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно платежей менеджера -->
+    <div class="modal fade" id="managerPaymentsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Платежи менеджера</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 text-end">
+                        <button class="btn btn-primary btn-sm" onclick="openAddManagerPayment()">Добавить оплату</button>
+                    </div>
+                    <table class="table table-sm">
+                        <thead><tr><th>Дата</th><th>Клиент</th><th>Сумма</th></tr></thead>
+                        <tbody id="managerPaymentsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления оплаты менеджеру -->
+    <div class="modal fade" id="addManagerPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новая оплата</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="managerPaymentClient" class="form-label">Клиент</label>
+                        <select id="managerPaymentClient" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerPaymentAmount" class="form-label">Сумма</label>
+                        <input type="number" id="managerPaymentAmount" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerPaymentDate" class="form-label">Дата</label>
+                        <input type="date" id="managerPaymentDate" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" id="saveManagerPaymentBtn">Сохранить</button>
                 </div>
             </div>
         </div>
