@@ -13,7 +13,7 @@
         <a href="index.html" class="btn btn-back mb-3">&larr; Назад</a>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">Менеджеры</h3>
-            <button class="btn btn-primary" id="createManagerBtn" title="Создать менеджера"><i class="ri-user-add-line me-1"></i>Создать менеджера</button>
+            <button type="button" class="btn btn-primary" id="createManagerBtn" title="Создать менеджера"><i class="ri-user-add-line me-1"></i>Создать менеджера</button>
         </div>
         <div id="managersList"></div>
     </div>
@@ -51,8 +51,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button class="btn btn-primary" id="saveManagerBtn">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveManagerBtn">Сохранить</button>
                 </div>
             </div>
         </div>
@@ -85,8 +85,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button class="btn btn-primary" id="saveAssignedClientBtn">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveAssignedClientBtn">Сохранить</button>
                 </div>
             </div>
         </div>
@@ -114,10 +114,10 @@
                         <label class="form-check-label" for="managerPaid">Оплачено в этом месяце</label>
                     </div>
                     <div class="mb-3 text-end">
-                        <button class="btn btn-primary btn-sm" id="issueManagerSalaryBtn">Выдать</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="issueManagerSalaryBtn">Выдать</button>
                     </div>
                     <div class="mb-3 text-end">
-                        <button class="btn btn-primary btn-sm" onclick="openAddManagerPayment()">Добавить оплату</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openAddManagerPayment()">Добавить оплату</button>
                     </div>
                     <table class="table table-sm">
                         <thead><tr><th>Дата</th><th>Клиент</th><th>Сумма</th><th>Действия</th></tr></thead>
@@ -151,8 +151,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button class="btn btn-primary" id="saveManagerPaymentBtn">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveManagerPaymentBtn">Сохранить</button>
                 </div>
             </div>
         </div>
