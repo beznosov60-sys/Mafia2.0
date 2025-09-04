@@ -409,6 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('createManagerBtn')?.addEventListener('click', openCreateManagerModal);
         document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
+        document.getElementById('saveManagerSalaryBtn')?.addEventListener('click', saveManagerSalary);
     }
     // Загрузка карточки клиента (только на client-card.html)
     if (window.location.pathname.includes('client-card.html')) {
@@ -2203,9 +2204,14 @@ function renderManagersPage() {
             ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.finManagerName || ''}</td></tr>`).join('')
             : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
         card.innerHTML = `
-            <div class="d-flex align-items-center mb-2">
-                <i class="ri-user-line me-2"></i>
-                <h5 class="mb-0">${manager.name}</h5>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center">
+                    <i class="ri-user-line me-2"></i>
+                    <h5 class="mb-0">${manager.name}</h5>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm" onclick="openManagerSalaryModal(${manager.id})" title="Зарплата">
+                    <i class="ri-money-dollar-circle-line"></i>
+                </button>
             </div>
             <div class="text-muted small mb-2">Ежемесячно: ${monthlyIncome.toFixed(2)} | Всего: ${totalIncome.toFixed(2)}</div>
             <table class="table mb-2">
@@ -2276,6 +2282,27 @@ window.saveAssignedClient = function() {
     renderManagersPage();
     const modal = bootstrap.Modal.getInstance(document.getElementById('assignClientModal'));
     modal.hide();
+};
+
+window.openManagerSalaryModal = function(managerId) {
+    currentManagerId = managerId;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const data = payments[managerId] || {};
+    document.getElementById('managerSalary').value = data.salary || '';
+    document.getElementById('managerBonus').value = data.bonus || '';
+    document.getElementById('managerPaid').checked = !!data.paid;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerSalaryModal'));
+    modal.show();
+};
+
+window.saveManagerSalary = function() {
+    const salary = document.getElementById('managerSalary').value;
+    const bonus = document.getElementById('managerBonus').value;
+    const paid = document.getElementById('managerPaid').checked;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    payments[currentManagerId] = { salary, bonus, paid, month: new Date().toISOString().slice(0,7) };
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    bootstrap.Modal.getInstance(document.getElementById('managerSalaryModal')).hide();
 };
 
 window.showConsultationDetails = function(consultId) {
