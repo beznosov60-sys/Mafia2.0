@@ -286,9 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const floatingOptions = document.querySelectorAll('.floating-option');
         floatingOptions.forEach(btn => {
             if (btn.id !== 'globalFinanceBtn') {
-                btn.addEventListener('click', () => {
-                    alert('Эта функция будет скоро доработана');
-                });
+                btn.disabled = true;
             }
         });
         document.getElementById('globalFinanceBtn')?.addEventListener('click', openFinanceModal);
@@ -501,7 +499,7 @@ function displayCourtThisMonth() {
                 <div class="court-date-pay">
                     <span class="court-date">${dateText}</span>
                     <button class="court-payments-btn" onclick="event.stopPropagation(); showPaymentsModal('${client.id}')">Платежи</button>
-                    <button class="court-toggle" data-client="${client.id}"><i class="ri-more-2-line"></i></button>
+                    <button class="court-toggle" data-client="${client.id}" disabled title="Раздел в разработке"><i class="ri-more-2-line"></i></button>
                 </div>
             </div>
             <div class="court-details">
@@ -529,13 +527,6 @@ function displayCourtThisMonth() {
         courtThisMonthDiv.appendChild(li);
     });
 
-    courtThisMonthDiv.addEventListener('click', (event) => {
-        const toggleBtn = event.target.closest('.court-toggle');
-        if (toggleBtn) {
-            event.stopPropagation();
-            alert('Функция временно недоступна. Ведутся технические работы');
-        }
-    });
 }
 
 // Отображение списка клиентов в боковой панели
@@ -2144,7 +2135,7 @@ function renderClientManager(client) {
     if (client.managerId) {
         const m = managers.find(m => String(m.id) === String(client.managerId));
         if (m) {
-            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${client.managerPercent ? ' (' + client.managerPercent + '%)' : ''}${client.isFinManager ? ' ФУ' : ''}</span>`;
+            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${client.managerPercent ? ' (' + client.managerPercent + '%)' : ''}${client.finManagerName ? ' ФУ: ' + client.finManagerName : (client.isFinManager ? ' ФУ' : '')}</span>`;
             return;
         }
     }
@@ -2209,7 +2200,7 @@ function renderManagersPage() {
             totalIncome += incomePerMonth * months;
         });
         const rows = managerClients.length
-            ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.isFinManager ? '✔' : ''}</td></tr>`).join('')
+            ? managerClients.map(c => `<tr><td>${c.firstName} ${c.lastName}</td><td>${c.managerPercent || ''}</td><td>${c.finManagerName || ''}</td></tr>`).join('')
             : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
         card.innerHTML = `
             <div class="d-flex align-items-center mb-2">
@@ -2263,6 +2254,7 @@ window.openAssignClientToManager = function(managerId) {
     });
     document.getElementById('assignClientPercent').value = '';
     document.getElementById('assignClientFU').checked = false;
+    document.getElementById('assignClientFUName').value = '';
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('assignClientModal'));
     modal.show();
 };
@@ -2271,12 +2263,14 @@ window.saveAssignedClient = function() {
     const clientId = document.getElementById('assignClientSelect').value;
     const percent = document.getElementById('assignClientPercent').value;
     const isFU = document.getElementById('assignClientFU').checked;
+    const fuName = document.getElementById('assignClientFUName').value.trim();
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (client) {
         client.managerId = currentManagerId;
         client.managerPercent = percent;
         client.isFinManager = isFU;
+        client.finManagerName = fuName;
         localStorage.setItem('clients', JSON.stringify(clients));
     }
     renderManagersPage();

@@ -491,6 +491,13 @@ body.home-screen {
     background: #EEF2FF;
 }
 
+.court-toggle:disabled {
+    border-color: #A5B4FC;
+    color: #A5B4FC;
+    cursor: not-allowed;
+    background: transparent;
+}
+
 #courtThisMonth .court-details {
     max-height: 0;
     overflow: hidden;
@@ -1140,6 +1147,12 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
 
 .floating-option:hover {
     background: rgba(255,255,255,0.8);
+}
+
+.floating-option:disabled {
+    background: rgba(255,255,255,0.3);
+    color: #888;
+    cursor: not-allowed;
 }
 
 .consultation-item {
