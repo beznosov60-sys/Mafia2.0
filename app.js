@@ -605,11 +605,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.location.pathname.includes('client-card.html')) {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
+        const fromManager = urlParams.get('fromManager');
         if (clientId) {
             currentClientId = clientId;
             loadClientCard(clientId);
             document.getElementById('assignManagerBtn')?.addEventListener('click', () => openAssignManagerForClient(clientId));
             document.getElementById('saveClientManager')?.addEventListener('click', () => saveClientManager(clientId));
+            if (fromManager) {
+                const backLink = document.getElementById('backLink');
+                if (backLink) backLink.href = `managers.html#managerCard${fromManager}`;
+            }
         } else {
             alert('Клиент не найден!');
             window.location.href = 'index.html';
@@ -2577,46 +2582,56 @@ function renderManagersPage() {
     managers.forEach(manager => {
         const card = document.createElement('div');
         card.className = 'manager-card mb-4';
+        card.id = `managerCard${manager.id}`;
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
         let monthlyIncome = 0;
-        let totalIncome = 0;
+        let totalRemaining = 0;
         managerClients.forEach(c => {
             const months = c.paymentMonths || 0;
             const total = c.totalAmount || 0;
             const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
-            if (!c.managerFullyPaid && percent > 0) {
+            const paid = c.managerPaidTotal || 0;
+            const managerShare = total * percent / 100;
+            if (percent > 0) {
                 const monthly = months ? total / months : 0;
                 const incomePerMonth = monthly * percent / 100;
-                monthlyIncome += incomePerMonth;
-                totalIncome += incomePerMonth * months;
+                if (!c.managerFullyPaid) {
+                    monthlyIncome += incomePerMonth;
+                }
+                const remainingForClient = managerShare - paid;
+                if (remainingForClient > 0) {
+                    totalRemaining += remainingForClient;
+                }
             }
         });
-        const rows = managerClients.length
+        const clientItems = managerClients.length
             ? managerClients.map(c => {
-                const percentCell = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
-                return `<tr><td>${c.firstName} ${c.lastName}</td><td>${percentCell}</td><td>${c.finManagerName || ''}</td></tr>`;
+                const percentText = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
+                return `<li class="list-group-item"><a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link">${c.firstName} ${c.lastName}</a><div class="small text-muted">Процент: ${percentText}</div><div class="small text-muted">ФУ: ${c.finManagerName || ''}</div></li>`;
             }).join('')
-            : '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
+            : '<li class="list-group-item text-center">Нет клиентов</li>';
         card.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="d-flex align-items-center">
-                    <i class="ri-user-line me-2"></i>
-                    <h5 class="mb-0">${manager.name}</h5>
+            <div class="row g-3">
+                <div class="col-md-4 manager-block">
+                    <div class="d-flex align-items-center">
+                        <i class="ri-user-line me-2"></i>
+                        <h5 class="mb-0">${manager.name}</h5>
+                    </div>
+                    <div class="text-muted small">${manager.contacts || ''}</div>
+                    <div class="text-muted small">Ежемесячная плата: ${monthlyIncome.toFixed(2)}</div>
+                    <div class="text-muted small">Остаток: ${totalRemaining.toFixed(2)}</div>
                 </div>
-                <div class="btn-group">
-                    <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты">
-                        <i class="ri-wallet-line"></i>
-                    </button>
+                <div class="col-md-4 manager-block">
+                    <strong>Клиенты</strong>
+                    <ul class="list-group mb-2">${clientItems}</ul>
+                    <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
                 </div>
-            </div>
-            <div class="text-muted small mb-2">${manager.contacts || ''}</div>
-            <div class="manager-tasks-card mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong>Задачи</strong>
-                    <button class="btn btn-show btn-sm" data-bs-toggle="collapse" data-bs-target="#managerTasks${manager.id}">Показать</button>
-                </div>
-                <div class="collapse" id="managerTasks${manager.id}">
-                    <div class="mb-2">
+                <div class="col-md-4 manager-block">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Задачи</strong>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты"><i class="ri-wallet-line"></i></button>
+                    </div>
+                    <div>
                         <input type="text" id="managerTaskText${manager.id}" class="form-control mb-1" placeholder="Новая задача">
                         <input type="date" id="managerTaskDeadline${manager.id}" class="form-control mb-1">
                         <input type="color" id="managerTaskColor${manager.id}" class="form-control form-control-color mb-1" value="#28a745">
@@ -2625,12 +2640,6 @@ function renderManagersPage() {
                     <ul class="list-group manager-task-list" id="managerTaskList${manager.id}"></ul>
                 </div>
             </div>
-            <div class="text-muted small mb-2">Ежемесячно: ${monthlyIncome.toFixed(2)} | Всего: ${totalIncome.toFixed(2)}</div>
-            <table class="table mb-2">
-                <thead><tr><th>Клиент</th><th>%</th><th>ФУ</th></tr></thead>
-                <tbody>${rows}</tbody>
-            </table>
-            <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
         `;
         list.appendChild(card);
         renderManagerTaskList(manager.id);

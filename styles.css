@@ -347,6 +347,18 @@ body.home-screen {
     padding: 1rem;
 }
 
+.manager-card .manager-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.manager-card .manager-block .list-group-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .client-card .client-info {
     display: flex;
     flex-direction: column;
