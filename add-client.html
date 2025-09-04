@@ -215,7 +215,11 @@
               courtDate: document.getElementById('courtDate').value,
               notes: document.getElementById('notes').value.trim(),
               favorite: false,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
+              finManagerPaid: false,
+              courtDepositPaid: false,
+              extraPayments: [],
+              managerPayments: []
           };
           if (!clientData.firstName || !clientData.lastName) {
               alert('Имя и фамилия обязательны!');

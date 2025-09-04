@@ -765,6 +765,11 @@ function renderClientPayments(client) {
                 client.paidMonths[idx] = this.checked;
                 if (clientIndex !== -1) {
                     clients[clientIndex].paidMonths = client.paidMonths;
+                    if (this.checked) {
+                        recordManagerPayment(client, schedule[idx].amount, new Date().toISOString().split('T')[0], { type: 'month', index: idx });
+                    } else {
+                        removeManagerPayment(client, { type: 'month', index: idx });
+                    }
                     localStorage.setItem('clients', JSON.stringify(clients));
                 }
                 this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
@@ -801,6 +806,39 @@ function saveClientData(client) {
     if (idx !== -1) {
         clients[idx] = client;
         localStorage.setItem('clients', JSON.stringify(clients));
+    }
+}
+
+function recordManagerPayment(client, amount, date, info = {}) {
+    if (!client || !client.managerId || !client.managerPercent) return;
+    const percent = parseFloat(client.managerPercent);
+    if (isNaN(percent) || percent <= 0) return;
+    const salary = Math.round((amount * percent) / 100);
+    const store = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const managerData = store[client.managerId] || {};
+    const history = managerData.history || [];
+    history.push({ clientId: client.id, amount: salary, date });
+    store[client.managerId] = { ...managerData, history };
+    localStorage.setItem('managerPayments', JSON.stringify(store));
+
+    client.managerPayments = client.managerPayments || [];
+    client.managerPayments.push({ ...info, date, amount: salary });
+}
+
+function removeManagerPayment(client, info = {}) {
+    if (!client || !client.managerPayments) return;
+    const idx = client.managerPayments.findIndex(p => p.type === info.type && p.index === info.index);
+    if (idx === -1) return;
+    const payment = client.managerPayments.splice(idx, 1)[0];
+    if (!client.managerId) return;
+    const store = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const managerData = store[client.managerId] || {};
+    const history = managerData.history || [];
+    const hIdx = history.findIndex(h => h.clientId === client.id && h.amount === payment.amount && h.date === payment.date);
+    if (hIdx !== -1) {
+        history.splice(hIdx, 1);
+        store[client.managerId] = { ...managerData, history };
+        localStorage.setItem('managerPayments', JSON.stringify(store));
     }
 }
 
@@ -963,6 +1001,7 @@ function loadFinancePage(clientId) {
             const comment = prompt('Комментарий:', '') || '';
             if (!client.extraPayments) client.extraPayments = [];
             client.extraPayments.push({ date, amount, paid: true, comment });
+            recordManagerPayment(client, amount, date, { type: 'extra', index: client.extraPayments.length - 1 });
             saveClientData(client);
             renderFinanceMetrics(client);
             renderFinanceHistory(client);
@@ -1120,7 +1159,8 @@ function saveClient() {
         finManagerPaid: false,
         courtDepositPaid: false,
         paymentAdjustments: {},
-        extraPayments: []
+        extraPayments: [],
+        managerPayments: []
     };
 
     // Валидация
@@ -2001,6 +2041,7 @@ function manageClientPayments() {
             const client = clients.find(c => String(c.id) === String(id));
             if (!client.extraPayments) client.extraPayments = [];
             client.extraPayments.push({ date, amount, paid: true, comment });
+            recordManagerPayment(client, amount, date, { type: 'extra', index: client.extraPayments.length - 1 });
             localStorage.setItem('clients', JSON.stringify(clients));
             manageClientPayments();
         });
@@ -2105,7 +2146,9 @@ window.convertToClient = function(consultId, dateStr) {
         createdAt: new Date().toISOString(),
         tasks: [],
         finManagerPaid: false,
-        courtDepositPaid: false
+        courtDepositPaid: false,
+        extraPayments: [],
+        managerPayments: []
     });
     localStorage.setItem('clients', JSON.stringify(clients));
     // Удалить консультацию
