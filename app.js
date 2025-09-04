@@ -2370,18 +2370,27 @@ function renderManagerPayments() {
     const history = data.history || [];
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const month = new Date().toISOString().slice(0,7);
-    const filtered = history.filter(p => p.date && p.date.slice(0,7) === month);
     body.innerHTML = '';
-    if (filtered.length === 0) {
-        body.innerHTML = '<tr><td colspan="3" class="text-center">Нет платежей</td></tr>';
+    let hasPayments = false;
+    history.forEach((p, idx) => {
+        if (p.date && p.date.slice(0,7) === month) {
+            hasPayments = true;
+            const client = clients.find(c => String(c.id) === String(p.clientId));
+            const name = client ? `${client.firstName} ${client.lastName}` : '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
+            body.appendChild(tr);
+        }
+    });
+    if (!hasPayments) {
+        body.innerHTML = '<tr><td colspan="4" class="text-center">Нет платежей</td></tr>';
         return;
     }
-    filtered.forEach(p => {
-        const client = clients.find(c => String(c.id) === String(p.clientId));
-        const name = client ? `${client.firstName} ${client.lastName}` : '';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td>`;
-        body.appendChild(tr);
+    body.querySelectorAll('button[data-index]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.index, 10);
+            deleteManagerPayment(idx);
+        });
     });
 }
 
@@ -2416,6 +2425,16 @@ window.saveManagerPayment = function() {
     payments[currentManagerId] = { ...existing, history };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     bootstrap.Modal.getInstance(document.getElementById('addManagerPaymentModal')).hide();
+    renderManagerPayments();
+};
+
+window.deleteManagerPayment = function(index) {
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const data = payments[currentManagerId] || {};
+    if (!data.history) return;
+    data.history.splice(index, 1);
+    payments[currentManagerId] = data;
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
 };
 
