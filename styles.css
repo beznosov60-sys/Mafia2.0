@@ -354,7 +354,7 @@ body.home-screen {
     border: 2px solid var(--purple-600);
     border-radius: var(--border-radius);
     padding: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .manager-card .manager-block .list-group-item {

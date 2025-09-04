@@ -2620,12 +2620,20 @@ function renderManagersPage() {
         const clientItems = managerClients.length
             ? managerClients.map(c => {
                 const percentText = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
-                return `<li class="list-group-item d-flex justify-content-between align-items-start"><div><a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link">${c.firstName} ${c.lastName}</a><div class="small text-muted">Процент: ${percentText}</div><div class="small text-muted">ФУ: ${c.finManagerName || ''}</div></div><div class="btn-group btn-group-sm"><button class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button><button class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button></div></li>`;
+                return `<li class="list-group-item position-relative pe-5">
+                            <div class="btn-group btn-group-sm position-absolute top-0 end-0">
+                                <button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>
+                                <button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>
+                            </div>
+                            <a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link d-block mb-1">${c.firstName} ${c.lastName}</a>
+                            <div class="small text-muted">Процент: ${percentText}</div>
+                            <div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>
+                        </li>`;
             }).join('')
             : '<li class="list-group-item text-center">Нет клиентов</li>';
         const clientsLine = managerClients.map(c => `${c.firstName} ${c.lastName}`).join(', ') || 'Нет клиентов';
         card.innerHTML = `
-            <div class="row g-3">
+            <div class="row g-4">
                 <div class="col-md-4 manager-block">
                     <div class="d-flex align-items-center">
                         <i class="ri-user-line me-2"></i>
@@ -2636,21 +2644,21 @@ function renderManagersPage() {
                     <div class="text-muted small">Остаток: ${totalRemaining.toFixed(2)}</div>
                 </div>
                 <div class="col-md-4 manager-block">
-                    <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
+                    <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button type="button" class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
                     <ul class="list-group mb-2" id="managerClientsList${manager.id}">${clientItems}</ul>
                     <div class="clients-collapsed" id="managerClientsCollapsed${manager.id}" style="display:none;">${clientsLine}</div>
-                    <button class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
                 </div>
                 <div class="col-md-4 manager-block">
                     <div class="d-flex justify-content-between align-items-center">
                         <strong>Задачи</strong>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты"><i class="ri-wallet-line"></i></button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты"><i class="ri-wallet-line"></i></button>
                     </div>
                     <div>
                         <input type="text" id="managerTaskText${manager.id}" class="form-control mb-1" placeholder="Новая задача">
                         <input type="date" id="managerTaskDeadline${manager.id}" class="form-control mb-1">
                         <input type="color" id="managerTaskColor${manager.id}" class="form-control form-control-color mb-1" value="#28a745">
-                        <button class="btn btn-outline-primary btn-sm" onclick="addManagerTask(${manager.id})">Добавить</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addManagerTask(${manager.id})">Добавить</button>
                     </div>
                     <ul class="list-group manager-task-list" id="managerTaskList${manager.id}"></ul>
                 </div>
