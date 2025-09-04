@@ -92,12 +92,12 @@
         </div>
     </div>
 
-    <!-- Модальное окно зарплаты менеджера -->
-    <div class="modal fade" id="managerSalaryModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+    <!-- Модальное окно выплат менеджера -->
+    <div class="modal fade" id="managerPaymentsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Зарплата менеджера</h5>
+                    <h5 class="modal-title">Выплаты менеджера</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -109,28 +109,13 @@
                         <label for="managerBonus" class="form-label">Премия</label>
                         <input type="number" id="managerBonus" class="form-control">
                     </div>
-                    <div class="form-check">
+                    <div class="form-check mb-3">
                         <input type="checkbox" id="managerPaid" class="form-check-input">
                         <label class="form-check-label" for="managerPaid">Оплачено в этом месяце</label>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button class="btn btn-primary" id="saveManagerSalaryBtn">Сохранить</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Модальное окно платежей менеджера -->
-    <div class="modal fade" id="managerPaymentsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Платежи менеджера</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
+                    <div class="mb-3 text-end">
+                        <button class="btn btn-primary btn-sm" id="saveManagerSalaryBtn">Сохранить зарплату</button>
+                    </div>
                     <div class="mb-3 text-end">
                         <button class="btn btn-primary btn-sm" onclick="openAddManagerPayment()">Добавить оплату</button>
                     </div>
