@@ -144,7 +144,10 @@ window.generateClientId = generateClientId;
 
 function exportClientsToExcel() {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const data = clients.map(c => ({
+    const managers = getManagers();
+    const managerPayments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+
+    const clientData = clients.map(c => ({
         'ID': c.id,
         'Имя': c.firstName,
         'Отчество': c.middleName,
@@ -166,11 +169,67 @@ function exportClientsToExcel() {
         'Дата суда': c.courtDate,
         'Заметки': c.notes,
         'Избранный': c.favorite ? 'Да' : 'Нет',
-        'Создан': c.createdAt
+        'Создан': c.createdAt,
+        'ID менеджера': c.managerId || '',
+        'Процент менеджера': c.managerPercent || '',
+        'Менеджер выплачено': c.managerPaidTotal || 0,
+        'Менеджер оплачен полностью': c.managerFullyPaid ? 'Да' : 'Нет'
     }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    const tasksData = clients.flatMap(c =>
+        (c.tasks || []).map(t => ({
+            'ID клиента': c.id,
+            'ID задачи': t.id,
+            'Текст': t.text,
+            'Дедлайн': t.deadline,
+            'Выполнено': t.completed ? 'Да' : 'Нет',
+            'Дата выполнения': t.completedAt || '',
+            'Цвет': t.color || ''
+        }))
+    );
+
+    const managersData = managers.map(m => {
+        const mp = managerPayments[m.id] || {};
+        return {
+            'ID': m.id,
+            'Имя': m.name || '',
+            'Контакты': m.contacts || '',
+            'Тип оплаты': m.paymentType || '',
+            'Значение оплаты': m.paymentValue || '',
+            'Зарплата': mp.salary || '',
+            'Премия': mp.bonus || '',
+            'Оплачено': mp.paid ? 'Да' : 'Нет'
+        };
+    });
+
+    const managerPaymentsData = Object.entries(managerPayments).flatMap(([managerId, mp]) =>
+        (mp.history || []).map(h => ({
+            'ID менеджера': managerId,
+            'ID клиента': h.clientId || '',
+            'Сумма': h.amount,
+            'Дата': h.date
+        }))
+    );
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clients');
+    const wsClients = XLSX.utils.json_to_sheet(clientData);
+    XLSX.utils.book_append_sheet(workbook, wsClients, 'Clients');
+
+    if (tasksData.length > 0) {
+        const wsTasks = XLSX.utils.json_to_sheet(tasksData);
+        XLSX.utils.book_append_sheet(workbook, wsTasks, 'Tasks');
+    }
+
+    if (managersData.length > 0) {
+        const wsManagers = XLSX.utils.json_to_sheet(managersData);
+        XLSX.utils.book_append_sheet(workbook, wsManagers, 'Managers');
+    }
+
+    if (managerPaymentsData.length > 0) {
+        const wsMP = XLSX.utils.json_to_sheet(managerPaymentsData);
+        XLSX.utils.book_append_sheet(workbook, wsMP, 'ManagerPayments');
+    }
+
     XLSX.writeFile(workbook, 'clients.xlsx');
 }
 
@@ -181,8 +240,9 @@ function importClientsFromExcel(event) {
     reader.onload = function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        const clientsSheet = workbook.Sheets['Clients'] || workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(clientsSheet);
         const usedIds = new Set();
         const clients = rows.map(row => {
             let id;
@@ -222,10 +282,89 @@ function importClientsFromExcel(event) {
                 notes: row['Заметки'] || '',
                 favorite: row['Избранный'] === 'Да' || row['Избранный'] === true,
                 createdAt: row['Создан'] || new Date().toISOString(),
+                managerId: row['ID менеджера'] || '',
+                managerPercent: row['Процент менеджера'] || '',
+                managerPaidTotal: parseFloat(row['Менеджер выплачено']) || 0,
+                managerFullyPaid: row['Менеджер оплачен полностью'] === 'Да' || row['Менеджер оплачен полностью'] === true,
+                managerPayments: [],
                 tasks: []
             };
         });
+
+        const clientsById = {};
+        clients.forEach(c => { clientsById[c.id] = c; });
+
+        const tasksSheet = workbook.Sheets['Tasks'];
+        if (tasksSheet) {
+            const taskRows = XLSX.utils.sheet_to_json(tasksSheet);
+            taskRows.forEach(row => {
+                const clientId = row['ID клиента'];
+                const client = clientsById[clientId];
+                if (!client) return;
+                if (!Array.isArray(client.tasks)) client.tasks = [];
+                client.tasks.push({
+                    id: row['ID задачи'] || Date.now() + Math.random(),
+                    text: row['Текст'] || '',
+                    deadline: row['Дедлайн'] || '',
+                    completed: row['Выполнено'] === 'Да' || row['Выполнено'] === true,
+                    completedAt: row['Дата выполнения'] || '',
+                    color: row['Цвет'] || '#28a745'
+                });
+            });
+        }
+
+        const managers = [];
+        const managerPayments = {};
+        const managersSheet = workbook.Sheets['Managers'];
+        if (managersSheet) {
+            const managerRows = XLSX.utils.sheet_to_json(managersSheet);
+            managerRows.forEach(row => {
+                managers.push({
+                    id: row['ID'],
+                    name: row['Имя'] || '',
+                    contacts: row['Контакты'] || '',
+                    paymentType: row['Тип оплаты'] || '',
+                    paymentValue: row['Значение оплаты'] || ''
+                });
+                managerPayments[row['ID']] = {
+                    salary: row['Зарплата'] || '',
+                    bonus: row['Премия'] || '',
+                    paid: row['Оплачено'] === 'Да' || row['Оплачено'] === true,
+                    history: []
+                };
+            });
+        }
+
+        const mpSheet = workbook.Sheets['ManagerPayments'];
+        if (mpSheet) {
+            const mpRows = XLSX.utils.sheet_to_json(mpSheet);
+            mpRows.forEach(row => {
+                const mId = row['ID менеджера'];
+                const cId = row['ID клиента'];
+                const amount = parseFloat(row['Сумма']) || 0;
+                const date = row['Дата'] || '';
+                if (!managerPayments[mId]) {
+                    managerPayments[mId] = { history: [] };
+                }
+                managerPayments[mId].history = managerPayments[mId].history || [];
+                managerPayments[mId].history.push({ clientId: cId, amount, date });
+                const client = clientsById[cId];
+                if (client) {
+                    client.managerPayments = client.managerPayments || [];
+                    client.managerPayments.push({ date, amount });
+                    client.managerPaidTotal = (client.managerPaidTotal || 0) + amount;
+                }
+            });
+        }
+
         localStorage.setItem('clients', JSON.stringify(clients));
+        if (managers.length > 0) {
+            localStorage.setItem('managers', JSON.stringify(managers));
+        }
+        if (Object.keys(managerPayments).length > 0) {
+            localStorage.setItem('managerPayments', JSON.stringify(managerPayments));
+        }
+
         alert('Импорт завершён');
         window.location.reload();
     };
