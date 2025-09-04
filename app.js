@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('createManagerBtn')?.addEventListener('click', openCreateManagerModal);
         document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
-        document.getElementById('saveManagerSalaryBtn')?.addEventListener('click', saveManagerSalary);
+        document.getElementById('issueManagerSalaryBtn')?.addEventListener('click', issueManagerSalary);
         document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
     }
     // Загрузка карточки клиента (только на client-card.html)
@@ -2330,18 +2330,23 @@ window.saveAssignedClient = function() {
     modal.hide();
 };
 
-window.saveManagerSalary = function() {
+window.issueManagerSalary = function() {
     const salary = parseFloat(document.getElementById('managerSalary').value) || 0;
     const bonus = parseFloat(document.getElementById('managerBonus').value) || 0;
-    const paid = document.getElementById('managerPaid').checked;
+    const amount = salary + bonus;
+    if (amount <= 0) return;
+    const date = new Date().toISOString().split('T')[0];
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
+    const history = existing.history || [];
+    history.push({ clientId: null, amount, date, type: 'salary' });
     payments[currentManagerId] = {
         ...existing,
         salary,
         bonus,
-        paid,
-        month: new Date().toISOString().slice(0, 7)
+        paid: true,
+        month: date.slice(0, 7),
+        history
     };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
@@ -2377,7 +2382,7 @@ function renderManagerPayments() {
         if (p.date && p.date.slice(0,7) === month) {
             hasPayments = true;
             const client = clients.find(c => String(c.id) === String(p.clientId));
-            const name = client ? `${client.firstName} ${client.lastName}` : '';
+            const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
             body.appendChild(tr);
