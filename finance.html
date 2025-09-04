@@ -11,31 +11,24 @@
     <div class="container py-4">
         <a href="index.html" id="backBtn" class="btn btn-back mb-3">&larr; Назад</a>
         <h2 id="financeTitle" class="mb-4">Финансы</h2>
-        <div class="row g-3" id="financeMetrics">
-            <div class="col-md-3 col-6">
-                <div class="finance-metric-card">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="finance-summary-card p-4 h-100">
                     <div class="small text-muted">Сумма договора</div>
-                    <div id="totalAmount" class="h5 mb-0">0</div>
+                    <div id="totalAmount" class="h3 mb-2">0</div>
+                    <span id="paidPercent" class="text-success small"></span>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="finance-metric-card">
-                    <div class="small text-muted">Оплачено</div>
-                    <div id="paidAmount" class="h5 mb-0 text-success">0</div>
+            <div class="col-md-6">
+                <div class="finance-summary-card p-4 h-100 d-flex flex-column align-items-center">
+                    <h6 class="mb-3">Оплачено / Остаток</h6>
+                    <canvas id="clientExpenseChart"></canvas>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="finance-metric-card">
-                    <div class="small text-muted">Остаток</div>
-                    <div id="remainingAmount" class="h5 mb-0 text-warning">0</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="finance-metric-card">
-                    <div class="small text-muted">Просрочено</div>
-                    <div id="overdueAmount" class="h5 mb-0 text-danger">0</div>
-                </div>
-            </div>
+        </div>
+        <div class="finance-summary-card p-4 mb-4">
+            <h6 class="mb-3">Динамика платежей</h6>
+            <canvas id="clientTransactionsChart"></canvas>
         </div>
         <h4 class="mt-4">История платежей</h4>
         <table class="table table-sm">
@@ -60,6 +53,7 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

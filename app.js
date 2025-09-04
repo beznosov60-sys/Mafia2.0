@@ -36,6 +36,10 @@ const stageColorClasses = {
 
 let currentManagerId = null;
 let currentClientId = null;
+let summaryExpenseChart = null;
+let summaryTransactionsChart = null;
+let clientExpenseChart = null;
+let clientTransactionsChart = null;
 
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
@@ -821,7 +825,7 @@ function renderFinanceMetrics(client) {
     setText('remainingAmount', remaining);
     setText('overdueAmount', overdue);
     setText('remainingTotal', remaining);
-    setText('paidPercent', percent);
+    setText('paidPercent', `${percent}%`);
 }
 
 function renderFinanceHistory(client) {
@@ -876,8 +880,61 @@ function renderPlannedPayments(client) {
             renderFinanceMetrics(client);
             renderFinanceHistory(client);
             renderPlannedPayments(client);
+            renderClientCharts(client);
         });
     });
+}
+
+function renderClientCharts(client) {
+    const schedule = getPaymentSchedule(client);
+    const paidSchedule = schedule.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+    const extra = (client.extraPayments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const paid = paidSchedule + extra;
+    const total = client.totalAmount || 0;
+    const remaining = total - paid;
+
+    const expCtx = document.getElementById('clientExpenseChart');
+    if (expCtx) {
+        if (clientExpenseChart) clientExpenseChart.destroy();
+        clientExpenseChart = new Chart(expCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Оплачено', 'Остаток'],
+                datasets: [{
+                    data: [paid, remaining],
+                    backgroundColor: ['#6555FF', '#C1C6FF']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    const transCtx = document.getElementById('clientTransactionsChart');
+    if (transCtx) {
+        if (clientTransactionsChart) clientTransactionsChart.destroy();
+        const labels = schedule.map(p => new Date(p.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }));
+        const paidData = schedule.map(p => p.paid ? p.amount : 0);
+        const unpaidData = schedule.map(p => !p.paid ? p.amount : 0);
+        clientTransactionsChart = new Chart(transCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Оплачено', data: paidData, backgroundColor: '#6555FF' },
+                    { label: 'Ожидается', data: unpaidData, backgroundColor: '#C1C6FF' }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
 }
 
 function loadFinancePage(clientId) {
@@ -896,6 +953,7 @@ function loadFinancePage(clientId) {
     renderFinanceMetrics(client);
     renderFinanceHistory(client);
     renderPlannedPayments(client);
+    renderClientCharts(client);
     const addBtn = document.getElementById('addPaymentBtn');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
@@ -910,6 +968,7 @@ function loadFinancePage(clientId) {
             renderFinanceMetrics(client);
             renderFinanceHistory(client);
             renderPlannedPayments(client);
+            renderClientCharts(client);
         });
     }
 }
@@ -1931,15 +1990,55 @@ function showFinanceSummary() {
         if (client.courtDepositPaid) courtDepositExpense += 25000;
     });
 
-    const unpaidAmount = totalRemaining;
+    const changePercent = totalIncome ? ((currentMonthIncome / totalIncome) * 100).toFixed(2) : 0;
+    const balanceEl = document.getElementById('totalBalance');
+    if (balanceEl) balanceEl.textContent = totalIncome;
+    const changeEl = document.getElementById('balanceChange');
+    if (changeEl) changeEl.textContent = `${changePercent}%`;
+    const remainingEl = document.getElementById('totalRemaining');
+    if (remainingEl) remainingEl.textContent = totalRemaining;
 
-    document.getElementById('currentMonthIncome').textContent = currentMonthIncome;
-    document.getElementById('nextMonthIncome').textContent = nextMonthIncome;
-    document.getElementById('unpaidAmount').textContent = unpaidAmount;
-    document.getElementById('finManagerExpense').textContent = finManagerExpense;
-    document.getElementById('courtDepositExpense').textContent = courtDepositExpense;
-    document.getElementById('globalTotalIncome').textContent = totalIncome;
-    document.getElementById('totalRemaining').textContent = totalRemaining;
+    const expenseCtx = document.getElementById('summaryExpenseChart');
+    if (expenseCtx) {
+        if (summaryExpenseChart) summaryExpenseChart.destroy();
+        summaryExpenseChart = new Chart(expenseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['ФУ', 'Депозит'],
+                datasets: [{
+                    data: [finManagerExpense, courtDepositExpense],
+                    backgroundColor: ['#6555FF', '#C1C6FF']
+                }]
+            },
+            options: {
+                plugins: { legend: { position: 'bottom' } },
+                cutout: '70%'
+            }
+        });
+    }
+
+    const lastFive = details.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-5);
+    const labels = lastFive.map(d => new Date(d.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }));
+    const paidData = lastFive.map(d => d.status === 'paid' ? d.amount : 0);
+    const pendingData = lastFive.map(d => d.status !== 'paid' ? d.amount : 0);
+    const transCtx = document.getElementById('summaryTransactionsChart');
+    if (transCtx) {
+        if (summaryTransactionsChart) summaryTransactionsChart.destroy();
+        summaryTransactionsChart = new Chart(transCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Оплачено', data: paidData, backgroundColor: '#6555FF' },
+                    { label: 'Неоплачено', data: pendingData, backgroundColor: '#C1C6FF' }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
 
     const clientSelect = document.getElementById('financeClientSelect');
     clientSelect.innerHTML = '<option value="">Выберите клиента</option>';
