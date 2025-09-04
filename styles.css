@@ -339,6 +339,14 @@ body.home-screen {
     gap: 1rem;
 }
 
+.manager-card {
+    background: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+
 .client-card .client-info {
     display: flex;
     flex-direction: column;
@@ -867,7 +875,8 @@ body.dark-theme {
 .client-court-card,
 .client-notes-card,
 .client-payments-card,
-.client-tasks-card {
+.client-tasks-card,
+.manager-tasks-card {
     background: rgba(255, 255, 255, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: var(--border-radius);
@@ -945,7 +954,8 @@ body.dark-theme {
 }
 
 .client-info-card .list-group-item,
-.client-tasks-card .list-group-item {
+.client-tasks-card .list-group-item,
+.manager-tasks-card .list-group-item {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: var(--border-radius);
@@ -1209,4 +1219,14 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
 
 .finance-menu-card:hover {
     transform: scale(1.02);
+}
+
+.table {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: #fff;
+}
+
+.client-delete-btn {
+    border-radius: var(--border-radius);
 }
