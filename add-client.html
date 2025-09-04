@@ -227,7 +227,7 @@
               alert('Имя и фамилия обязательны!');
               return;
           }
-          if (!clientData.phone.match(/^\d{10,12}$/)) {
+          if (clientData.phone && !clientData.phone.match(/^\d{10,12}$/)) {
               alert('Номер телефона должен содержать 10-12 цифр!');
               return;
           }
