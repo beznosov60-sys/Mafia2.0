@@ -2952,15 +2952,33 @@ function renderManagerPayments() {
     }
     body.innerHTML = '';
     let hasPayments = false;
-    history.forEach((p, idx) => {
-        hasPayments = true;
-        const client = clients.find(c => String(c.id) === String(p.clientId));
-        const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
-        const tr = document.createElement('tr');
-        if (p.early) tr.classList.add('table-warning');
-        const early = p.early ? ' (раньше)' : '';
-        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}${early}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
-        body.appendChild(tr);
+    const indexedHistory = history.map((p, idx) => ({ ...p, idx }))
+        .filter(p => p.date);
+    indexedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const grouped = indexedHistory.reduce((acc, p) => {
+        const month = p.date.slice(0, 7);
+        acc[month] = acc[month] || { items: [], total: 0 };
+        acc[month].items.push(p);
+        acc[month].total += p.amount || 0;
+        return acc;
+    }, {});
+    const months = Object.keys(grouped).sort().reverse();
+    months.forEach(month => {
+        const group = grouped[month];
+        const header = document.createElement('tr');
+        header.classList.add('table-secondary');
+        header.innerHTML = `<td colspan="4"><strong>${month} — ${group.total.toFixed(2)}</strong></td>`;
+        body.appendChild(header);
+        group.items.forEach(p => {
+            hasPayments = true;
+            const client = clients.find(c => String(c.id) === String(p.clientId));
+            const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
+            const tr = document.createElement('tr');
+            if (p.early) tr.classList.add('table-warning');
+            const early = p.early ? ' (раньше)' : '';
+            tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}${early}</td><td><button class="btn btn-sm btn-danger" data-index="${p.idx}">Удалить</button></td>`;
+            body.appendChild(tr);
+        });
     });
     if (!hasPayments) {
         body.innerHTML = '<tr><td colspan="4" class="text-center">Нет платежей</td></tr>';
