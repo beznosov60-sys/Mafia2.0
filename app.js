@@ -2594,61 +2594,70 @@ function renderManagersPage() {
     list.innerHTML = '';
     managers.forEach(manager => {
         const card = document.createElement('div');
-        card.className = 'manager-card mb-4';
+        card.className = 'manager-card mb-5';
         card.id = `managerCard${manager.id}`;
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
-        let monthlyIncome = 0;
+        let clientMonthlyIncome = 0;
         let totalRemaining = 0;
-        managerClients.forEach(c => {
-            const months = c.paymentMonths || 0;
-            const total = c.totalAmount || 0;
-            const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
-            const paid = c.managerPaidTotal || 0;
-            const managerShare = total * percent / 100;
-            if (percent > 0) {
-                const monthly = months ? total / months : 0;
-                const incomePerMonth = monthly * percent / 100;
-                if (!c.managerFullyPaid) {
-                    monthlyIncome += incomePerMonth;
+        const clientItems = managerClients.length
+            ? managerClients.map(c => {
+                const months = c.paymentMonths || 0;
+                const total = c.totalAmount || 0;
+                const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
+                const paid = c.managerPaidTotal || 0;
+                const managerShare = total * percent / 100;
+                if (percent > 0) {
+                    const monthly = months ? total / months : 0;
+                    const incomePerMonth = monthly * percent / 100;
+                    if (!c.managerFullyPaid) {
+                        clientMonthlyIncome += incomePerMonth;
+                    }
+                    const remainingForClient = managerShare - paid;
+                    if (remainingForClient > 0) {
+                        totalRemaining += remainingForClient;
+                    }
+                    const percentText = c.managerFullyPaid ? 'оплачен' : percent;
+                    const remainingText = remainingForClient > 0 ? remainingForClient.toFixed(2) : '0.00';
+                    return `<li class="list-group-item position-relative pe-5">`
+                            + `<div class="btn-group btn-group-sm position-absolute top-0 end-0">`
+                            + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>`
+                            + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
+                            + `</div>`
+                            + `<a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link d-block mb-1">${c.firstName} ${c.lastName}</a>`
+                            + `<div class="small text-muted">Процент: ${percentText}</div>`
+                            + `<div class="small text-muted">Остаток: ${remainingText}</div>`
+                            + `<div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>`
+                        + `</li>`;
                 }
-                const remainingForClient = managerShare - paid;
-                if (remainingForClient > 0) {
-                    totalRemaining += remainingForClient;
-                }
-            }
-        });
+                return '';
+            }).join('')
+            : '<li class="list-group-item text-center">Нет клиентов</li>';
         const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
         const history = paymentsStore[manager.id]?.history || [];
         const currentMonth = new Date().toISOString().slice(0,7);
-        const paidThisMonth = history
-            .filter(p => p.date && p.date.slice(0,7) === currentMonth)
+        const paidClientThisMonth = history
+            .filter(p => p.clientId && p.date && p.date.slice(0,7) === currentMonth)
             .reduce((sum, p) => sum + (p.amount || 0), 0);
-        monthlyIncome = Math.max(0, monthlyIncome - paidThisMonth);
-        const clientItems = managerClients.length
-            ? managerClients.map(c => {
-                const percentText = c.managerFullyPaid ? 'оплачен' : (c.managerPercent || '');
-                return `<li class="list-group-item position-relative pe-5">
-                            <div class="btn-group btn-group-sm position-absolute top-0 end-0">
-                                <button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>
-                                <button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>
-                            </div>
-                            <a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link d-block mb-1">${c.firstName} ${c.lastName}</a>
-                            <div class="small text-muted">Процент: ${percentText}</div>
-                            <div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>
-                        </li>`;
-            }).join('')
-            : '<li class="list-group-item text-center">Нет клиентов</li>';
+        clientMonthlyIncome = Math.max(0, clientMonthlyIncome - paidClientThisMonth);
+        const salaryPaid = history
+            .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+        const baseSalary = manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
+        const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
         const clientsLine = managerClients.map(c => `${c.firstName} ${c.lastName}`).join(', ') || 'Нет клиентов';
         card.innerHTML = `
             <div class="row g-4">
                 <div class="col-md-4 manager-block">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center w-100">
                         <i class="ri-user-line me-2"></i>
                         <h5 class="mb-0">${manager.name}</h5>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeManager(${manager.id})" title="Удалить менеджера"><i class="ri-delete-bin-line"></i></button>
                     </div>
                     <div class="text-muted small">${manager.contacts || ''}</div>
-                    <div class="text-muted small">Ежемесячная плата: ${monthlyIncome.toFixed(2)}</div>
-                    <div class="text-muted small">Остаток: ${totalRemaining.toFixed(2)}</div>
+                    <div class="text-muted small">Оклад: ${baseSalary.toFixed(2)}</div>
+                    <div class="text-muted small">Ежемесячно от клиентов: ${clientMonthlyIncome.toFixed(2)}</div>
+                    <div class="text-muted small">Остаток зарплаты: ${salaryRemaining.toFixed(2)}</div>
+                    <div class="text-muted small">Остаток по клиентам: ${totalRemaining.toFixed(2)}</div>
                 </div>
                 <div class="col-md-4 manager-block">
                     <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button type="button" class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
@@ -2696,6 +2705,26 @@ window.saveManager = function() {
     saveManagers(managers);
     renderManagersPage();
     bootstrap.Modal.getInstance(document.getElementById('managerModal')).hide();
+};
+
+window.removeManager = function(managerId) {
+    if (!confirm('Удалить менеджера?')) return;
+    const managers = getManagers().filter(m => String(m.id) !== String(managerId));
+    saveManagers(managers);
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    clients.forEach(c => {
+        if (String(c.managerId) === String(managerId)) {
+            delete c.managerId;
+            delete c.managerPercent;
+            delete c.managerPaidTotal;
+            delete c.managerFullyPaid;
+        }
+    });
+    localStorage.setItem('clients', JSON.stringify(clients));
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    delete payments[managerId];
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    renderManagersPage();
 };
 
 window.openAssignClientToManager = function(managerId) {
@@ -2804,39 +2833,35 @@ window.toggleManagerClients = function(managerId) {
 };
 
 window.issueManagerSalary = function() {
-    const salary = parseFloat(document.getElementById('managerSalary').value) || 0;
-    const bonus = parseFloat(document.getElementById('managerBonus').value) || 0;
-    const amount = salary + bonus;
-    if (amount <= 0) return;
+    const pay = parseFloat(document.getElementById('managerSalaryPay').value) || 0;
+    if (pay <= 0) return;
     const dateInput = document.getElementById('managerSalaryDate');
     const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
+    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
+    const baseSalary = manager && manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
+    const currentMonth = date.slice(0,7);
+    const salaryPaid = history
+        .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+    let amount = pay;
+    const remaining = Math.max(0, baseSalary - salaryPaid);
+    if (amount > remaining) amount = remaining;
+    if (amount <= 0) return;
     history.push({ clientId: null, amount, date, type: 'salary' });
-    payments[currentManagerId] = {
-        ...existing,
-        salary,
-        bonus,
-        paid: true,
-        month: date.slice(0, 7),
-        salaryDate: date,
-        history
-    };
+    payments[currentManagerId] = { ...existing, history };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
 };
 
 window.openManagerPayments = function(managerId) {
     currentManagerId = managerId;
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
-    const data = payments[managerId] || {};
-    document.getElementById('managerSalary').value = data.salary || '';
-    document.getElementById('managerBonus').value = data.bonus || '';
     const dateInput = document.getElementById('managerSalaryDate');
-    if (dateInput) {
-        dateInput.value = data.salaryDate || new Date().toISOString().split('T')[0];
-    }
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    const payInput = document.getElementById('managerSalaryPay');
+    if (payInput) payInput.value = '';
     renderManagerPayments();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
     modal.show();
@@ -2844,11 +2869,37 @@ window.openManagerPayments = function(managerId) {
 
 function renderManagerPayments() {
     const body = document.getElementById('managerPaymentsBody');
-    if (!body) return;
+    const clientsBody = document.getElementById('managerPaymentsClientsBody');
+    const salaryRemEl = document.getElementById('managerSalaryRemaining');
+    if (!body || !clientsBody) return;
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const data = payments[currentManagerId] || {};
     const history = data.history || [];
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
+    const baseSalary = manager && manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
+    const currentMonth = new Date().toISOString().slice(0,7);
+    const salaryPaid = history
+        .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
+    if (salaryRemEl) salaryRemEl.textContent = salaryRemaining.toFixed(2);
+    clientsBody.innerHTML = '';
+    const managerClients = clients.filter(c => String(c.managerId) === String(currentManagerId));
+    if (managerClients.length === 0) {
+        clientsBody.innerHTML = '<tr><td colspan="4" class="text-center">Нет клиентов</td></tr>';
+    } else {
+        managerClients.forEach(c => {
+            const percent = parseFloat(c.managerPercent) || 0;
+            const total = c.totalAmount || 0;
+            const totalDue = total * percent / 100;
+            const paid = c.managerPaidTotal || 0;
+            const remaining = Math.max(0, totalDue - paid);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" onclick="openAddManagerPayment(${c.id})">Выплатить</button></td>`;
+            clientsBody.appendChild(tr);
+        });
+    }
     body.innerHTML = '';
     let hasPayments = false;
     history.forEach((p, idx) => {
@@ -2861,17 +2912,17 @@ function renderManagerPayments() {
     });
     if (!hasPayments) {
         body.innerHTML = '<tr><td colspan="4" class="text-center">Нет платежей</td></tr>';
-        return;
-    }
-    body.querySelectorAll('button[data-index]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const idx = parseInt(this.dataset.index, 10);
-            deleteManagerPayment(idx);
+    } else {
+        body.querySelectorAll('button[data-index]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.index, 10);
+                deleteManagerPayment(idx);
+            });
         });
-    });
+    }
 }
 
-window.openAddManagerPayment = function() {
+window.openAddManagerPayment = function(clientId) {
     const select = document.getElementById('managerPaymentClient');
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     if (select) {
@@ -2891,6 +2942,7 @@ window.openAddManagerPayment = function() {
                 opt.textContent = `${c.firstName} ${c.lastName}`;
                 select.appendChild(opt);
             });
+        if (clientId) select.value = String(clientId);
     }
     const dateInput = document.getElementById('managerPaymentDate');
     if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
