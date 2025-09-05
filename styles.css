@@ -370,6 +370,10 @@ body.home-screen {
     margin-bottom: 0.5rem;
 }
 
+.client-percent-paid {
+    background-color: #e8f5e9;
+}
+
 .client-card .client-info {
     display: flex;
     flex-direction: column;

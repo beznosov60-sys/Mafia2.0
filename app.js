@@ -36,6 +36,7 @@ const stageColorClasses = {
 
 let currentManagerId = null;
 let currentClientId = null;
+let editingManagerId = null;
 let summaryExpenseChart = null;
 let summaryTransactionsChart = null;
 let clientExpenseChart = null;
@@ -600,6 +601,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
         document.getElementById('issueManagerSalaryBtn')?.addEventListener('click', issueManagerSalary);
         document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
+        document.getElementById('managerHasSalary')?.addEventListener('change', function() {
+            document.getElementById('managerSalaryWrapper').style.display = this.checked ? '' : 'none';
+        });
     }
     // Загрузка карточки клиента (только на client-card.html)
     if (window.location.pathname.includes('client-card.html')) {
@@ -2618,7 +2622,8 @@ function renderManagersPage() {
                     }
                     const percentText = c.managerFullyPaid ? 'оплачен' : percent;
                     const remainingText = remainingForClient > 0 ? remainingForClient.toFixed(2) : '0.00';
-                    return `<li class="list-group-item position-relative pe-5">`
+                    const paidClass = paid > 0 ? 'client-percent-paid' : '';
+                    return `<li class="list-group-item position-relative pe-5 ${paidClass}">`
                             + `<div class="btn-group btn-group-sm position-absolute top-0 end-0">`
                             + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>`
                             + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
@@ -2632,6 +2637,8 @@ function renderManagersPage() {
                 return '';
             }).join('')
             : '<li class="list-group-item text-center">Нет клиентов</li>';
+        const collapsedNames = managerClients.slice(0,3).map(c => `${c.firstName} ${c.lastName}`).join(', ');
+        const clientsLine = collapsedNames ? collapsedNames + (managerClients.length > 3 ? ', ...' : '') : 'Нет клиентов';
         const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
         const history = paymentsStore[manager.id]?.history || [];
         const currentMonth = new Date().toISOString().slice(0,7);
@@ -2644,19 +2651,24 @@ function renderManagersPage() {
             .reduce((sum, p) => sum + (p.amount || 0), 0);
         const baseSalary = manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
         const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
-        const clientsLine = managerClients.map(c => `${c.firstName} ${c.lastName}`).join(', ') || 'Нет клиентов';
+        const lastSalary = history.filter(p => p.type === 'salary').sort((a,b) => b.date.localeCompare(a.date))[0];
+        const lastSalaryDate = lastSalary ? lastSalary.date : null;
         card.innerHTML = `
             <div class="row g-4">
                 <div class="col-md-4 manager-block">
                     <div class="d-flex align-items-center w-100">
                         <i class="ri-user-line me-2"></i>
                         <h5 class="mb-0">${manager.name}</h5>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeManager(${manager.id})" title="Удалить менеджера"><i class="ri-delete-bin-line"></i></button>
+                        <div class="ms-auto">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="openEditManager(${manager.id})" title="Редактировать менеджера"><i class="ri-edit-line"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeManager(${manager.id})" title="Удалить менеджера"><i class="ri-delete-bin-line"></i></button>
+                        </div>
                     </div>
                     <div class="text-muted small">${manager.contacts || ''}</div>
                     <div class="text-muted small">Оклад: ${baseSalary.toFixed(2)}</div>
                     <div class="text-muted small">Ежемесячно от клиентов: ${clientMonthlyIncome.toFixed(2)}</div>
                     <div class="text-muted small">Остаток зарплаты: ${salaryRemaining.toFixed(2)}</div>
+                    <div class="text-muted small">Последняя з/п: ${lastSalaryDate ? new Date(lastSalaryDate).toLocaleDateString('ru-RU') : '-'}</div>
                     <div class="text-muted small">Остаток по клиентам: ${totalRemaining.toFixed(2)}</div>
                 </div>
                 <div class="col-md-4 manager-block">
@@ -2686,25 +2698,61 @@ function renderManagersPage() {
 }
 
 window.openCreateManagerModal = function() {
+    editingManagerId = null;
     document.getElementById('managerName').value = '';
     document.getElementById('managerContacts').value = '';
     document.getElementById('managerPayValue').value = '';
-    document.getElementById('payTypePercent').checked = true;
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerModal'));
+    const salaryWrapper = document.getElementById('managerSalaryWrapper');
+    const hasSalaryChk = document.getElementById('managerHasSalary');
+    if (hasSalaryChk) hasSalaryChk.checked = false;
+    if (salaryWrapper) salaryWrapper.style.display = 'none';
+    const modalEl = document.getElementById('managerModal');
+    modalEl.querySelector('.modal-title').textContent = 'Новый менеджер';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+};
+
+window.openEditManager = function(managerId) {
+    const managers = getManagers();
+    const manager = managers.find(m => String(m.id) === String(managerId));
+    if (!manager) return;
+    editingManagerId = managerId;
+    document.getElementById('managerName').value = manager.name;
+    document.getElementById('managerContacts').value = manager.contacts || '';
+    const hasSalary = manager.paymentType === 'fixed';
+    const salaryChk = document.getElementById('managerHasSalary');
+    const salaryWrapper = document.getElementById('managerSalaryWrapper');
+    if (salaryChk) salaryChk.checked = hasSalary;
+    if (salaryWrapper) salaryWrapper.style.display = hasSalary ? '' : 'none';
+    document.getElementById('managerPayValue').value = hasSalary ? manager.paymentValue : '';
+    const modalEl = document.getElementById('managerModal');
+    modalEl.querySelector('.modal-title').textContent = 'Редактировать менеджера';
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 };
 
 window.saveManager = function() {
     const name = document.getElementById('managerName').value.trim();
     const contacts = document.getElementById('managerContacts').value.trim();
-    const type = document.querySelector('input[name="managerPayType"]:checked').value;
-    const value = document.getElementById('managerPayValue').value.trim();
+    const hasSalary = document.getElementById('managerHasSalary').checked;
+    const value = hasSalary ? document.getElementById('managerPayValue').value.trim() : '';
     if (!name) return;
     const managers = getManagers();
-    managers.push({ id: Date.now(), name, contacts, paymentType: type, paymentValue: value });
+    if (editingManagerId) {
+        const manager = managers.find(m => String(m.id) === String(editingManagerId));
+        if (manager) {
+            manager.name = name;
+            manager.contacts = contacts;
+            manager.paymentType = hasSalary ? 'fixed' : 'none';
+            manager.paymentValue = hasSalary ? value : '';
+        }
+    } else {
+        managers.push({ id: Date.now(), name, contacts, paymentType: hasSalary ? 'fixed' : 'none', paymentValue: hasSalary ? value : '' });
+    }
     saveManagers(managers);
     renderManagersPage();
     bootstrap.Modal.getInstance(document.getElementById('managerModal')).hide();
+    editingManagerId = null;
 };
 
 window.removeManager = function(managerId) {
@@ -2854,6 +2902,7 @@ window.issueManagerSalary = function() {
     payments[currentManagerId] = { ...existing, history };
     localStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
+    renderManagersPage();
 };
 
 window.openManagerPayments = function(managerId) {
@@ -2896,7 +2945,8 @@ function renderManagerPayments() {
             const paid = c.managerPaidTotal || 0;
             const remaining = Math.max(0, totalDue - paid);
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" onclick="openAddManagerPayment(${c.id})">Выплатить</button></td>`;
+            if (paid > 0) tr.classList.add('client-percent-paid');
+            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" onclick="issueClientPercent(${c.id})">Выдать %</button></td>`;
             clientsBody.appendChild(tr);
         });
     }
@@ -2907,7 +2957,9 @@ function renderManagerPayments() {
         const client = clients.find(c => String(c.id) === String(p.clientId));
         const name = client ? `${client.firstName} ${client.lastName}` : (p.type === 'salary' ? 'Зарплата' : '');
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
+        if (p.early) tr.classList.add('table-warning');
+        const early = p.early ? ' (раньше)' : '';
+        tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}${early}</td><td><button class="btn btn-sm btn-danger" data-index="${idx}">Удалить</button></td>`;
         body.appendChild(tr);
     });
     if (!hasPayments) {
@@ -2921,6 +2973,41 @@ function renderManagerPayments() {
         });
     }
 }
+
+window.issueClientPercent = function(clientId) {
+    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const client = clients.find(c => String(c.id) === String(clientId));
+    if (!client) return;
+    const percent = parseFloat(client.managerPercent) || 0;
+    const total = client.totalAmount || 0;
+    const months = client.paymentMonths || 0;
+    let amount = months ? (total / months) * percent / 100 : (total * percent / 100);
+    amount = Math.round(amount);
+    const totalDue = Math.round(total * percent / 100);
+    const paid = client.managerPaidTotal || 0;
+    const remaining = totalDue - paid;
+    if (remaining <= 0) return;
+    if (amount > remaining) amount = remaining;
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const existing = payments[currentManagerId] || {};
+    const history = existing.history || [];
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = today.slice(0,7);
+    const already = history.some(p => String(p.clientId) === String(clientId) && p.date && p.date.slice(0,7) === currentMonth);
+    if (already) {
+        if (!confirm('Получить процент заранее?')) return;
+    }
+    history.push({ clientId, amount, date: today, early: already });
+    payments[currentManagerId] = { ...existing, history };
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    client.managerPaidTotal = paid + amount;
+    if (client.managerPaidTotal >= totalDue) client.managerFullyPaid = true;
+    client.managerPayments = client.managerPayments || [];
+    client.managerPayments.push({ date: today, amount, early: already });
+    saveClientData(client);
+    renderManagerPayments();
+    renderManagersPage();
+};
 
 window.openAddManagerPayment = function(clientId) {
     const select = document.getElementById('managerPaymentClient');
@@ -2981,6 +3068,7 @@ window.saveManagerPayment = function() {
     saveClientData(client);
     bootstrap.Modal.getInstance(document.getElementById('addManagerPaymentModal')).hide();
     renderManagerPayments();
+    renderManagersPage();
 };
 
 window.deleteManagerPayment = function(index) {
@@ -3007,6 +3095,7 @@ window.deleteManagerPayment = function(index) {
         }
     }
     renderManagerPayments();
+    renderManagersPage();
 };
 
 window.showConsultationDetails = function(consultId) {
