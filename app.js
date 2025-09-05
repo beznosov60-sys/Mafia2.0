@@ -2603,7 +2603,8 @@ function renderManagersPage() {
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
         let clientMonthlyIncome = 0;
         let totalRemaining = 0;
-        const clientItems = managerClients.length
+        let firstClientHtml = '';
+        const clientItemsArr = managerClients.length
             ? managerClients.map(c => {
                 const months = c.paymentMonths || 0;
                 const total = c.totalAmount || 0;
@@ -2622,8 +2623,8 @@ function renderManagersPage() {
                     }
                     const percentText = c.managerFullyPaid ? 'оплачен' : percent;
                     const remainingText = remainingForClient > 0 ? remainingForClient.toFixed(2) : '0.00';
-                    const paidClass = paid > 0 ? 'client-percent-paid' : '';
-                    return `<li class="list-group-item position-relative pe-5 ${paidClass}">`
+                    const paidClass = c.managerFullyPaid ? 'client-percent-paid' : '';
+                    const item = `<li class="list-group-item position-relative pe-5 ${paidClass}">`
                             + `<div class="btn-group btn-group-sm position-absolute top-0 end-0">`
                             + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>`
                             + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
@@ -2633,12 +2634,14 @@ function renderManagersPage() {
                             + `<div class="small text-muted">Остаток: ${remainingText}</div>`
                             + `<div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>`
                         + `</li>`;
+                    if (!firstClientHtml) firstClientHtml = item;
+                    return item;
                 }
                 return '';
-            }).join('')
-            : '<li class="list-group-item text-center">Нет клиентов</li>';
-        const collapsedNames = managerClients.slice(0,3).map(c => `${c.firstName} ${c.lastName}`).join(', ');
-        const clientsLine = collapsedNames ? collapsedNames + (managerClients.length > 3 ? ', ...' : '') : 'Нет клиентов';
+            })
+            : ['<li class="list-group-item text-center">Нет клиентов</li>'];
+        if (!firstClientHtml) firstClientHtml = '<li class="list-group-item text-center">Нет клиентов</li>';
+        const clientItems = clientItemsArr.join('');
         const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
         const history = paymentsStore[manager.id]?.history || [];
         const currentMonth = new Date().toISOString().slice(0,7);
@@ -2674,7 +2677,7 @@ function renderManagersPage() {
                 <div class="col-md-4 manager-block">
                     <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button type="button" class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
                     <ul class="list-group mb-2" id="managerClientsList${manager.id}">${clientItems}</ul>
-                    <div class="clients-collapsed" id="managerClientsCollapsed${manager.id}" style="display:none;">${clientsLine}</div>
+                    <ul class="list-group mb-2" id="managerClientsCollapsed${manager.id}" style="display:none;">${firstClientHtml}</ul>
                     <button type="button" class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
                 </div>
                 <div class="col-md-4 manager-block">
@@ -2945,8 +2948,9 @@ function renderManagerPayments() {
             const paid = c.managerPaidTotal || 0;
             const remaining = Math.max(0, totalDue - paid);
             const tr = document.createElement('tr');
-            if (paid > 0) tr.classList.add('client-percent-paid');
-            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" onclick="issueClientPercent(${c.id})">Выдать %</button></td>`;
+            if (remaining <= 0) tr.classList.add('client-percent-paid');
+            const btnDisabled = remaining <= 0 ? 'disabled' : '';
+            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" ${btnDisabled} onclick="issueClientPercent(${c.id})">Выдать %</button></td>`;
             clientsBody.appendChild(tr);
         });
     }
@@ -2965,10 +2969,23 @@ function renderManagerPayments() {
     const months = Object.keys(grouped).sort().reverse();
     months.forEach(month => {
         const group = grouped[month];
+        const collapseId = `mpMonth${month}`;
         const header = document.createElement('tr');
         header.classList.add('table-secondary');
+        header.setAttribute('data-bs-toggle', 'collapse');
+        header.setAttribute('data-bs-target', `#${collapseId}`);
+        header.style.cursor = 'pointer';
         header.innerHTML = `<td colspan="4"><strong>${month} — ${group.total.toFixed(2)}</strong></td>`;
         body.appendChild(header);
+
+        const detailRow = document.createElement('tr');
+        detailRow.id = collapseId;
+        detailRow.className = 'collapse';
+        const detailCell = document.createElement('td');
+        detailCell.colSpan = 4;
+        const innerTable = document.createElement('table');
+        innerTable.className = 'table table-sm mb-0';
+        const innerBody = document.createElement('tbody');
         group.items.forEach(p => {
             hasPayments = true;
             const client = clients.find(c => String(c.id) === String(p.clientId));
@@ -2977,8 +2994,12 @@ function renderManagerPayments() {
             if (p.early) tr.classList.add('table-warning');
             const early = p.early ? ' (раньше)' : '';
             tr.innerHTML = `<td>${p.date}</td><td>${name}</td><td>${p.amount}${early}</td><td><button class="btn btn-sm btn-danger" data-index="${p.idx}">Удалить</button></td>`;
-            body.appendChild(tr);
+            innerBody.appendChild(tr);
         });
+        innerTable.appendChild(innerBody);
+        detailCell.appendChild(innerTable);
+        detailRow.appendChild(detailCell);
+        body.appendChild(detailRow);
     });
     if (!hasPayments) {
         body.innerHTML = '<tr><td colspan="4" class="text-center">Нет платежей</td></tr>';
