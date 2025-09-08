@@ -26,6 +26,7 @@
                 <a href="managers.html" class="circle-btn" title="Менеджеры"><i class="ri-user-star-line"></i></a>
                 <button class="circle-btn" id="sidebarToggle" title="Список клиентов"><i class="ri-group-line"></i></button>
                 <a href="calendar.html" class="circle-btn" title="Календарь"><i class="ri-calendar-event-line"></i></a>
+                <button class="circle-btn" id="updatesBtn" title="Обновления"><i class="ri-information-line"></i></button>
                 <div class="dropdown">
                     <button class="circle-btn dropdown-toggle" id="importExportBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Импорт/Экспорт">
                         <i class="ri-file-transfer-line"></i>
@@ -103,6 +104,26 @@
                 </div>
                 <div class="modal-body">
                     <ul class="list-group" id="archivedClientsList"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно обновлений -->
+    <div class="modal fade" id="updatesModal" tabindex="-1" aria-labelledby="updatesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updatesModalLabel">Обновления программы</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group" id="updatesList">
+                        <li class="list-group-item">Список обновлений пока пуст.</li>
+                    </ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
