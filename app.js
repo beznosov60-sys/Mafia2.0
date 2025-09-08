@@ -144,7 +144,7 @@ function generateClientId(firstName, middleName, lastName, phone, existingIds) {
 window.generateClientId = generateClientId;
 
 function exportClientsToExcel() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
     const allClients = clients.concat(archivedClients.map(c => ({ ...c, archived: true })));
     const managers = getManagers();
@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     // Проверка наличия клиентов
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     if (clients.length === 0) {
         // Можно убрать или оставить для отладки
         // console.warn('Нет клиентов в базе. Добавьте клиента для теста.');
@@ -671,7 +671,7 @@ function updateArbitrButtonTitle(button, courtDate) {
 
 // Показ клиентов с судом в текущем месяце
 function displayCourtThisMonth() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const courtThisMonthDiv = document.getElementById('courtThisMonth');
     if (!courtThisMonthDiv) return;
 
@@ -2288,7 +2288,9 @@ function showAddTaskModal(dateStr) {
 
 // Показ модального окна платежей
 window.showPaymentsModal = function(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const modalEl = document.getElementById('paymentsModal');
+    if (modalEl.classList.contains('show')) return;
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const client = clients.find(c => String(c.id) === String(clientId));
     const paymentsTableBody = document.getElementById('paymentsTableBody');
     if (!client || !paymentsTableBody) return;
@@ -2350,7 +2352,7 @@ window.showPaymentsModal = function(clientId) {
         };
     }, 100);
 
-const modal = new bootstrap.Modal(document.getElementById('paymentsModal'));
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 };
 
@@ -3057,7 +3059,7 @@ window.issueClientPercent = function(clientId) {
 
 window.openAddManagerPayment = function(clientId) {
     const select = document.getElementById('managerPaymentClient');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     if (select) {
         select.innerHTML = '';
         clients
@@ -3092,7 +3094,7 @@ window.saveManagerPayment = function() {
     const amount = document.getElementById('managerPaymentAmount').value;
     const date = document.getElementById('managerPaymentDate').value;
     if (!clientId || !amount || !date) return;
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) return;
     const percent = parseFloat(client.managerPercent);
