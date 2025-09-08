@@ -3084,6 +3084,9 @@ window.openAddManagerPayment = function(clientId) {
     modal.show();
 };
 
+// Legacy alias to avoid ReferenceError in older markup
+window['САА'] = window.openAddManagerPayment;
+
 window.saveManagerPayment = function() {
     const clientId = document.getElementById('managerPaymentClient').value;
     const amount = document.getElementById('managerPaymentAmount').value;
