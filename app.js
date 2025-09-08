@@ -423,6 +423,13 @@ function importClientsFromExcel(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('hide.bs.modal', (event) => {
+        const activeElement = document.activeElement;
+        if (activeElement && event.target.contains(activeElement)) {
+            activeElement.blur();
+        }
+    });
+
     document.body.classList.add('loaded');
     document.querySelectorAll('a').forEach(link => {
         const href = link.getAttribute('href');
