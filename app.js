@@ -3088,6 +3088,8 @@ window.openAddManagerPayment = function(clientId) {
 
 // Legacy alias to avoid ReferenceError in older markup
 window['САА'] = window.openAddManagerPayment;
+// Additional legacy alias for older markup variants
+window['СТ'] = window.openAddManagerPayment;
 
 window.saveManagerPayment = function() {
     const clientId = document.getElementById('managerPaymentClient').value;
