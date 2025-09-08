@@ -363,6 +363,10 @@ body.home-screen {
     align-items: flex-start;
 }
 
+.manager-card .btn-group.position-absolute {
+    z-index: 2;
+}
+
 .manager-card .clients-collapsed {
     white-space: nowrap;
     overflow: hidden;

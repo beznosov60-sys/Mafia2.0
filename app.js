@@ -42,6 +42,11 @@ let summaryTransactionsChart = null;
 let clientExpenseChart = null;
 let clientTransactionsChart = null;
 
+const updates = [
+    { date: '01.06.2024', text: 'Добавлена история выполненных задач клиента.' },
+    { date: '01.06.2024', text: 'Исправлены кнопки редактирования и удаления клиентов у менеджеров.' }
+];
+
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
     if (types.arbitration && types.tret) return '<span class="court-badge">АС/ТС</span>';
@@ -606,11 +611,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('createManagerBtn')?.addEventListener('click', openCreateManagerModal);
         document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
-        document.getElementById('issueManagerSalaryBtn')?.addEventListener('click', issueManagerSalary);
         document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
         document.getElementById('managerHasSalary')?.addEventListener('change', function() {
             document.getElementById('managerSalaryWrapper').style.display = this.checked ? '' : 'none';
         });
+    }
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        document.getElementById('updatesBtn')?.addEventListener('click', showUpdates);
     }
     // Загрузка карточки клиента (только на client-card.html)
     if (window.location.pathname.includes('client-card.html')) {
@@ -622,6 +629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadClientCard(clientId);
             document.getElementById('assignManagerBtn')?.addEventListener('click', () => openAssignManagerForClient(clientId));
             document.getElementById('saveClientManager')?.addEventListener('click', () => saveClientManager(clientId));
+            document.getElementById('completedTasksBtn')?.addEventListener('click', showCompletedTasks);
             if (fromManager) {
                 const backLink = document.getElementById('backLink');
                 if (backLink) backLink.href = `managers.html#managerCard${fromManager}`;
@@ -1048,6 +1056,13 @@ function recordManagerPayment(client, amount, date, info = {}) {
         client.managerFullyPaid = true;
     }
     saveClientData(client);
+}
+
+function clientHasPaymentForMonth(client, month) {
+    const schedule = getPaymentSchedule(client);
+    const hasMonthly = schedule.some(p => p.date.slice(0,7) === month && p.paid);
+    const hasExtra = (client.extraPayments || []).some(p => p.date && p.date.slice(0,7) === month && p.paid);
+    return hasMonthly || hasExtra;
 }
 
 function removeManagerPayment(client, info = {}) {
@@ -2041,6 +2056,12 @@ function renderCompletedTasks() {
     });
 }
 
+window.showCompletedTasks = function() {
+    renderCompletedTasks();
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('completedTasksModal'));
+    modal.show();
+};
+
 function advanceClientStage(client) {
     const stages = Object.keys(subStages);
     const currentStageIndex = stages.indexOf(client.stage);
@@ -2892,37 +2913,8 @@ window.toggleManagerClients = function(managerId) {
     }
 };
 
-window.issueManagerSalary = function() {
-    const pay = parseFloat(document.getElementById('managerSalaryPay').value) || 0;
-    if (pay <= 0) return;
-    const dateInput = document.getElementById('managerSalaryDate');
-    const date = (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0];
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
-    const existing = payments[currentManagerId] || {};
-    const history = existing.history || [];
-    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
-    const baseSalary = manager && manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
-    const currentMonth = date.slice(0,7);
-    const salaryPaid = history
-        .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-    let amount = pay;
-    const remaining = Math.max(0, baseSalary - salaryPaid);
-    if (amount > remaining) amount = remaining;
-    if (amount <= 0) return;
-    history.push({ clientId: null, amount, date, type: 'salary' });
-    payments[currentManagerId] = { ...existing, history };
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
-    renderManagerPayments();
-    renderManagersPage();
-};
-
 window.openManagerPayments = function(managerId) {
     currentManagerId = managerId;
-    const dateInput = document.getElementById('managerSalaryDate');
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-    const payInput = document.getElementById('managerSalaryPay');
-    if (payInput) payInput.value = '';
     renderManagerPayments();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
     modal.show();
@@ -2958,7 +2950,8 @@ function renderManagerPayments() {
             const remaining = Math.max(0, totalDue - paid);
             const tr = document.createElement('tr');
             if (remaining <= 0) tr.classList.add('client-percent-paid');
-            const btnDisabled = remaining <= 0 ? 'disabled' : '';
+            const canIssue = remaining > 0 && clientHasPaymentForMonth(c, currentMonth);
+            const btnDisabled = canIssue ? '' : 'disabled';
             tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" ${btnDisabled} onclick="issueClientPercent(${c.id})">Выдать %</button></td>`;
             clientsBody.appendChild(tr);
         });
@@ -3041,6 +3034,10 @@ window.issueClientPercent = function(clientId) {
     const history = existing.history || [];
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = today.slice(0,7);
+    if (!clientHasPaymentForMonth(client, currentMonth)) {
+        alert('Клиент не оплатил за текущий месяц');
+        return;
+    }
     const already = history.some(p => String(p.clientId) === String(clientId) && p.date && p.date.slice(0,7) === currentMonth);
     if (already) {
         if (!confirm('Получить процент заранее?')) return;
@@ -3060,6 +3057,7 @@ window.issueClientPercent = function(clientId) {
 window.openAddManagerPayment = function(clientId) {
     const select = document.getElementById('managerPaymentClient');
     const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    const currentMonth = new Date().toISOString().slice(0,7);
     if (select) {
         select.innerHTML = '';
         clients
@@ -3069,7 +3067,8 @@ window.openAddManagerPayment = function(clientId) {
                 if (isNaN(percent) || percent <= 0) return false;
                 const totalDue = Math.round((c.totalAmount || 0) * percent / 100);
                 const paid = c.managerPaidTotal || 0;
-                return paid < totalDue;
+                if (paid >= totalDue) return false;
+                return clientHasPaymentForMonth(c, currentMonth);
             })
             .forEach(c => {
                 const opt = document.createElement('option');
@@ -3099,6 +3098,11 @@ window.saveManagerPayment = function() {
     const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) return;
+    const month = date.slice(0,7);
+    if (!clientHasPaymentForMonth(client, month)) {
+        alert('Клиент не оплатил за указанный месяц');
+        return;
+    }
     const percent = parseFloat(client.managerPercent);
     const totalDue = isNaN(percent) ? 0 : Math.round((client.totalAmount || 0) * percent / 100);
     client.managerPaidTotal = client.managerPaidTotal || 0;
@@ -3188,6 +3192,21 @@ window.openClientsModal = function() {
     const modalEl = document.getElementById('clientsModal');
     if (!modalEl) return;
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+};
+
+window.showUpdates = function() {
+    const list = document.getElementById('updatesList');
+    if (list) {
+        list.innerHTML = '';
+        updates.forEach(u => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.innerHTML = `<strong>${u.date}:</strong> ${u.text}`;
+            list.appendChild(li);
+        });
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('updatesModal'));
     modal.show();
 };
     
