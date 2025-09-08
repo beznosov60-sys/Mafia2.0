@@ -15,6 +15,7 @@
             <div class="search-wrapper mb-3">
                 <div class="search-bar">
                     <i class="ri-search-line"></i>
+                    <label for="searchInput" class="visually-hidden">Поиск клиентов</label>
                     <input type="text" id="searchInput" placeholder="Поиск клиентов" autocomplete="off">
                 </div>
                 <ul id="searchSuggestions" class="list-group search-suggestions d-none"></ul>
@@ -34,6 +35,7 @@
                         <li><a class="dropdown-item" id="importOption">Импорт из Excel</a></li>
                     </ul>
                 </div>
+                <label for="importFile" class="visually-hidden">Импорт из Excel</label>
                 <input type="file" id="importFile" accept=".xlsx" style="display:none" />
             </div>
         </div>

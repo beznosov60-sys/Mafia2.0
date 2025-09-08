@@ -26,21 +26,21 @@
             <div class="form-step active" id="step1">
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label for="lastName" class="form-label">Фамилия</label>
-                        <input type="text" class="form-control" id="lastName" required>
+                    <label for="lastName" class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="lastName" autocomplete="family-name" required>
                     </div>
                     <div class="col-md-4">
-                        <label for="firstName" class="form-label">Имя</label>
-                        <input type="text" class="form-control" id="firstName" required>
+                    <label for="firstName" class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="firstName" autocomplete="given-name" required>
                     </div>
                     <div class="col-md-4">
-                        <label for="middleName" class="form-label">Отчество</label>
-                        <input type="text" class="form-control" id="middleName">
+                    <label for="middleName" class="form-label">Отчество</label>
+                    <input type="text" class="form-control" id="middleName" autocomplete="additional-name">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="phone" class="form-label">Номер телефона</label>
-                    <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)">
+                    <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)" autocomplete="tel">
                 </div>
                 <div id="passportFields" class="d-none">
                     <div class="row g-3">
