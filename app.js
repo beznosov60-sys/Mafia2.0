@@ -2656,8 +2656,8 @@ function renderManagersPage() {
                     const paidClass = c.managerFullyPaid ? 'client-percent-paid' : '';
                     const item = `<li class="list-group-item position-relative pe-5 ${paidClass}">`
                             + `<div class="btn-group btn-group-sm position-absolute top-0 end-0">`
-                            + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>`
-                            + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
+                            + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, '${c.id}')" title="Редактировать"><i class="ri-edit-line"></i></button>`
+                            + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, '${c.id}')" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
                             + `</div>`
                             + `<a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link d-block mb-1">${c.firstName} ${c.lastName}</a>`
                             + `<div class="small text-muted">Процент: ${percentText}</div>`
@@ -2952,7 +2952,7 @@ function renderManagerPayments() {
             if (remaining <= 0) tr.classList.add('client-percent-paid');
             const canIssue = remaining > 0 && clientHasPaymentForMonth(c, currentMonth);
             const btnDisabled = canIssue ? '' : 'disabled';
-            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" ${btnDisabled} onclick="issueClientPercent(${c.id})">Выдать %</button></td>`;
+            tr.innerHTML = `<td>${c.firstName} ${c.lastName}</td><td>${percent}</td><td>${remaining.toFixed(2)}</td><td><button class="btn btn-sm btn-primary" ${btnDisabled} onclick="issueClientPercent('${c.id}')">Выдать %</button></td>`;
             clientsBody.appendChild(tr);
         });
     }
