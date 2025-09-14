@@ -148,6 +148,11 @@ function generateClientId(firstName, middleName, lastName, phone, existingIds) {
 
 window.generateClientId = generateClientId;
 
+window.openClient = function(id, managerId) {
+    const managerParam = managerId ? `&fromManager=${managerId}` : '';
+    window.location.href = `client-card.html?id=${id}${managerParam}`;
+};
+
 function exportClientsToExcel() {
     const clients = JSON.parse(localStorage.getItem('clients') || '[]');
     const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
@@ -2659,7 +2664,7 @@ function renderManagersPage() {
                             + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, ${c.id})" title="Редактировать"><i class="ri-edit-line"></i></button>`
                             + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, ${c.id})" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
                             + `</div>`
-                            + `<a href="client-card.html?id=${c.id}&fromManager=${manager.id}" class="client-link d-block mb-1">${c.firstName} ${c.lastName}</a>`
+                            + `<button type="button" class="client-link d-block mb-1 btn btn-link p-0" onclick="openClient('${c.id}', '${manager.id}')">${c.firstName} ${c.lastName}</button>`
                             + `<div class="small text-muted">Процент: ${percentText}</div>`
                             + `<div class="small text-muted">Остаток: ${remainingText}</div>`
                             + `<div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>`
