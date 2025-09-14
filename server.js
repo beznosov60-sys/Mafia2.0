@@ -1,13 +1,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://zktbasskylvqprofkinb.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+(async () => {
+  const { createClient } = await import('@supabase/supabase-js');
 
-const server = http.createServer(async (req, res) => {
+  const supabaseUrl = 'https://zktbasskylvqprofkinb.supabase.co';
+  const supabaseKey = process.env.SUPABASE_KEY;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/api/clients') {
     const { data, error } = await supabase.from('clients').select('*');
     if (error) {
@@ -26,6 +28,34 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const clients = JSON.parse(body || '[]');
+
+        // Fetch existing client IDs to determine which should be removed
+        const { data: existing, error: existingError } = await supabase
+          .from('clients')
+          .select('id');
+        if (existingError) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: existingError.message }));
+          return;
+        }
+
+        const payloadIds = clients.map(c => c.id);
+        const idsToDelete = existing
+          .map(row => row.id)
+          .filter(id => !payloadIds.includes(id));
+
+        if (idsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('clients')
+            .delete()
+            .in('id', idsToDelete);
+          if (deleteError) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: deleteError.message }));
+            return;
+          }
+        }
+
         const { error } = await supabase.from('clients').upsert(clients);
         if (error) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -56,9 +86,13 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream' });
     res.end(data);
   });
-});
+  });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+})().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
