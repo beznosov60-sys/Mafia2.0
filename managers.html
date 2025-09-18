@@ -98,6 +98,21 @@
                     <div class="mb-3">
                         <label class="form-label">Остаток зарплаты: <span id="managerSalaryRemaining"></span></label>
                     </div>
+                    <div class="manager-salary-form mb-4">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md-4">
+                                <label for="managerSalaryAmount" class="form-label">Сумма</label>
+                                <input type="number" id="managerSalaryAmount" class="form-control" min="0" step="0.01" placeholder="0">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="managerSalaryDate" class="form-label">Дата</label>
+                                <input type="date" id="managerSalaryDate" class="form-control">
+                            </div>
+                            <div class="col-12 col-md-4 col-xl-3">
+                                <button type="button" class="btn btn-success w-100 mt-2 mt-md-0" id="issueManagerSalaryBtn">Выдать зарплату</button>
+                            </div>
+                        </div>
+                    </div>
                     <table class="table table-sm mb-3">
                         <thead><tr><th>Клиент</th><th>%</th><th>Остаток</th><th></th></tr></thead>
                         <tbody id="managerPaymentsClientsBody"></tbody>

@@ -505,7 +505,7 @@ body.manager-screen {
 .manager-tile__body--blue {
     background: linear-gradient(135deg, #5b50f3, #4339f2);
     color: #fff;
-    min-height: 220px;
+    min-height: 170px;
 }
 
 .manager-tile__body--green {
