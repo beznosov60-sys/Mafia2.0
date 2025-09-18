@@ -71,11 +71,64 @@ async function syncManagersFromServer() {
 }
 
 function getManagers() {
-    return JSON.parse(localStorage.getItem('managers')) || [];
+    const managers = JSON.parse(localStorage.getItem('managers')) || [];
+    let requiresSave = false;
+    managers.forEach(manager => {
+        if (!manager) return;
+        const legacySalary = manager.paymentValue ?? manager.salary ?? manager.baseSalary;
+        if (!manager.paymentType) {
+            if (legacySalary !== undefined && legacySalary !== null && legacySalary !== '') {
+                manager.paymentType = 'fixed';
+            } else {
+                manager.paymentType = 'none';
+            }
+            requiresSave = true;
+        }
+        if (manager.paymentType === 'fixed' && (manager.paymentValue === undefined || manager.paymentValue === '') && legacySalary !== undefined && legacySalary !== null && legacySalary !== '') {
+            manager.paymentValue = legacySalary;
+            requiresSave = true;
+        }
+    });
+    if (requiresSave) {
+        saveManagers(managers);
+    }
+    return managers;
 }
 
 function saveManagers(managers) {
     localStorage.setItem('managers', JSON.stringify(managers));
+}
+
+
+function getManagerBaseSalary(manager) {
+    if (!manager) return 0;
+    const sources = [];
+    if (manager.paymentType === 'fixed') {
+        sources.push(manager.paymentValue);
+    }
+    sources.push(manager.salary, manager.baseSalary, manager.paymentValue);
+    for (const value of sources) {
+        if (value === undefined || value === null || value === '') continue;
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+            return num;
+        }
+    }
+    return 0;
+}
+
+function getManagerSalaryInputValue(manager) {
+    if (!manager) return '';
+    const sources = [];
+    if (manager.paymentType === 'fixed') {
+        sources.push(manager.paymentValue);
+    }
+    sources.push(manager.salary, manager.baseSalary, manager.paymentValue);
+    for (const value of sources) {
+        if (value === undefined || value === null || value === '') continue;
+        return String(value);
+    }
+    return '';
 }
 
 
@@ -617,6 +670,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
         document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
         document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
+        document.getElementById('issueManagerSalaryBtn')?.addEventListener('click', issueManagerSalary);
+        document.getElementById('managerSalaryDate')?.addEventListener('change', () => updateManagerSalaryUI());
         document.getElementById('managerHasSalary')?.addEventListener('change', function() {
             document.getElementById('managerSalaryWrapper').style.display = this.checked ? '' : 'none';
         });
@@ -2689,12 +2744,12 @@ function renderManagersPage() {
         const currentMonth = new Date().toISOString().slice(0,7);
         const paidClientThisMonth = history
             .filter(p => p.clientId && p.date && p.date.slice(0,7) === currentMonth)
-            .reduce((sum, p) => sum + (p.amount || 0), 0);
+            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         clientMonthlyIncome = Math.max(0, clientMonthlyIncome - paidClientThisMonth);
         const salaryPaid = history
             .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
-            .reduce((sum, p) => sum + (p.amount || 0), 0);
-        const baseSalary = manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
+            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        const baseSalary = getManagerBaseSalary(manager);
         const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
         const lastSalary = history.filter(p => p.type === 'salary').sort((a,b) => b.date.localeCompare(a.date))[0];
         const lastSalaryDate = lastSalary ? lastSalary.date : null;
@@ -2804,12 +2859,13 @@ window.openEditManager = function(managerId) {
     editingManagerId = managerId;
     document.getElementById('managerName').value = manager.name;
     document.getElementById('managerContacts').value = manager.contacts || '';
-    const hasSalary = manager.paymentType === 'fixed';
+    const salaryValue = getManagerSalaryInputValue(manager);
+    const hasSalary = manager.paymentType === 'fixed' || salaryValue !== '';
     const salaryChk = document.getElementById('managerHasSalary');
     const salaryWrapper = document.getElementById('managerSalaryWrapper');
     if (salaryChk) salaryChk.checked = hasSalary;
     if (salaryWrapper) salaryWrapper.style.display = hasSalary ? '' : 'none';
-    document.getElementById('managerPayValue').value = hasSalary ? manager.paymentValue : '';
+    document.getElementById('managerPayValue').value = hasSalary ? salaryValue : '';
     const modalEl = document.getElementById('managerModal');
     modalEl.querySelector('.modal-title').textContent = 'Редактировать менеджера';
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -2830,9 +2886,19 @@ window.saveManager = function() {
             manager.contacts = contacts;
             manager.paymentType = hasSalary ? 'fixed' : 'none';
             manager.paymentValue = hasSalary ? value : '';
+            manager.salary = hasSalary ? value : '';
+            manager.baseSalary = hasSalary ? value : '';
         }
     } else {
-        managers.push({ id: Date.now(), name, contacts, paymentType: hasSalary ? 'fixed' : 'none', paymentValue: hasSalary ? value : '' });
+        managers.push({
+            id: Date.now(),
+            name,
+            contacts,
+            paymentType: hasSalary ? 'fixed' : 'none',
+            paymentValue: hasSalary ? value : '',
+            salary: hasSalary ? value : '',
+            baseSalary: hasSalary ? value : ''
+        });
     }
     saveManagers(managers);
     renderManagersPage();
@@ -2971,6 +3037,8 @@ window.toggleManagerClients = function(managerId) {
 
 window.openManagerPayments = function(managerId) {
     currentManagerId = managerId;
+    const salaryDateInput = document.getElementById('managerSalaryDate');
+    if (salaryDateInput) salaryDateInput.value = '';
     renderManagerPayments();
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('managerPaymentsModal'));
     modal.show();
@@ -2979,20 +3047,17 @@ window.openManagerPayments = function(managerId) {
 function renderManagerPayments() {
     const body = document.getElementById('managerPaymentsBody');
     const clientsBody = document.getElementById('managerPaymentsClientsBody');
-    const salaryRemEl = document.getElementById('managerSalaryRemaining');
     if (!body || !clientsBody) return;
     const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
     const data = payments[currentManagerId] || {};
     const history = data.history || [];
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
-    const baseSalary = manager && manager.paymentType === 'fixed' ? parseFloat(manager.paymentValue) || 0 : 0;
+    const salaryDateInput = document.getElementById('managerSalaryDate');
+    if (salaryDateInput && !salaryDateInput.value) {
+        salaryDateInput.value = new Date().toISOString().split('T')[0];
+    }
+    updateManagerSalaryUI(history);
     const currentMonth = new Date().toISOString().slice(0,7);
-    const salaryPaid = history
-        .filter(p => p.type === 'salary' && p.date && p.date.slice(0,7) === currentMonth)
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-    const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
-    if (salaryRemEl) salaryRemEl.textContent = salaryRemaining.toFixed(2);
     clientsBody.innerHTML = '';
     const managerClients = clients.filter(c => String(c.managerId) === String(currentManagerId));
     if (managerClients.length === 0) {
@@ -3021,7 +3086,7 @@ function renderManagerPayments() {
         const month = p.date.slice(0, 7);
         acc[month] = acc[month] || { items: [], total: 0 };
         acc[month].items.push(p);
-        acc[month].total += p.amount || 0;
+        acc[month].total += parseFloat(p.amount) || 0;
         return acc;
     }, {});
     const months = Object.keys(grouped).sort().reverse();
@@ -3070,6 +3135,113 @@ function renderManagerPayments() {
         });
     }
 }
+
+function updateManagerSalaryUI(historyOverride) {
+    const amountInput = document.getElementById('managerSalaryAmount');
+    const dateInput = document.getElementById('managerSalaryDate');
+    const button = document.getElementById('issueManagerSalaryBtn');
+    const remainingEl = document.getElementById('managerSalaryRemaining');
+    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
+    if (!manager) {
+        if (remainingEl) remainingEl.textContent = '0.00';
+        if (button) button.disabled = true;
+        if (amountInput) {
+            amountInput.value = '';
+            amountInput.placeholder = 'Нет оклада';
+        }
+        return;
+    }
+    let selectedDate = dateInput?.value;
+    if (!selectedDate) {
+        selectedDate = new Date().toISOString().split('T')[0];
+        if (dateInput) dateInput.value = selectedDate;
+    }
+    const month = selectedDate.slice(0, 7);
+    let history = historyOverride;
+    if (!Array.isArray(history)) {
+        const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        history = payments[currentManagerId]?.history || [];
+    }
+    const baseSalary = getManagerBaseSalary(manager);
+    const salaryPaid = history
+        .filter(p => p.type === 'salary' && p.date && p.date.slice(0, 7) === month)
+        .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const remaining = Math.max(0, baseSalary - salaryPaid);
+    if (remainingEl) remainingEl.textContent = remaining.toFixed(2);
+    if (amountInput) {
+        const currentVal = parseFloat(amountInput.value);
+        if (!amountInput.value || isNaN(currentVal) || currentVal > remaining) {
+            amountInput.value = remaining > 0 ? remaining.toFixed(2) : '';
+        }
+        amountInput.placeholder = baseSalary > 0 ? `до ${remaining.toFixed(2)}` : 'Нет оклада';
+        if (remaining > 0) {
+            amountInput.setAttribute('max', remaining.toFixed(2));
+        } else {
+            amountInput.removeAttribute('max');
+        }
+    }
+    if (button) {
+        const shouldDisable = remaining <= 0 || baseSalary <= 0;
+        button.disabled = shouldDisable;
+        if (shouldDisable) {
+            if (baseSalary <= 0) {
+                button.title = 'Укажите оклад в карточке менеджера';
+            } else {
+                button.title = 'Оклад за выбранный месяц уже выплачен';
+            }
+        } else {
+            button.removeAttribute('title');
+        }
+    }
+}
+
+window.issueManagerSalary = function() {
+    const amountInput = document.getElementById('managerSalaryAmount');
+    const dateInput = document.getElementById('managerSalaryDate');
+    if (!amountInput || !dateInput) return;
+    let rawAmount = parseFloat(amountInput.value);
+    if (isNaN(rawAmount) || rawAmount <= 0) {
+        alert('Введите сумму выплаты');
+        return;
+    }
+    rawAmount = Math.round(rawAmount * 100) / 100;
+    let date = dateInput.value;
+    if (!date) {
+        date = new Date().toISOString().split('T')[0];
+        dateInput.value = date;
+    }
+    const manager = getManagers().find(m => String(m.id) === String(currentManagerId));
+    if (!manager) return;
+    const baseSalary = getManagerBaseSalary(manager);
+    if (baseSalary <= 0) {
+        alert('Для выплаты укажите оклад в карточке менеджера');
+        return;
+    }
+    const month = date.slice(0, 7);
+    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const existing = payments[currentManagerId] || {};
+    const history = existing.history || [];
+    const salaryPaid = history
+        .filter(p => p.type === 'salary' && p.date && p.date.slice(0, 7) === month)
+        .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    let remaining = Math.max(0, baseSalary - salaryPaid);
+    if (remaining <= 0) {
+        alert('Оклад за выбранный месяц уже выплачен');
+        updateManagerSalaryUI(history);
+        return;
+    }
+    let amount = Math.min(rawAmount, remaining);
+    amount = Math.round(amount * 100) / 100;
+    if (amount <= 0) {
+        alert('Сумма выплаты должна быть больше нуля');
+        return;
+    }
+    history.push({ type: 'salary', amount, date });
+    payments[currentManagerId] = { ...existing, history };
+    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    renderManagerPayments();
+    renderManagersPage();
+};
 
 window.issueClientPercent = function(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
