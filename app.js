@@ -2128,13 +2128,14 @@ function renderManagerTaskList(managerId) {
     (manager.tasks || []).forEach(task => {
         if (task.completed) return;
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-start task-item';
-        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
+        li.className = 'manager-task-item';
+        li.style.setProperty('--task-accent-color', task.color || '#28a745');
         const textWithDeadline = `${task.text}${task.deadline ? ' (' + task.deadline + ')' : ''}`;
-        li.innerHTML = `<span class="task-text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</span>
-            <div class="d-flex">
-                <button class="client-btn client-btn-complete me-2" onclick="completeManagerTask(${managerId}, ${task.id})">Выполнено</button>
-                <button class="btn btn-sm btn-danger" onclick="removeManagerTask(${managerId}, ${task.id})">Удалить</button>
+        li.innerHTML = `
+            <button type="button" class="manager-task-item__text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</button>
+            <div class="manager-task-item__actions">
+                <button type="button" class="manager-task-item__action manager-task-item__action--complete" onclick="completeManagerTask(${managerId}, ${task.id})">Выполнено</button>
+                <button type="button" class="manager-task-item__action manager-task-item__action--delete" onclick="removeManagerTask(${managerId}, ${task.id})">Удалить</button>
             </div>`;
         list.appendChild(li);
     });
@@ -2638,7 +2639,8 @@ function renderManagersPage() {
         const managerClients = clients.filter(c => String(c.managerId) === String(manager.id));
         let clientMonthlyIncome = 0;
         let totalRemaining = 0;
-        let firstClientHtml = '';
+        let clientsWithPercent = 0;
+        let totalPercentValue = 0;
         const clientItemsArr = managerClients.length
             ? managerClients.map(c => {
                 const months = c.paymentMonths || 0;
@@ -2646,36 +2648,41 @@ function renderManagersPage() {
                 const percent = c.managerPercent ? parseFloat(c.managerPercent) : 0;
                 const paid = c.managerPaidTotal || 0;
                 const managerShare = total * percent / 100;
+                const remainingForClient = percent > 0 ? Math.max(0, managerShare - paid) : 0;
                 if (percent > 0) {
+                    clientsWithPercent += 1;
+                    totalPercentValue += percent;
                     const monthly = months ? total / months : 0;
                     const incomePerMonth = monthly * percent / 100;
                     if (!c.managerFullyPaid) {
                         clientMonthlyIncome += incomePerMonth;
                     }
-                    const remainingForClient = managerShare - paid;
                     if (remainingForClient > 0) {
                         totalRemaining += remainingForClient;
                     }
-                    const percentText = c.managerFullyPaid ? 'оплачен' : percent;
-                    const remainingText = remainingForClient > 0 ? remainingForClient.toFixed(2) : '0.00';
-                    const paidClass = c.managerFullyPaid ? 'client-percent-paid' : '';
-                    const item = `<li class="list-group-item position-relative pe-5 ${paidClass}">`
-                            + `<div class="btn-group btn-group-sm position-absolute top-0 end-0">`
-                            + `<button type="button" class="btn btn-outline-secondary" onclick="openEditAssignedClient(${manager.id}, '${c.id}')" title="Редактировать"><i class="ri-edit-line"></i></button>`
-                            + `<button type="button" class="btn btn-outline-danger" onclick="removeClientFromManager(${manager.id}, '${c.id}')" title="Удалить"><i class="ri-delete-bin-line"></i></button>`
-                            + `</div>`
-                            + `<button type="button" class="client-link d-block mb-1 btn btn-link p-0" onclick="openClient('${c.id}', '${manager.id}')">${c.firstName} ${c.lastName}</button>`
-                            + `<div class="small text-muted">Процент: ${percentText}</div>`
-                            + `<div class="small text-muted">Остаток: ${remainingText}</div>`
-                            + `<div class="small text-muted">ФУ: ${c.finManagerName || ''}</div>`
-                        + `</li>`;
-                    if (!firstClientHtml) firstClientHtml = item;
-                    return item;
                 }
-                return '';
+                const percentText = c.managerFullyPaid ? 'оплачен' : `${percent || 0}%`;
+                const remainingText = remainingForClient.toFixed(2);
+                const paidClass = c.managerFullyPaid ? 'manager-client-item--paid' : '';
+                const finManagerInfo = c.finManagerName ? `<span class="manager-client-meta__item">ФУ: ${c.finManagerName}</span>` : '';
+                return `
+                    <li class="manager-client-item ${paidClass}">
+                        <div class="manager-client-item__body">
+                            <button type="button" class="manager-client-link" onclick="openClient('${c.id}', '${manager.id}')">${c.firstName} ${c.lastName}</button>
+                            <div class="manager-client-meta">
+                                <span class="manager-client-meta__item">Процент: ${percentText}</span>
+                                <span class="manager-client-meta__item">Остаток: ${remainingText}</span>
+                                ${finManagerInfo}
+                            </div>
+                        </div>
+                        <div class="manager-client-item__actions">
+                            <button type="button" class="tile-icon-button" onclick="openEditAssignedClient(${manager.id}, '${c.id}')" title="Редактировать"><i class="ri-edit-line"></i></button>
+                            <button type="button" class="tile-icon-button tile-icon-button--danger" onclick="removeClientFromManager(${manager.id}, '${c.id}')" title="Удалить"><i class="ri-delete-bin-line"></i></button>
+                        </div>
+                    </li>
+                `;
             })
-            : ['<li class="list-group-item text-center">Нет клиентов</li>'];
-        if (!firstClientHtml) firstClientHtml = '<li class="list-group-item text-center">Нет клиентов</li>';
+            : ['<li class="manager-client-item manager-client-item--empty">Клиенты пока не назначены</li>'];
         const clientItems = clientItemsArr.join('');
         const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
         const history = paymentsStore[manager.id]?.history || [];
@@ -2691,43 +2698,83 @@ function renderManagersPage() {
         const salaryRemaining = Math.max(0, baseSalary - salaryPaid);
         const lastSalary = history.filter(p => p.type === 'salary').sort((a,b) => b.date.localeCompare(a.date))[0];
         const lastSalaryDate = lastSalary ? lastSalary.date : null;
+        const clientsCount = managerClients.length;
+        const clientWord = clientsCount === 1 ? 'клиент' : (clientsCount >= 2 && clientsCount <= 4 ? 'клиента' : 'клиентов');
+        const namesPreview = managerClients.slice(0, 2).map(c => `${c.firstName} ${c.lastName}`).join(', ');
+        const restCount = clientsCount > 2 ? ` и ещё ${clientsCount - 2}` : '';
+        const collapsedContent = clientsCount
+            ? `<div class="manager-clients-summary-count">${clientsCount} ${clientWord}</div>${namesPreview ? `<div class="manager-clients-summary-names">${namesPreview}${restCount}</div>` : ''}`
+            : '<div class="manager-clients-summary-empty">Клиенты пока не назначены</div>';
+        const averagePercent = clientsWithPercent > 0 ? totalPercentValue / clientsWithPercent : 0;
         card.innerHTML = `
-            <div class="row g-4">
-                <div class="col-md-4 manager-block">
-                    <div class="d-flex align-items-center w-100">
-                        <i class="ri-user-line me-2"></i>
-                        <h5 class="mb-0">${manager.name}</h5>
-                        <div class="ms-auto">
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="openEditManager(${manager.id})" title="Редактировать менеджера"><i class="ri-edit-line"></i></button>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeManager(${manager.id})" title="Удалить менеджера"><i class="ri-delete-bin-line"></i></button>
+            <div class="manager-card__grid">
+                <section class="manager-tile manager-tile--info">
+                    <div class="manager-tile__header">
+                        <div class="manager-tile__title-group">
+                            <h2 class="manager-tile__title">${manager.name}</h2>
+                            ${manager.contacts ? `<div class="manager-tile__subtitle">${manager.contacts}</div>` : ''}
+                        </div>
+                        <div class="manager-tile__actions">
+                            <button type="button" class="tile-icon-button" onclick="openEditManager(${manager.id})" title="Редактировать менеджера"><i class="ri-edit-line"></i></button>
+                            <button type="button" class="tile-icon-button tile-icon-button--danger" onclick="removeManager(${manager.id})" title="Удалить менеджера"><i class="ri-delete-bin-line"></i></button>
                         </div>
                     </div>
-                    <div class="text-muted small">${manager.contacts || ''}</div>
-                    <div class="text-muted small">Оклад: ${baseSalary.toFixed(2)}</div>
-                    <div class="text-muted small">Ежемесячно от клиентов: ${clientMonthlyIncome.toFixed(2)}</div>
-                    <div class="text-muted small">Остаток зарплаты: ${salaryRemaining.toFixed(2)}</div>
-                    <div class="text-muted small">Последняя з/п: ${lastSalaryDate ? new Date(lastSalaryDate).toLocaleDateString('ru-RU') : '-'}</div>
-                    <div class="text-muted small">Остаток по клиентам: ${totalRemaining.toFixed(2)}</div>
-                </div>
-                <div class="col-md-4 manager-block">
-                    <div class="d-flex justify-content-between align-items-center"><strong>Клиенты</strong><button type="button" class="btn btn-sm btn-link" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})">Скрыть</button></div>
-                    <ul class="list-group mb-2" id="managerClientsList${manager.id}">${clientItems}</ul>
-                    <ul class="list-group mb-2" id="managerClientsCollapsed${manager.id}" style="display:none;">${firstClientHtml}</ul>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="openAssignClientToManager(${manager.id})">Добавить клиента</button>
-                </div>
-                <div class="col-md-4 manager-block">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <strong>Задачи</strong>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openManagerPayments(${manager.id})" title="Выплаты"><i class="ri-wallet-line"></i></button>
+                    <div class="manager-tile__body manager-tile__body--red">
+                        <div class="manager-stats">
+                            <div class="manager-stat">
+                                <span class="manager-stat__label">Клиенты</span>
+                                <span class="manager-stat__value">${clientsCount}</span>
+                            </div>
+                            <div class="manager-stat">
+                                <span class="manager-stat__label">Средний %</span>
+                                <span class="manager-stat__value">${averagePercent.toFixed(1)}%</span>
+                            </div>
+                            <div class="manager-stat">
+                                <span class="manager-stat__label">Общий %</span>
+                                <span class="manager-stat__value">${totalPercentValue.toFixed(1)}%</span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <input type="text" id="managerTaskText${manager.id}" class="form-control mb-1" placeholder="Новая задача">
-                        <input type="date" id="managerTaskDeadline${manager.id}" class="form-control mb-1">
-                        <input type="color" id="managerTaskColor${manager.id}" class="form-control form-control-color mb-1" value="#28a745">
-                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addManagerTask(${manager.id})">Добавить</button>
+                    <div class="manager-tile__footer">
+                        <div class="manager-meta">
+                            <div class="manager-meta__row"><span>Оклад</span><span>${baseSalary.toFixed(2)}</span></div>
+                            <div class="manager-meta__row"><span>Ежемесячно от клиентов</span><span>${clientMonthlyIncome.toFixed(2)}</span></div>
+                            <div class="manager-meta__row"><span>Остаток зарплаты</span><span>${salaryRemaining.toFixed(2)}</span></div>
+                            <div class="manager-meta__row"><span>Последняя з/п</span><span>${lastSalaryDate ? new Date(lastSalaryDate).toLocaleDateString('ru-RU') : '-'}</span></div>
+                            <div class="manager-meta__row"><span>Остаток по клиентам</span><span>${totalRemaining.toFixed(2)}</span></div>
+                        </div>
                     </div>
-                    <ul class="list-group manager-task-list" id="managerTaskList${manager.id}"></ul>
-                </div>
+                </section>
+                <section class="manager-tile manager-tile--clients">
+                    <div class="manager-tile__header">
+                        <div class="manager-tile__title">Клиенты</div>
+                        <button type="button" class="manager-clients-toggle" id="toggleClientsBtn${manager.id}" onclick="toggleManagerClients(${manager.id})" aria-expanded="false">Показать</button>
+                    </div>
+                    <div class="manager-tile__body manager-tile__body--blue">
+                        <div class="manager-clients-summary" id="managerClientsCollapsed${manager.id}">${collapsedContent}</div>
+                        <ul class="manager-clients-list" id="managerClientsList${manager.id}" style="display:none;">${clientItems}</ul>
+                    </div>
+                    <div class="manager-tile__footer">
+                        <button type="button" class="manager-tile__button" onclick="openAssignClientToManager(${manager.id})">Привязать клиента</button>
+                    </div>
+                </section>
+                <section class="manager-tile manager-tile--tasks">
+                    <div class="manager-tile__header">
+                        <div class="manager-tile__title">Задачи</div>
+                        <button type="button" class="tile-icon-button" onclick="openManagerPayments(${manager.id})" title="Выплаты"><i class="ri-wallet-line"></i></button>
+                    </div>
+                    <div class="manager-tile__body manager-tile__body--green">
+                        <div class="manager-task-form">
+                            <input type="text" id="managerTaskText${manager.id}" class="manager-task-form__input" placeholder="Новая задача">
+                            <div class="manager-task-form__row">
+                                <input type="date" id="managerTaskDeadline${manager.id}" class="manager-task-form__input">
+                                <input type="color" id="managerTaskColor${manager.id}" class="manager-task-form__color" value="#28a745">
+                            </div>
+                            <button type="button" class="manager-tile__button manager-tile__button--light" onclick="addManagerTask(${manager.id})">Добавить задачу</button>
+                        </div>
+                        <ul class="manager-task-list" id="managerTaskList${manager.id}"></ul>
+                    </div>
+                </section>
             </div>
         `;
         list.appendChild(card);
@@ -2911,10 +2958,14 @@ window.toggleManagerClients = function(managerId) {
         list.style.display = '';
         collapsed.style.display = 'none';
         btn.textContent = 'Скрыть';
+        btn.setAttribute('aria-expanded', 'true');
+        btn.classList.add('is-open');
     } else {
         list.style.display = 'none';
         collapsed.style.display = '';
         btn.textContent = 'Показать';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.classList.remove('is-open');
     }
 };
 

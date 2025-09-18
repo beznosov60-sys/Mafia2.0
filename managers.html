@@ -9,13 +9,13 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="manager-screen">
-    <div class="container py-5">
-        <a href="index.html" class="btn btn-back mb-3">&larr; Назад</a>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Менеджеры</h3>
-            <button type="button" class="btn btn-primary" id="createManagerBtn" title="Создать менеджера"><i class="ri-user-add-line me-1"></i>Создать менеджера</button>
+    <div class="manager-page container-xl py-5">
+        <div class="manager-toolbar">
+            <a href="index.html" class="manager-toolbar__button manager-toolbar__button--back" title="Вернуться на главную">Назад</a>
+            <button type="button" class="manager-toolbar__button manager-toolbar__button--create" id="createManagerBtn" title="Создать менеджера">Создать менеджера</button>
         </div>
-        <div id="managersList"></div>
+        <h1 class="manager-page__title">Менеджеры</h1>
+        <div id="managersList" class="manager-list"></div>
     </div>
 
     <!-- Модальное окно создания менеджера -->
