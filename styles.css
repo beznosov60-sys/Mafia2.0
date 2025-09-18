@@ -59,11 +59,12 @@ body.loaded {
 
 /* Главный экран */
 body.home-screen {
-    background: linear-gradient(135deg, var(--purple-100), var(--purple-300));
+    background: linear-gradient(180deg, #edeefe 0%, #dcdfff 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 40px 16px;
 }
 
 .calendar-screen {
@@ -74,21 +75,22 @@ body.home-screen {
 
 .home-screen .main-wrapper {
     width: 100%;
-    max-width: 600px;
+    max-width: 720px;
     text-align: center;
 }
 
 .home-screen .control-panel {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
-    border-radius: 25px;
-    padding: 20px;
+    gap: 32px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(22px);
+    border-radius: 32px;
+    padding: 36px 40px;
     position: relative;
     z-index: 1000;
+    box-shadow: 0 28px 60px -32px rgba(67, 57, 242, 0.45);
 }
 
 .home-screen .search-wrapper {
@@ -98,30 +100,38 @@ body.home-screen {
 .home-screen .search-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 16px;
+    padding: 18px 26px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    box-shadow: 0 18px 40px rgba(67, 57, 242, 0.12);
 }
 
 .home-screen .search-bar input {
     flex: 1;
     border: none;
     outline: none;
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 25px;
-    backdrop-filter: blur(10px);
+    background: transparent;
     color: var(--neutral-900);
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+.home-screen .search-bar input::placeholder {
+    color: var(--neutral-600);
+    text-transform: lowercase;
 }
 
 .home-screen .search-bar i {
-    font-size: 1.2rem;
-    color: var(--neutral-600);
+    font-size: 1.35rem;
+    color: var(--purple-500);
 }
 
 .home-screen .icon-buttons {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 18px;
+    flex-wrap: wrap;
 }
 
 .icon-buttons .dropdown-menu {
@@ -129,22 +139,44 @@ body.home-screen {
 }
 
 .home-screen .circle-btn {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: none;
-    background: var(--primary-color);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background: var(--purple-500);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     color: #fff;
-    transition: background 0.2s;
+    box-shadow: 0 20px 40px -22px rgba(67, 57, 242, 0.65);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
 }
 
-.home-screen .circle-btn:hover {
-    background: var(--primary-color-dark);
+.home-screen .circle-btn i {
+    pointer-events: none;
+}
+
+.home-screen .circle-btn:hover,
+.home-screen .circle-btn:focus {
+    background: var(--purple-600);
+}
+
+.home-screen .circle-btn:hover,
+.home-screen .circle-btn:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 44px -18px rgba(67, 57, 242, 0.55);
+}
+
+.home-screen .circle-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(112, 102, 255, 0.35), 0 24px 44px -18px rgba(67, 57, 242, 0.55);
+}
+
+.home-screen .circle-btn:active {
+    transform: translateY(-1px);
 }
 
 .search-suggestions {
@@ -153,6 +185,115 @@ body.home-screen {
     left: 0;
     right: 0;
     z-index: 1000;
+}
+
+.home-screen #courtAccordion {
+    margin-top: 8px;
+}
+
+.home-screen #courtAccordion .accordion-item {
+    background: transparent;
+    border: none;
+}
+
+.home-screen .accordion-button {
+    box-shadow: none;
+}
+
+.home-screen .accordion-button.court-toggle {
+    justify-content: center;
+    gap: 12px;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    color: var(--neutral-700);
+    padding: 18px 30px;
+    transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    text-transform: lowercase;
+}
+
+.home-screen .accordion-button.court-toggle .toggle-label {
+    font-size: 1rem;
+}
+
+.home-screen .accordion-button.court-toggle .toggle-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease, color 0.3s ease;
+    color: var(--purple-500);
+}
+
+.home-screen .accordion-button.court-toggle:not(.collapsed) .toggle-icon {
+    transform: rotate(180deg);
+    color: var(--purple-600);
+}
+
+.home-screen .accordion-button.court-toggle:hover,
+.home-screen .accordion-button.court-toggle:focus {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--neutral-800);
+    box-shadow: 0 22px 40px -24px rgba(67, 57, 242, 0.4);
+}
+
+.home-screen .accordion-button.court-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(112, 102, 255, 0.25), 0 22px 40px -24px rgba(67, 57, 242, 0.4);
+}
+
+.home-screen .accordion-button::after {
+    display: none;
+}
+
+.home-screen .court-accordion-body {
+    padding: 24px !important;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 28px;
+    margin-top: 16px;
+    box-shadow: 0 30px 60px -36px rgba(67, 57, 242, 0.35);
+}
+
+.home-screen .court-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.home-screen .court-list .list-group-item {
+    background: transparent;
+    border: none;
+    color: var(--neutral-700);
+    font-weight: 500;
+}
+
+@media (max-width: 575.98px) {
+    .home-screen .control-panel {
+        padding: 28px 24px;
+        gap: 24px;
+    }
+
+    .home-screen .search-bar {
+        padding: 16px 20px;
+        gap: 12px;
+    }
+
+    .home-screen .circle-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 1.2rem;
+    }
+
+    #courtThisMonth .court-row {
+        grid-template-columns: 1fr;
+    }
+
+    #courtThisMonth .court-date-pay {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    #courtThisMonth .court-item {
+        padding: 18px 20px;
+    }
 }
 
 .clickable-item {
@@ -980,52 +1121,69 @@ body.manager-screen {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#courtThisMonth .list-group-item {
+    border-radius: 20px;
+    background: rgba(247, 247, 252, 0.85);
+    border: none;
+    padding: 18px 20px;
+    color: var(--neutral-700);
+    font-weight: 500;
 }
 
 #courtThisMonth .court-item {
     cursor: pointer;
+    border-radius: 20px;
+    background: rgba(247, 247, 252, 0.85);
     border: 1px solid transparent;
+    padding: 20px 24px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+#courtThisMonth .court-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 40px -28px rgba(67, 57, 242, 0.4);
+    border-color: rgba(112, 102, 255, 0.28);
+}
+
+#courtThisMonth .court-item:active {
+    transform: translateY(-1px);
+}
+
+#courtThisMonth .court-item.overdue {
+    border-color: rgba(239, 68, 68, 0.45);
+    box-shadow: 0 24px 40px -32px rgba(239, 68, 68, 0.35);
+}
+
+#courtThisMonth .court-item.today {
+    border-color: rgba(245, 158, 11, 0.45);
+    box-shadow: 0 24px 40px -32px rgba(245, 158, 11, 0.35);
 }
 
 #courtThisMonth .court-row {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1.5fr 1fr auto;
     align-items: center;
-    height: 72px;
-    padding: 12px;
-    column-gap: 12px;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-#courtThisMonth .court-item:hover .court-row {
-    background: #F8FAFC;
-}
-
-#courtThisMonth .court-item.active .court-row {
-    background: #EEF2FF;
-    border: 1px solid #C7D2FE;
-}
-
-#courtThisMonth .court-item.overdue .court-row {
-    border-left: 4px solid #EF4444;
-}
-
-#courtThisMonth .court-item.today .court-row {
-    border-left: 4px solid #F59E0B;
+    gap: 12px 18px;
 }
 
 #courtThisMonth .court-name {
     display: flex;
     align-items: center;
-    font-size: 16px;
+    gap: 8px;
+    font-size: 1rem;
     font-weight: 600;
-    color: #0F172A;
+    color: var(--neutral-900);
 }
 
 #courtThisMonth .court-task {
-    font-size: 14px;
-    font-weight: 400;
-    color: #475569;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--neutral-700);
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1039,58 +1197,68 @@ body.manager-screen {
 }
 
 #courtThisMonth .court-date {
-    font-size: 14px;
-    font-weight: 500;
-    color: #111827;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--neutral-800);
 }
 
 .court-payments-btn {
-    height: 36px;
-    padding: 0 12px;
-    border-radius: 10px;
-    background: #5850EC;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--purple-500);
     color: #fff;
     border: none;
-    transition: background 0.2s;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .court-payments-btn:hover {
-    background: #4F46E5;
+    background: var(--purple-600);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -20px rgba(67, 57, 242, 0.5);
+}
+
+.court-payments-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(112, 102, 255, 0.3);
 }
 
 .court-payments-btn:disabled {
-    background: #A5B4FC;
+    background: rgba(112, 102, 255, 0.35);
+    box-shadow: none;
 }
 
-.court-toggle {
-    width: 32px;
-    height: 32px;
-    border: 1px solid #5850EC;
-    border-radius: 10px;
-    background: transparent;
-    color: #5850EC;
-    display: flex;
+#courtThisMonth .court-item button.court-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(112, 102, 255, 0.12);
+    color: var(--purple-600);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.court-toggle:hover {
-    background: #EEF2FF;
+#courtThisMonth .court-item button.court-toggle:hover {
+    background: rgba(112, 102, 255, 0.22);
 }
 
-.court-toggle:disabled {
-    border-color: #A5B4FC;
-    color: #A5B4FC;
+#courtThisMonth .court-item button.court-toggle:disabled {
+    background: rgba(112, 102, 255, 0.1);
+    color: rgba(112, 102, 255, 0.4);
     cursor: not-allowed;
-    background: transparent;
 }
 
 #courtThisMonth .court-details {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
-    padding: 0 16px 16px;
+    padding-top: 12px;
 }
 
 #courtThisMonth .court-details.open {
@@ -1109,7 +1277,7 @@ body.manager-screen {
 }
 
 
-.accordion-button:not(.collapsed) {
+.accordion-button:not(.collapsed):not(.court-toggle) {
     color: #0d6efd;
     background-color: #e7f1ff;
 }
