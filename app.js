@@ -42,10 +42,71 @@ let summaryTransactionsChart = null;
 let clientExpenseChart = null;
 let clientTransactionsChart = null;
 
-const updates = [
+const DEFAULT_UPDATES = [
     { date: '01.06.2024', text: 'Добавлена история выполненных задач клиента.' },
     { date: '01.06.2024', text: 'Исправлены кнопки редактирования и удаления клиентов у менеджеров.' }
 ];
+
+const UPDATES_STORAGE_KEY = 'appUpdates';
+
+function saveAppUpdates(updates) {
+    if (typeof localStorage === 'undefined' || !Array.isArray(updates)) return;
+    localStorage.setItem(UPDATES_STORAGE_KEY, JSON.stringify(updates));
+}
+
+function loadAppUpdates() {
+    if (typeof localStorage === 'undefined') {
+        return DEFAULT_UPDATES.map(update => ({ ...update }));
+    }
+
+    let storedUpdates = [];
+    try {
+        const raw = localStorage.getItem(UPDATES_STORAGE_KEY);
+        storedUpdates = raw ? JSON.parse(raw) : [];
+    } catch (error) {
+        console.error('Не удалось прочитать обновления из localStorage:', error);
+        storedUpdates = [];
+    }
+
+    if (!Array.isArray(storedUpdates)) {
+        storedUpdates = [];
+    }
+
+    if (storedUpdates.length === 0) {
+        const defaults = DEFAULT_UPDATES.map(update => ({ ...update }));
+        saveAppUpdates(defaults);
+        return defaults;
+    }
+
+    const missingDefaults = DEFAULT_UPDATES.filter(defaultUpdate =>
+        !storedUpdates.some(
+            storedUpdate => storedUpdate.date === defaultUpdate.date && storedUpdate.text === defaultUpdate.text
+        )
+    );
+
+    if (missingDefaults.length > 0) {
+        storedUpdates = [...missingDefaults.map(update => ({ ...update })), ...storedUpdates];
+        saveAppUpdates(storedUpdates);
+    }
+
+    return storedUpdates;
+}
+
+window.addAppUpdate = function(date, text) {
+    const normalizedText = (text || '').trim();
+    if (!normalizedText) {
+        console.warn('Текст обновления не указан. Добавление обновления отменено.');
+        return;
+    }
+
+    const normalizedDate = (date || '').trim();
+    const updates = loadAppUpdates();
+    updates.unshift({
+        date: normalizedDate || new Date().toLocaleDateString('ru-RU'),
+        text: normalizedText
+    });
+    saveAppUpdates(updates);
+};
 
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
@@ -1510,11 +1571,13 @@ function searchClients() {
         return;
     }
 
-    const filteredClients = clients.filter(client =>
-        client.firstName.toLowerCase().includes(query) ||
-        client.lastName.toLowerCase().includes(query) ||
-        (client.caseNumber && client.caseNumber.toLowerCase().includes(query))
-    ).sort((a, b) => Number(b.favorite) - Number(a.favorite));
+    const filteredClients = clients.filter(client => {
+        const firstName = (client.firstName || '').toLowerCase();
+        const lastName = (client.lastName || '').toLowerCase();
+        const matchesName = firstName.startsWith(query) || lastName.startsWith(query);
+        const matchesCaseNumber = client.caseNumber && client.caseNumber.toLowerCase().includes(query);
+        return matchesName || matchesCaseNumber;
+    }).sort((a, b) => Number(b.favorite) - Number(a.favorite));
 
     if (filteredClients.length === 0) {
         list.classList.add('d-none');
@@ -3427,12 +3490,17 @@ window.showUpdates = function() {
     const list = document.getElementById('updatesList');
     if (list) {
         list.innerHTML = '';
-        updates.forEach(u => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.innerHTML = `<strong>${u.date}:</strong> ${u.text}`;
-            list.appendChild(li);
-        });
+        const updates = loadAppUpdates();
+        if (updates.length === 0) {
+            list.innerHTML = '<li class="list-group-item text-center">Список обновлений пока пуст.</li>';
+        } else {
+            updates.forEach(u => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<strong>${u.date}:</strong> ${u.text}`;
+                list.appendChild(li);
+            });
+        }
     }
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('updatesModal'));
     modal.show();
