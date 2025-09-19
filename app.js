@@ -1602,6 +1602,23 @@ function generateContractPDF() {
 function renderDayActions(dateStr) {
     const list = document.getElementById('dayActionsList');
     if (!list) return;
+    const selectedDateLabel = document.getElementById('tasksSelectedDate');
+    if (selectedDateLabel && dateStr) {
+        const parts = dateStr.split('-').map(Number);
+        if (parts.length === 3 && !parts.some(Number.isNaN)) {
+            const [year, month, day] = parts;
+            const formattedDate = new Date(year, month - 1, day);
+            const weekday = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' }).format(formattedDate);
+            const dayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(formattedDate);
+            const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (dateStr === todayStr) {
+                selectedDateLabel.textContent = `Сегодня · ${dayMonth}`;
+            } else {
+                selectedDateLabel.textContent = `${capitalizedWeekday}, ${dayMonth}`;
+            }
+        }
+    }
 
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
@@ -1749,15 +1766,18 @@ function initCalendar() {
         console.error('FullCalendar не загружен!');
         return;
     }
+    const monthLabel = document.getElementById('calendarMonthLabel');
+    const yearLabel = document.getElementById('calendarYearLabel');
+    const viewToggle = document.getElementById('calendarViewToggle');
+    const prevBtn = document.getElementById('calendarPrev');
+    const nextBtn = document.getElementById('calendarNext');
     let selectedDayEl = null;
+    let selectedDateStr = new Date().toISOString().split('T')[0];
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'ru',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
+        firstDay: 1,
+        headerToolbar: false,
         buttonText: {
             today: 'Сегодня',
             month: 'Месяц',
@@ -1832,32 +1852,75 @@ function initCalendar() {
             };
         },
         dateClick: function(info) {
-            highlightDay(info.dayEl);
+            selectedDateStr = info.dateStr;
+            highlightDay(selectedDateStr);
             renderDayActions(info.dateStr);
         },
         eventClick: function(info) {
-            const dayEl = info.el.closest('.fc-daygrid-day');
-            if (dayEl) highlightDay(dayEl);
-            renderDayActions(info.event.startStr);
+            const clickedDate = (info.event.startStr || info.event.start?.toISOString() || '').split('T')[0];
+            if (clickedDate) {
+                selectedDateStr = clickedDate;
+                highlightDay(selectedDateStr);
+                renderDayActions(clickedDate);
+            }
+        },
+        datesSet: function() {
+            updateCalendarHeader();
+            requestAnimationFrame(() => highlightDay(selectedDateStr));
+            markDaysWithEvents();
         }
     });
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            calendar.prev();
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            calendar.next();
+        });
+    }
+    if (viewToggle) {
+        viewToggle.addEventListener('click', () => {
+            const isMonth = calendar.view.type === 'dayGridMonth';
+            calendar.changeView(isMonth ? 'dayGridWeek' : 'dayGridMonth');
+        });
+    }
     calendar.render();
-    highlightDay(calendarEl.querySelector('.fc-daygrid-day.fc-day-today'));
+    updateCalendarHeader();
+    highlightDay(selectedDateStr);
     markDaysWithEvents();
     calendar.on('eventsSet', markDaysWithEvents);
 
-    function highlightDay(dayEl) {
+    function highlightDay(dateStr) {
         if (selectedDayEl) {
             selectedDayEl.classList.remove('selected-day');
         }
-        selectedDayEl = dayEl;
+        selectedDayEl = calendarEl.querySelector(`.fc-daygrid-day[data-date="${dateStr}"]`);
         if (selectedDayEl) {
             selectedDayEl.classList.add('selected-day');
         }
     }
 
+    function updateCalendarHeader() {
+        const view = calendar.view;
+        const startDate = view.currentStart;
+        if (monthLabel) {
+            const monthName = new Intl.DateTimeFormat('ru-RU', { month: 'long' }).format(startDate);
+            monthLabel.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        }
+        if (yearLabel) {
+            yearLabel.textContent = new Intl.DateTimeFormat('ru-RU', { year: 'numeric' }).format(startDate);
+        }
+        if (viewToggle) {
+            const isWeek = view.type === 'dayGridWeek';
+            viewToggle.textContent = isWeek ? 'месяц' : 'неделя';
+            viewToggle.classList.toggle('is-active', isWeek);
+        }
+    }
+
     function markDaysWithEvents() {
-        const dayCells = document.querySelectorAll('.fc-daygrid-day');
+        const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
         dayCells.forEach(cell => {
             const dateStr = cell.getAttribute('data-date');
             const events = calendar.getEvents().filter(ev => ev.startStr === dateStr);
