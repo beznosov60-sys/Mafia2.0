@@ -1560,9 +1560,9 @@ body.manager-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 16px 8px 12px;
-    min-height: 110px;
+    gap: 10px;
+    padding: 14px 8px 10px;
+    min-height: 96px;
     background: rgba(255, 255, 255, 0.78);
     border-radius: 22px;
     box-shadow: 0 18px 40px -30px rgba(67, 57, 242, 0.55);
@@ -1578,9 +1578,9 @@ body.manager-screen {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.95);
     color: var(--neutral-800);
     font-weight: 600;
@@ -1606,6 +1606,7 @@ body.manager-screen {
 #calendar .fc-daygrid-day.selected-day .fc-daygrid-day-frame {
     box-shadow: 0 0 0 2px rgba(112, 102, 255, 0.35), 0 18px 40px -28px rgba(67, 57, 242, 0.55);
     background: rgba(112, 102, 255, 0.14);
+    opacity: 1;
 }
 
 #calendar .fc-daygrid-day.selected-day .fc-daygrid-day-number {
@@ -1616,6 +1617,10 @@ body.manager-screen {
 #calendar .fc-daygrid-event,
 #calendar .fc-daygrid-more-link {
     display: none;
+}
+
+#calendar .fc-daygrid-day.fc-day-past .fc-daygrid-day-frame {
+    opacity: 0.6;
 }
 
 .event-dots {
@@ -1667,7 +1672,13 @@ body.manager-screen {
     border: none;
     background: rgba(112, 102, 255, 0.15);
     position: relative;
-    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--purple-700);
+    overflow: hidden;
+    box-shadow: 0 14px 30px -24px rgba(67, 57, 242, 0.58);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
 .tasks-toggle::after {
@@ -1676,7 +1687,8 @@ body.manager-screen {
     inset: 10px;
     border-radius: 6px;
     background: var(--purple-500);
-    opacity: 0.55;
+    opacity: 0.45;
+    z-index: 0;
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -1684,6 +1696,17 @@ body.manager-screen {
 .tasks-toggle:focus-visible::after {
     opacity: 1;
     transform: scale(1.05);
+}
+
+.tasks-toggle i {
+    position: relative;
+    z-index: 1;
+    font-size: 1.25rem;
+}
+
+.tasks-toggle:hover,
+.tasks-toggle:focus-visible {
+    color: #fff;
 }
 
 .tasks-toggle:focus-visible {
