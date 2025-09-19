@@ -10,37 +10,66 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="calendar-screen">
-    <div class="container py-4">
-        <div class="row g-4">
+    <div class="calendar-layout container-xxl py-5">
+        <div class="row g-4 align-items-stretch">
             <div class="col-lg-8">
-                <div class="calendar-card">
+                <div class="calendar-card h-100">
+                    <div class="calendar-card__header">
+                        <div class="calendar-card__title">
+                            <h1 id="calendarMonthLabel">Месяц</h1>
+                            <span id="calendarYearLabel" class="calendar-card__subtitle">Год</span>
+                        </div>
+                        <div class="calendar-card__controls">
+                            <button class="calendar-view-toggle" id="calendarViewToggle" type="button" aria-label="Переключить вид календаря">неделя</button>
+                            <div class="calendar-nav">
+                                <button class="calendar-nav__btn" id="calendarPrev" type="button" aria-label="Предыдущий период">
+                                    <i class="ri-arrow-left-s-line"></i>
+                                </button>
+                                <button class="calendar-nav__btn" id="calendarNext" type="button" aria-label="Следующий период">
+                                    <i class="ri-arrow-right-s-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <span>пн</span>
+                        <span>вт</span>
+                        <span>ср</span>
+                        <span>чт</span>
+                        <span>пт</span>
+                        <span>сб</span>
+                        <span>вс</span>
+                    </div>
                     <div id="calendar"></div>
                 </div>
             </div>
             <div class="col-lg-4">
                 <div class="action-card h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2 class="h5 mb-0">Задачи на день</h2>
-                        <div class="day-action-buttons">
-                            <button class="small-square-btn" id="dayClientBtn" title="Клиенты"><i class="ri-group-line"></i></button>
-                            <button class="small-square-btn" id="dayTaskBtn" title="Задачи"><i class="ri-task-line"></i></button>
-                            <button class="small-square-btn" id="dayConsultBtn" title="Консультации"><i class="ri-chat-3-line"></i></button>
+                    <div class="tasks-card__header">
+                        <div>
+                            <h2 class="tasks-card__title">Задачи</h2>
+                            <p class="tasks-card__subtitle" id="tasksSelectedDate">Сегодня</p>
+                        </div>
+                        <div class="tasks-card__toggles">
+                            <button class="tasks-toggle" id="dayClientBtn" title="Клиенты" type="button" aria-label="Показать клиентов дня"></button>
+                            <button class="tasks-toggle" id="dayTaskBtn" title="Задачи" type="button" aria-label="Добавить задачу"></button>
+                            <button class="tasks-toggle" id="dayConsultBtn" title="Консультации" type="button" aria-label="Добавить консультацию"></button>
                         </div>
                     </div>
-                    <ul class="list-group mb-3" id="dayActionsList"></ul>
+                    <ul class="list-group tasks-list" id="dayActionsList"></ul>
                 </div>
             </div>
         </div>
-        <div class="row g-4 mt-1">
+        <div class="row g-4 mt-1 calendar-shortcuts">
             <div class="col-12 col-lg-8">
                 <button class="quick-action w-100" id="quickDebtorsBtn">
-                    <i class="ri-error-warning-line fs-4 mb-2"></i>
+                    <i class="ri-error-warning-line"></i>
                     Должники
                 </button>
             </div>
             <div class="col-12 col-lg-4">
                 <a href="index.html" class="quick-action w-100 text-center">
-                    <i class="ri-home-line fs-4 mb-2"></i>
+                    <i class="ri-home-line"></i>
                     Главная
                 </a>
             </div>
