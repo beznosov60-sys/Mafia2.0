@@ -2366,7 +2366,7 @@ function renderManagerTaskList(managerId) {
         if (task.completed) return;
         const li = document.createElement('li');
         li.className = 'manager-task-item';
-        li.style.setProperty('--task-accent-color', task.color || '#28a745');
+        li.style.setProperty('--task-accent-color', task.color || '#7066ff');
         const textWithDeadline = `${task.text}${task.deadline ? ' (' + task.deadline + ')' : ''}`;
         li.innerHTML = `
             <button type="button" class="manager-task-item__text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</button>
@@ -3005,7 +3005,7 @@ function renderManagersPage() {
                             <input type="text" id="managerTaskText${manager.id}" class="manager-task-form__input" placeholder="Новая задача">
                             <div class="manager-task-form__row">
                                 <input type="date" id="managerTaskDeadline${manager.id}" class="manager-task-form__input">
-                                <input type="color" id="managerTaskColor${manager.id}" class="manager-task-form__color" value="#28a745">
+                                <input type="color" id="managerTaskColor${manager.id}" class="manager-task-form__color" value="#7066ff">
                             </div>
                             <button type="button" class="manager-tile__button manager-tile__button--light" onclick="addManagerTask(${manager.id})">Добавить задачу</button>
                         </div>
