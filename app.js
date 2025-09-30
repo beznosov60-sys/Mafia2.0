@@ -590,32 +590,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('importOption')?.addEventListener('click', () => document.getElementById('importFile')?.click());
         document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
 
-        const floatingMenu = document.querySelector('.floating-menu');
-        if (floatingMenu) {
-            let hideTimeout;
-            const showMenu = () => {
-                clearTimeout(hideTimeout);
-                floatingMenu.classList.add('open');
-            };
-            const hideMenu = () => {
-                hideTimeout = setTimeout(() => floatingMenu.classList.remove('open'), 200);
-            };
-            floatingMenu.addEventListener('mouseenter', showMenu);
-            floatingMenu.addEventListener('mouseleave', hideMenu);
-        }
-
-        const floatingOptions = document.querySelectorAll('.floating-option');
-        floatingOptions.forEach(btn => {
-            if (btn.id !== 'globalFinanceBtn') {
-                btn.disabled = true;
-            }
-        });
-        document.getElementById('globalFinanceBtn')?.addEventListener('click', openFinanceModal);
-        document.getElementById('btnTotalEarnings')?.addEventListener('click', showTotalEarnings);
-        document.getElementById('btnClientPayments')?.addEventListener('click', manageClientPayments);
-        document.getElementById('btnAllPayments')?.addEventListener('click', showAllPayments);
-        document.getElementById('btnUnpaid')?.addEventListener('click', showUnpaidClients);
-
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
@@ -2619,94 +2593,6 @@ window.showPaymentsModal = function(clientId) {
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 };
-
-function openFinanceModal() {
-    const modalEl = document.getElementById('financeSummaryModal');
-    if (!modalEl) return;
-    document.getElementById('financeMenu')?.style.setProperty('display', 'flex');
-    const content = document.getElementById('financeContent');
-    if (content) content.style.display = 'none';
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modal.show();
-}
-
-function showFinanceSection(html) {
-    const menu = document.getElementById('financeMenu');
-    const content = document.getElementById('financeContent');
-    if (!menu || !content) return;
-    content.innerHTML = `<button class="btn btn-secondary mb-3" id="financeBackBtn">&larr; Назад</button>` + html;
-    menu.style.display = 'none';
-    content.style.display = 'block';
-    document.getElementById('financeBackBtn').onclick = () => {
-        content.style.display = 'none';
-        menu.style.display = 'flex';
-    };
-}
-
-function showTotalEarnings() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    let total = 0;
-    clients.forEach(client => {
-        const schedule = getPaymentSchedule(client);
-        schedule.forEach(p => { if (p.paid) total += p.amount; });
-        (client.extraPayments || []).forEach(p => { if (p.paid) total += p.amount; });
-        if (client.finManagerPaid) total -= 17000;
-        if (client.courtDepositPaid) total -= 25000;
-    });
-    showFinanceSection(`<h5>Общий заработок</h5><p class="h4">${total} ₽</p>`);
-}
-
-function manageClientPayments() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const rows = clients.map(c => {
-        const schedule = getPaymentSchedule(c);
-        const paid = schedule.reduce((sum,p)=>p.paid?sum+p.amount:sum,0) + (c.extraPayments||[]).reduce((s,p)=>s+p.amount,0);
-        return `<tr><td>${c.firstName} ${c.lastName}</td><td>${paid}</td><td><button class="btn btn-primary btn-sm add-payment" data-id="${c.id}">Добавить</button></td></tr>`;
-    }).join('') || '<tr><td colspan="3" class="text-center">Нет клиентов</td></tr>';
-    showFinanceSection(`<table class="table table-sm"><thead><tr><th>Клиент</th><th>Оплачено</th><th></th></tr></thead><tbody>${rows}</tbody></table>`);
-    document.querySelectorAll('.add-payment').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            const date = prompt('Дата платежа (ГГГГ-ММ-ДД):', new Date().toISOString().split('T')[0]);
-            if (!date) return;
-            const amount = parseFloat(prompt('Сумма:', '0'));
-            if (isNaN(amount)) return;
-            const comment = prompt('Комментарий:', '') || '';
-            const clients = JSON.parse(localStorage.getItem('clients')) || [];
-            const client = clients.find(c => String(c.id) === String(id));
-            if (!client.extraPayments) client.extraPayments = [];
-            client.extraPayments.push({ date, amount, paid: true, comment });
-            recordManagerPayment(client, amount, date, { type: 'extra', index: client.extraPayments.length - 1 });
-            localStorage.setItem('clients', JSON.stringify(clients));
-            manageClientPayments();
-        });
-    });
-}
-
-function showAllPayments() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const rows = [];
-    clients.forEach(c => {
-        const name = `${c.firstName} ${c.lastName}`.trim();
-        getPaymentSchedule(c).forEach(p => {
-            rows.push(`<tr><td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${name}</td><td>${p.amount}</td><td>${p.paid ? 'Оплачен' : 'Ожидается'}</td></tr>`);
-        });
-        (c.extraPayments||[]).forEach(p => {
-            rows.push(`<tr><td>${new Date(p.date).toLocaleDateString('ru-RU')}</td><td>${name}</td><td>${p.amount}</td><td>${p.paid ? 'Оплачен' : 'Ожидается'}</td></tr>`);
-        });
-    });
-    const body = rows.join('') || '<tr><td colspan="4" class="text-center">Нет данных</td></tr>';
-    showFinanceSection(`<table class="table table-sm"><thead><tr><th>Дата</th><th>Клиент</th><th>Сумма</th><th>Статус</th></tr></thead><tbody>${body}</tbody></table>`);
-}
-
-function showUnpaidClients() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const items = clients
-        .filter(c => !c.finManagerPaid || !c.courtDepositPaid)
-        .map(c => `<li class="list-group-item">${c.firstName} ${c.lastName}<br><small>ФУ: ${c.finManagerPaid ? 'оплачен' : 'не оплачен'}, депозит: ${c.courtDepositPaid ? 'оплачен' : 'не оплачен'}</small></li>`)
-        .join('') || '<li class="list-group-item text-center">Все оплатили</li>';
-    showFinanceSection(`<ul class="list-group">${items}</ul>`);
-}
 
 // Сохранение консультации
 window.saveConsultation = function() {

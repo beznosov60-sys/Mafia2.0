@@ -142,59 +142,6 @@
             </div>
         </div>
     </div>
-    <!-- Плавающая панель быстрого доступа -->
-    <div class="floating-menu">
-        <button class="floating-toggle"><i class="ri-menu-line"></i></button>
-        <div class="floating-options">
-            <button class="floating-option" id="globalFinanceBtn">Финансы</button>
-            <button class="floating-option" disabled title="Раздел в разработке">Статистика</button>
-            <button class="floating-option" disabled title="Раздел в разработке">Настройки</button>
-            <button class="floating-option" disabled title="Раздел в разработке">Цели</button>
-        </div>
-    </div>
-    <!-- Модальное окно финансов -->
-    <div class="modal fade" id="financeSummaryModal" tabindex="-1" aria-labelledby="financeSummaryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="financeSummaryModalLabel">Финансы</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="financeMenu" class="row g-3">
-                        <div class="col-md-6">
-                            <div class="finance-summary-card finance-menu-card p-4 h-100 text-center" id="btnTotalEarnings">
-                                <h5 class="mb-2">Общий заработок</h5>
-                                <p class="text-muted small">Без учёта ФУ и депозита</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="finance-summary-card finance-menu-card p-4 h-100 text-center" id="btnClientPayments">
-                                <h5 class="mb-2">Клиенты</h5>
-                                <p class="text-muted small">Информация и платежи</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="finance-summary-card finance-menu-card p-4 h-100 text-center" id="btnAllPayments">
-                                <h5 class="mb-2">Оплаты</h5>
-                                <p class="text-muted small">Все платежи</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="finance-summary-card finance-menu-card p-4 h-100 text-center" id="btnUnpaid">
-                                <h5 class="mb-2">Не оплатили ФУ/депозит</h5>
-                                <p class="text-muted small">Список клиентов</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="financeContent" style="display:none;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="app.js"></script>
