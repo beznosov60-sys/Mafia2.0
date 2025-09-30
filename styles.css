@@ -560,6 +560,7 @@ body.manager-screen {
     display: grid;
     gap: 24px;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: start;
 }
 
 .manager-tile {
@@ -644,18 +645,18 @@ body.manager-screen {
 }
 
 .manager-tile__body--red {
-    background: linear-gradient(135deg, #ff8a8a, #ff4d4d);
+    background: linear-gradient(135deg, var(--purple-700), var(--purple-600));
     color: #fff;
 }
 
 .manager-tile__body--blue {
-    background: linear-gradient(135deg, #5b50f3, #4339f2);
+    background: linear-gradient(135deg, var(--purple-600), var(--purple-500));
     color: #fff;
     min-height: 170px;
 }
 
 .manager-tile__body--green {
-    background: linear-gradient(135deg, #34d399, #10b981);
+    background: linear-gradient(135deg, var(--purple-500), var(--purple-400));
     color: #fff;
 }
 
@@ -846,28 +847,28 @@ body.manager-screen {
     width: 100%;
     border: none;
     border-radius: 16px;
-    background: #fff;
-    color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--purple-700);
     font-weight: 600;
     padding: 0.65rem 1rem;
     cursor: pointer;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 28px rgba(67, 57, 242, 0.18);
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .manager-tile__button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+    box-shadow: 0 14px 36px rgba(67, 57, 242, 0.22);
 }
 
 .manager-tile__button:active {
     transform: translateY(0);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 8px 20px rgba(67, 57, 242, 0.14);
 }
 
 .manager-tile__button--light {
-    background: rgba(255, 255, 255, 0.9);
-    color: #065f46;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--purple-600);
 }
 
 .manager-task-form {
@@ -934,7 +935,7 @@ body.manager-screen {
     bottom: 10px;
     width: 6px;
     border-radius: 999px;
-    background: var(--task-accent-color, #22c55e);
+    background: var(--task-accent-color, #7066ff);
 }
 
 .manager-task-item__text {
@@ -978,13 +979,13 @@ body.manager-screen {
 }
 
 .manager-task-item__action--complete {
-    background: rgba(255, 255, 255, 0.9);
-    color: #047857;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--purple-700);
 }
 
 .manager-task-item__action--complete:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(4, 120, 87, 0.25);
+    box-shadow: 0 8px 18px rgba(67, 57, 242, 0.25);
 }
 
 .manager-task-item__action--delete {
