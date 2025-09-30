@@ -3200,6 +3200,7 @@ window.toggleManagerClients = function(managerId) {
     const list = document.getElementById(`managerClientsList${managerId}`);
     const collapsed = document.getElementById(`managerClientsCollapsed${managerId}`);
     const btn = document.getElementById(`toggleClientsBtn${managerId}`);
+    const body = btn ? btn.closest('.manager-tile')?.querySelector('.manager-tile__body--blue') : null;
     if (!list || !collapsed || !btn) return;
     const isHidden = list.style.display === 'none';
     if (isHidden) {
@@ -3208,12 +3209,14 @@ window.toggleManagerClients = function(managerId) {
         btn.textContent = 'Скрыть';
         btn.setAttribute('aria-expanded', 'true');
         btn.classList.add('is-open');
+        if (body) body.classList.add('is-open');
     } else {
         list.style.display = 'none';
         collapsed.style.display = '';
         btn.textContent = 'Показать';
         btn.setAttribute('aria-expanded', 'false');
         btn.classList.remove('is-open');
+        if (body) body.classList.remove('is-open');
     }
 };
 

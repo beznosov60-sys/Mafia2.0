@@ -655,6 +655,12 @@ body.manager-screen {
     min-height: 170px;
 }
 
+.manager-tile__body--blue.is-open {
+    min-height: 0;
+    padding-top: 12px;
+    gap: 12px;
+}
+
 .manager-tile__body--green {
     background: linear-gradient(135deg, var(--purple-500), var(--purple-400));
     color: #fff;
@@ -920,7 +926,7 @@ body.manager-screen {
 .manager-task-item {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 12px 14px 12px 20px;
     border-radius: 16px;
@@ -940,6 +946,8 @@ body.manager-screen {
 
 .manager-task-item__text {
     flex: 1;
+    min-width: 0;
+    max-width: 100%;
     background: transparent;
     border: none;
     color: #fff;
@@ -960,12 +968,17 @@ body.manager-screen {
 
 .manager-task-item__text.expanded {
     -webkit-line-clamp: unset;
+    display: block;
     overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .manager-task-item__actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .manager-task-item__action {
