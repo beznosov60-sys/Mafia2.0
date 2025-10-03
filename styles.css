@@ -144,29 +144,35 @@ body.home-screen {
 }
 
 .home-screen .circle-btn {
-    width: 56px;
-    height: 56px;
+    --btn-size: 56px;
+    --expanded-width: 196px;
+    height: var(--btn-size);
+    width: var(--btn-size);
     border-radius: 999px;
     border: none;
     background: var(--purple-500);
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 0;
     font-size: 1.25rem;
     color: #fff;
     box-shadow: 0 20px 40px -22px rgba(67, 57, 242, 0.65);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     border: 2px solid transparent;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
+    gap: 12px;
+    flex: 0 0 auto;
 }
 
 .home-screen .circle-btn .btn-icon {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: var(--btn-size);
+    height: var(--btn-size);
     flex-shrink: 0;
 }
 
@@ -175,23 +181,21 @@ body.home-screen {
 }
 
 .home-screen .circle-btn .btn-label {
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 50%;
-    transform: translateY(-50%) scale(0.9);
-    transform-origin: left center;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
     opacity: 0;
-    padding: 0.45rem 0.9rem;
-    background: rgba(112, 102, 255, 0.16);
-    color: var(--neutral-900);
-    border-radius: 999px;
-    box-shadow: 0 16px 32px -26px rgba(67, 57, 242, 0.7);
+    max-width: 0;
+    padding: 0.45rem 0;
+    color: var(--neutral-100);
     pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease, background 0.3s ease;
-    z-index: 5;
+    transform: translateX(12px);
+    transition: opacity 0.28s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
+    overflow: hidden;
 }
 
 .home-screen .circle-btn:hover,
@@ -204,14 +208,36 @@ body.home-screen {
 .home-screen .circle-btn:focus {
     transform: translateY(-3px);
     box-shadow: 0 24px 44px -18px rgba(67, 57, 242, 0.55);
+    width: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
 }
 
 .home-screen .circle-btn:hover .btn-label,
 .home-screen .circle-btn:focus-visible .btn-label,
 .home-screen .circle-btn:focus .btn-label {
     opacity: 1;
-    transform: translateY(-50%) scale(1);
-    background: rgba(112, 102, 255, 0.24);
+    max-width: max(0px, calc(clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width)) - var(--btn-size) - 32px));
+    transform: translateX(0);
+    padding: 0.45rem 0.9rem;
+}
+
+.icon-buttons > a.circle-btn:nth-of-type(1) {
+    --expanded-width: 228px;
+}
+
+.icon-buttons > a.circle-btn:nth-of-type(2) {
+    --expanded-width: 200px;
+}
+
+.icon-buttons > button.circle-btn#sidebarToggle {
+    --expanded-width: 236px;
+}
+
+.icon-buttons > a.circle-btn:nth-of-type(3) {
+    --expanded-width: 200px;
+}
+
+.icon-buttons .dropdown .circle-btn {
+    --expanded-width: 252px;
 }
 
 .home-screen .circle-btn:focus-visible {
@@ -229,22 +255,35 @@ body.home-screen {
 
 @media (max-width: 576px) {
     .home-screen .circle-btn {
-        width: 52px;
-        height: 52px;
+        --btn-size: 52px;
+        height: var(--btn-size);
+        width: var(--btn-size);
         font-size: 1.15rem;
+        gap: 8px;
     }
 
     .home-screen .circle-btn .btn-label {
         font-size: 0.85rem;
-        left: 50%;
-        top: calc(100% + 12px);
-        transform: translate(-50%, 0) scale(0.9);
     }
 
-    .home-screen .circle-btn:hover .btn-label,
-    .home-screen .circle-btn:focus-visible .btn-label,
-    .home-screen .circle-btn:focus .btn-label {
-        transform: translate(-50%, 0) scale(1);
+    .icon-buttons > a.circle-btn:nth-of-type(1) {
+        --expanded-width: 212px;
+    }
+
+    .icon-buttons > a.circle-btn:nth-of-type(2) {
+        --expanded-width: 188px;
+    }
+
+    .icon-buttons > button.circle-btn#sidebarToggle {
+        --expanded-width: 216px;
+    }
+
+    .icon-buttons > a.circle-btn:nth-of-type(3) {
+        --expanded-width: 188px;
+    }
+
+    .icon-buttons .dropdown .circle-btn {
+        --expanded-width: 220px;
     }
 }
 
