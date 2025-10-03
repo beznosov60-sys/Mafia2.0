@@ -10,12 +10,29 @@
 </head>
 <body class="manager-screen">
     <div class="manager-page container-xl py-5">
-        <div class="manager-toolbar">
-            <a href="index.html" class="manager-toolbar__button manager-toolbar__button--back" title="Вернуться на главную">Назад</a>
-            <button type="button" class="manager-toolbar__button manager-toolbar__button--create" id="createManagerBtn" title="Создать менеджера">Создать менеджера</button>
-        </div>
-        <h1 class="manager-page__title">Менеджеры</h1>
-        <div id="managersList" class="manager-list"></div>
+        <header class="manager-hero">
+            <div class="manager-hero__inner">
+                <div class="manager-hero__top">
+                    <a href="index.html" class="manager-toolbar__button manager-toolbar__button--back" title="Вернуться на главную">
+                        <i class="ri-arrow-left-line" aria-hidden="true"></i>
+                        <span>На главную</span>
+                    </a>
+                    <button type="button" class="manager-toolbar__button manager-toolbar__button--create" id="createManagerBtn" title="Создать менеджера">
+                        <i class="ri-add-line" aria-hidden="true"></i>
+                        <span>Создать менеджера</span>
+                    </button>
+                </div>
+                <div class="manager-hero__content">
+                    <h1 class="manager-page__title">Менеджеры</h1>
+                    <p class="manager-page__subtitle">Управляйте командой, назначайте клиентов и отслеживайте выплаты в одном месте.</p>
+                </div>
+            </div>
+            <div class="manager-hero__shape manager-hero__shape--one"></div>
+            <div class="manager-hero__shape manager-hero__shape--two"></div>
+        </header>
+        <main class="manager-main">
+            <div id="managersList" class="manager-list"></div>
+        </main>
     </div>
 
     <!-- Модальное окно создания менеджера -->

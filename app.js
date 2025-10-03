@@ -2818,6 +2818,21 @@ function renderManagersPage() {
     const managers = getManagers();
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
     list.innerHTML = '';
+    list.classList.toggle('manager-list--empty', managers.length === 0);
+    if (managers.length === 0) {
+        list.innerHTML = `
+            <div class="manager-empty-state">
+                <div class="manager-empty-state__icon"><i class="ri-team-line" aria-hidden="true"></i></div>
+                <h2 class="manager-empty-state__title">Добавьте первого менеджера</h2>
+                <p class="manager-empty-state__text">Создайте карточку менеджера, чтобы назначить клиентов и отслеживать выплаты по их сделкам.</p>
+                <button type="button" class="manager-empty-state__action" onclick="openCreateManagerModal()">
+                    <i class="ri-add-line" aria-hidden="true"></i>
+                    <span>Создать менеджера</span>
+                </button>
+            </div>
+        `;
+        return;
+    }
     managers.forEach(manager => {
         const card = document.createElement('div');
         card.className = 'manager-card mb-5';

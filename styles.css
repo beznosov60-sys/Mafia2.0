@@ -780,55 +780,218 @@ body.manager-screen {
     gap: 24px;
 }
 
+
+.manager-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    background: radial-gradient(140% 140% at 0% 0%, rgba(112, 102, 255, 0.18) 0%, rgba(112, 102, 255, 0) 60%),
+        linear-gradient(135deg, rgba(67, 57, 242, 0.8) 0%, rgba(112, 102, 255, 0.65) 40%, rgba(255, 255, 255, 0.1) 100%);
+    padding: 32px 36px;
+    box-shadow: 0 24px 70px -40px rgba(67, 57, 242, 0.6);
+    color: #fff;
+}
+
+.manager-hero__inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.manager-hero__top,
 .manager-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
+    gap: 16px;
+}
+
+.manager-hero__top {
+    position: relative;
+    z-index: 2;
+}
+
+.manager-hero__content {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+    max-width: 540px;
 }
 
 .manager-toolbar__button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-width: 140px;
-    padding: 0.65rem 1.5rem;
+    gap: 10px;
+    min-width: 150px;
+    padding: 0.7rem 1.6rem;
     font-weight: 600;
     font-size: 0.95rem;
     border-radius: 999px;
     border: none;
-    background: var(--primary-color);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
     text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 12px 30px rgba(67, 57, 242, 0.25);
-    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 16px 36px -24px rgba(15, 23, 42, 0.6);
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 
 .manager-toolbar__button:hover {
-    background: var(--primary-color-dark);
+    background: rgba(255, 255, 255, 0.28);
     color: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 14px 34px rgba(67, 57, 242, 0.28);
+    box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.75);
 }
 
 .manager-toolbar__button:active {
     transform: translateY(0);
-    box-shadow: 0 8px 20px rgba(67, 57, 242, 0.18);
+    box-shadow: 0 12px 24px -20px rgba(15, 23, 42, 0.65);
+}
+
+.manager-toolbar__button i {
+    font-size: 1.15rem;
+}
+
+.manager-toolbar__button--back {
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(12px);
+}
+
+.manager-toolbar__button--back:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.manager-toolbar__button--create {
+    background: linear-gradient(135deg, var(--purple-500), var(--purple-700));
+    color: #fff;
+    box-shadow: 0 20px 45px -25px rgba(112, 102, 255, 0.9);
+}
+
+.manager-toolbar__button--create:hover {
+    background: linear-gradient(135deg, var(--purple-400), var(--purple-600));
+}
+
+.manager-toolbar__button--create:active {
+    box-shadow: 0 12px 26px -18px rgba(112, 102, 255, 0.75);
 }
 
 .manager-page__title {
     font-size: 2rem;
     font-weight: 700;
     margin: 0;
+    color: inherit;
+}
+
+.manager-page__subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.55;
+}
+
+.manager-hero__shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.35;
+    filter: blur(0.5px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.manager-hero__shape--one {
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+    top: -60px;
+    right: -40px;
+}
+
+.manager-hero__shape--two {
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(112, 102, 255, 0.55) 0%, rgba(112, 102, 255, 0) 70%);
+    bottom: -160px;
+    left: -120px;
+}
+
+.manager-main {
+    margin-top: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
 }
 
 .manager-list {
     display: flex;
     flex-direction: column;
     gap: 32px;
+}
+
+.manager-list.manager-list--empty {
+    gap: 0;
+}
+
+.manager-empty-state {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 26px;
+    padding: 56px 40px;
+    text-align: center;
+    box-shadow: 0 24px 60px -34px rgba(67, 57, 242, 0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+}
+
+.manager-empty-state__icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(112, 102, 255, 0.18), rgba(112, 102, 255, 0.05));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--purple-600);
+}
+
+.manager-empty-state__title {
+    font-size: 1.45rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--neutral-900);
+}
+
+.manager-empty-state__text {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--neutral-700);
+    max-width: 460px;
+}
+
+.manager-empty-state__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--purple-500), var(--purple-700));
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.7rem 1.6rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 20px 45px -25px rgba(112, 102, 255, 0.75);
+}
+
+.manager-empty-state__action:hover {
+    background: linear-gradient(135deg, var(--purple-400), var(--purple-600));
 }
 
 .manager-card__grid {
@@ -1281,6 +1444,7 @@ body.manager-screen {
 }
 
 .manager-toolbar__button:focus-visible,
+.manager-empty-state__action:focus-visible,
 .manager-tile__button:focus-visible,
 .manager-client-link:focus-visible,
 .manager-clients-toggle:focus-visible,
@@ -1302,8 +1466,18 @@ body.manager-screen {
         grid-template-columns: 1fr;
     }
 
+    .manager-hero {
+        padding: 28px 24px;
+    }
+
+    .manager-hero__top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .manager-toolbar__button {
         flex: 1;
+        width: 100%;
     }
 
     .manager-task-form__row {
