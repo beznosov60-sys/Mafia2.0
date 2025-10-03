@@ -34,6 +34,8 @@ const stageColorClasses = {
     'Завершение': 'stage-complete'
 };
 
+const stageOrder = ['Договор', 'Подача в суд', 'Решение суда о банкротстве', 'Завершение'];
+
 let currentManagerId = null;
 let currentClientId = null;
 let editingManagerId = null;
@@ -114,6 +116,27 @@ function getCourtTypeBadge(client) {
     if (types.arbitration) return '<span class="court-badge">АС</span>';
     if (types.tret) return '<span class="court-badge">ТС</span>';
     return '';
+}
+
+function buildStageProgress(currentStage) {
+    const currentIndex = stageOrder.indexOf(currentStage);
+    return stageOrder
+        .map((stage, index) => {
+            const classes = ['client-card__progress-step'];
+            if (currentIndex === -1) {
+                if (index === 0) {
+                    classes.push('client-card__progress-step--active');
+                }
+            } else {
+                if (index < currentIndex) {
+                    classes.push('client-card__progress-step--completed');
+                } else if (index === currentIndex) {
+                    classes.push('client-card__progress-step--active');
+                }
+            }
+            return `<span class="${classes.join(' ')}" title="${stage}"></span>`;
+        })
+        .join('');
 }
 
 // Ранее клиенты синхронизировались с сервером. Теперь хранение происходит
@@ -864,39 +887,79 @@ function displayClientsList() {
 
     clients.forEach(client => {
         const li = document.createElement('li');
-        li.className = 'client-card clickable-item';
+        li.className = 'client-card';
+
+        const fullName = [client.lastName, client.firstName, client.middleName]
+            .filter(Boolean)
+            .join(' ')
+            .trim() || 'Без имени';
+        const courtDateHtml = client.courtDate
+            ? `<span class="client-card__date"><i class="ri-calendar-line" aria-hidden="true"></i>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>`
+            : '';
+        const subStageHtml = client.subStage
+            ? `<div class="client-card__substage" title="${client.subStage}">${client.subStage}</div>`
+            : '';
+        const courtLinkHtml = client.arbitrLink
+            ? `<a href="${client.arbitrLink}" target="_blank" rel="noopener" class="client-card__link"><i class="ri-external-link-line" aria-hidden="true"></i><span>Суд</span></a>`
+            : '';
+
         li.innerHTML = `
-            <div class="client-summary">
-                <div class="client-info">
-                    <div class="client-name">${client.firstName} ${client.lastName}${getCourtTypeBadge(client)}</div>
+            <div class="client-card__inner${client.favorite ? ' client-card__inner--favorite' : ''}" data-client-id="${client.id}">
+                <div class="client-card__header">
+                    <div class="client-card__name">${fullName}${getCourtTypeBadge(client)}</div>
+                    <div class="client-card__header-actions">
+                        ${courtDateHtml}
+                        <button class="client-card__toggle" type="button" aria-expanded="false" aria-label="Показать детали клиента">
+                            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-sm btn-outline-primary toggle-details"><i class="ri-arrow-down-s-line"></i></button>
-            </div>
-            <div class="client-details">
-                <div class="d-flex justify-content-between align-items-center flex-wrap w-100">
-                    <div class="task-info">${client.subStage || ''}</div>
-                    <button class="client-btn client-btn-payments ms-auto">Платеж</button>
-                </div>
-                <div class="client-actions mt-2">
-                    ${client.courtDate ? `<span class="client-date"><i class="ri-calendar-line"></i>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>` : ''}
-                    ${client.arbitrLink ? `<a href="${client.arbitrLink}" target="_blank" class="client-link">Суд</a>` : ''}
+                <div class="client-card__body" hidden>
+                    <div class="client-card__stage">
+                        <div class="client-card__stage-title">${client.stage || 'Без стадии'}</div>
+                        <div class="client-card__progress" role="presentation">
+                            ${buildStageProgress(client.stage)}
+                        </div>
+                    </div>
+                    ${subStageHtml}
+                    <div class="client-card__footer">
+                        <button class="client-card__payment" type="button">
+                            <i class="ri-wallet-3-line" aria-hidden="true"></i>
+                            <span>Платежи</span>
+                        </button>
+                        ${courtLinkHtml}
+                    </div>
                 </div>
             </div>
         `;
 
-        li.querySelector('.client-btn-payments').addEventListener('click', (e) => {
+        const toggleBtn = li.querySelector('.client-card__toggle');
+        const body = li.querySelector('.client-card__body');
+        const inner = li.querySelector('.client-card__inner');
+        const paymentBtn = li.querySelector('.client-card__payment');
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = body.hasAttribute('hidden');
+            if (willOpen) {
+                body.removeAttribute('hidden');
+            } else {
+                body.setAttribute('hidden', '');
+            }
+            toggleBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            toggleBtn.classList.toggle('client-card__toggle--open', willOpen);
+            inner.classList.toggle('client-card__inner--expanded', willOpen);
+        });
+
+        paymentBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             showPaymentsModal(client.id);
         });
 
-        li.querySelector('.toggle-details').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const details = li.querySelector('.client-details');
-            const isOpen = details.classList.toggle('open');
-            e.currentTarget.classList.toggle('open', isOpen);
-        });
-
-        li.addEventListener('click', () => {
+        li.addEventListener('click', (event) => {
+            if (event.target.closest('.client-card__toggle') || event.target.closest('.client-card__payment') || event.target.closest('a')) {
+                return;
+            }
             window.location.href = `client-card.html?id=${client.id}`;
         });
 
