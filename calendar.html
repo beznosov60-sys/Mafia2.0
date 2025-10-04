@@ -10,8 +10,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="calendar-screen">
-    <div class="calendar-layout container-xxl py-5">
-        <div class="row g-4 align-items-stretch">
+    <div class="calendar-layout container-xxl">
+        <div class="calendar-toolbar">
+            <a href="index.html" class="manager-toolbar__button manager-toolbar__button--back calendar-toolbar__back" title="Вернуться назад">
+                <i class="ri-arrow-left-line" aria-hidden="true"></i>
+                <span>Назад</span>
+            </a>
+        </div>
+        <div class="row g-4 align-items-stretch calendar-content-row">
             <div class="col-lg-8">
                 <div class="calendar-card h-100">
                     <div class="calendar-card__header">
@@ -51,6 +57,9 @@
                             <p class="tasks-card__subtitle" id="tasksSelectedDate">Сегодня</p>
                         </div>
                         <div class="tasks-card__toggles">
+                            <button class="tasks-toggle tasks-toggle--debtors" id="calendarDebtorsBtn" title="Должники" type="button" aria-label="Открыть список должников">
+                                <i class="ri-error-warning-line" aria-hidden="true"></i>
+                            </button>
                             <button class="tasks-toggle" id="dayClientBtn" title="Клиенты" type="button" aria-label="Показать клиентов дня">
                                 <i class="ri-team-line" aria-hidden="true"></i>
                             </button>
@@ -64,20 +73,6 @@
                     </div>
                     <ul class="list-group tasks-list" id="dayActionsList"></ul>
                 </div>
-            </div>
-        </div>
-        <div class="row g-4 mt-1 calendar-shortcuts">
-            <div class="col-12 col-lg-8">
-                <button class="quick-action w-100" id="quickDebtorsBtn">
-                    <i class="ri-error-warning-line"></i>
-                    Должники
-                </button>
-            </div>
-            <div class="col-12 col-lg-4">
-                <a href="index.html" class="quick-action w-100 text-center">
-                    <i class="ri-home-line"></i>
-                    Главная
-                </a>
             </div>
         </div>
     </div>
@@ -200,9 +195,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!document.getElementById('calendar')) {
         console.error('Элемент #calendar не найден!');
     }
-    const quickDebtors = document.getElementById('quickDebtorsBtn');
-    if (quickDebtors) {
-        quickDebtors.addEventListener('click', () => {
+    const calendarDebtorsBtn = document.getElementById('calendarDebtorsBtn');
+    if (calendarDebtorsBtn) {
+        calendarDebtorsBtn.addEventListener('click', () => {
             openDebtorsModal();
         });
     }
