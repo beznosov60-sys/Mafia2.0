@@ -78,12 +78,17 @@ body.home-screen {
 body.calendar-screen {
     background: linear-gradient(135deg, #eff0ff 0%, #d5d8ff 100%);
     min-height: 100vh;
-    height: 100vh;
     margin: 0;
     display: flex;
     justify-content: center;
     align-items: stretch;
-    overflow: hidden;
+}
+
+@media (min-width: 992px) {
+    body.calendar-screen {
+        height: 100vh;
+        overflow: hidden;
+    }
 }
 
 .calendar-layout {
