@@ -173,6 +173,16 @@ body.calendar-screen {
     min-height: 0;
 }
 
+.calendar-toolbar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+}
+
+.calendar-toolbar__back {
+    text-decoration: none;
+}
+
 .home-screen .main-wrapper {
     width: 100%;
     max-width: 720px;
