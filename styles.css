@@ -86,6 +86,16 @@ body.home-screen {
     margin: 0 auto;
 }
 
+.calendar-toolbar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+}
+
+.calendar-toolbar__back {
+    text-decoration: none;
+}
+
 .home-screen .main-wrapper {
     width: 100%;
     max-width: 720px;
@@ -2151,6 +2161,18 @@ body.manager-screen {
     font-size: 1.2rem;
     box-shadow: none;
     transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.tasks-toggle--debtors {
+    border-color: rgba(253, 126, 20, 0.35);
+    color: #fd7e14;
+}
+
+.tasks-toggle--debtors:hover,
+.tasks-toggle--debtors:focus-visible {
+    background: rgba(253, 126, 20, 0.15);
+    border-color: rgba(253, 126, 20, 0.55);
+    box-shadow: 0 14px 30px -26px rgba(253, 126, 20, 0.6);
 }
 
 .tasks-toggle::after {
