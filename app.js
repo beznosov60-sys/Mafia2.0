@@ -3360,7 +3360,7 @@ function renderClientManager(client) {
         block.innerHTML = `
             <div class="client-manager-indicator__header">
                 <span class="client-manager-indicator__icon" aria-hidden="true">
-                    <i class="ri-user-star-line"></i>
+                    <i class="ri-user-settings-line"></i>
                 </span>
                 <div class="client-manager-indicator__main">
                     <strong>${escapeHtml(manager ? manager.name : 'Менеджер')}</strong>
@@ -3376,7 +3376,7 @@ function renderClientManager(client) {
         block.innerHTML = `
             <div class="client-manager-indicator__header">
                 <span class="client-manager-indicator__icon client-manager-indicator__icon--empty" aria-hidden="true">
-                    <i class="ri-user-search-line"></i>
+                    <i class="ri-user-unfollow-line"></i>
                 </span>
                 <div class="client-manager-indicator__main">
                     <strong>Менеджер не назначен</strong>

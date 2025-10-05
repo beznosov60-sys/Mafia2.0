@@ -35,10 +35,22 @@
                             <p class="client-case text-muted" id="dealInfo"></p>
                         </div>
                         <div class="client-overview-card__actions">
-                            <button class="btn btn-save client-view-only" id="editClientBtn">Редактировать</button>
-                            <div class="client-edit-only d-flex gap-2">
-                                <button class="btn btn-save" id="saveClientBtn">Сохранить</button>
-                                <button class="btn btn-outline-secondary" id="cancelEditBtn">Отмена</button>
+                            <div class="client-overview-card__primary-actions">
+                                <button class="btn btn-save client-view-only" id="editClientBtn">Редактировать</button>
+                                <div class="client-edit-only d-flex gap-2">
+                                    <button class="btn btn-save" id="saveClientBtn">Сохранить</button>
+                                    <button class="btn btn-outline-secondary" id="cancelEditBtn">Отмена</button>
+                                </div>
+                            </div>
+                            <div class="client-overview-card__quick-actions">
+                                <button class="btn btn-icon btn-outline-danger" id="deleteClientBtn" title="Удалить клиента">
+                                    <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Удалить клиента</span>
+                                </button>
+                                <a href="#" class="btn btn-icon btn-outline-primary disabled" id="financeBtn" aria-disabled="true" title="Финансы (скоро)">
+                                    <i class="ri-funds-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Финансы (скоро)</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -94,10 +106,6 @@
                     <div class="client-overview-notes mt-4">
                         <span class="client-field__label">Заметки</span>
                         <textarea class="form-control client-notes" id="clientNotes" rows="5" placeholder="Заметки..." readonly></textarea>
-                    </div>
-                    <div class="client-overview-footer mt-4 d-flex flex-column gap-2">
-                        <button class="btn btn-danger client-delete-btn" id="deleteClientBtn">Удалить клиента</button>
-                        <a href="#" class="btn btn-finance disabled" id="financeBtn" aria-disabled="true" title="Раздел в разработке">Финансы (скоро)</a>
                     </div>
                 </section>
             </div>
