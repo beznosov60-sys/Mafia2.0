@@ -2928,17 +2928,99 @@ body.dark-theme {
 
 .client-manager-indicator {
     margin-top: 24px;
-    padding: 16px;
-    border-radius: 18px;
-    background: rgba(112, 102, 255, 0.08);
-    border: 1px solid rgba(112, 102, 255, 0.2);
+    padding: 20px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(112, 102, 255, 0.18);
     font-size: 0.95rem;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
+    align-items: flex-start;
 }
 
-.client-manager-indicator strong {
+.client-manager-indicator__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.client-manager-indicator__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(112, 102, 255, 0.12);
+    color: var(--purple-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.client-manager-indicator__icon--empty {
+    background: rgba(227, 73, 85, 0.12);
+    color: #b02a37;
+}
+
+.client-manager-indicator__main strong {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.client-manager-indicator__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.client-manager-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(112, 102, 255, 0.12);
+    color: var(--purple-700);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.client-manager-badge i {
+    font-size: 1rem;
+}
+
+.client-manager-badge--success {
+    background: rgba(24, 199, 111, 0.16);
+    color: #0d8a52;
+}
+
+.client-manager-indicator__hint {
+    margin-top: auto;
+    align-self: flex-end;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--neutral-600);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.client-manager-indicator__hint:hover,
+.client-manager-indicator__hint:focus-visible {
+    color: var(--purple-700);
+}
+
+.client-status-chip i {
+    font-size: 1.05rem;
+}
+
+.client-status-chip span {
     font-weight: 600;
 }
 
@@ -3044,19 +3126,19 @@ body.dark-theme {
 
 .client-payment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
 }
 
 .payment-tile {
     position: relative;
-    padding: 18px 16px 16px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(112, 102, 255, 0.18);
+    padding: 14px 14px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(112, 102, 255, 0.16);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -3074,19 +3156,19 @@ body.dark-theme {
 }
 
 .payment-tile__date {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--neutral-700);
     font-weight: 600;
 }
 
 .payment-tile__amount {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--neutral-900);
 }
 
 .payment-tile__status {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--neutral-700);
 }
