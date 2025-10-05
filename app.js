@@ -1539,20 +1539,46 @@ function updateClientStatusTags(client) {
     if (client.managerId) {
         const manager = managers.find(m => String(m.id) === String(client.managerId));
         const managerName = manager ? manager.name : 'Менеджер назначен';
-        tags.push(`<span class="client-status-chip">Менеджер: ${escapeHtml(managerName)}</span>`);
+        tags.push(`
+            <span class="client-status-chip" title="Закреплённый менеджер: ${escapeHtml(managerName)}">
+                <i class="ri-user-star-line" aria-hidden="true"></i>
+                <span>${escapeHtml(managerName)}</span>
+            </span>
+        `);
     } else {
-        tags.push('<span class="client-status-chip client-status-chip--alert">Менеджер не назначен</span>');
+        tags.push(`
+            <span class="client-status-chip client-status-chip--alert" title="Менеджер не назначен">
+                <i class="ri-user-search-line" aria-hidden="true"></i>
+            </span>
+        `);
     }
     const types = client.courtTypes || {};
     if (types.arbitration || types.tret) {
-        let label = '';
-        if (types.arbitration && types.tret) label = 'АС/ТС';
-        else if (types.arbitration) label = 'АС';
-        else label = 'ТС';
-        tags.push(`<span class="client-status-chip">${label}</span>`);
+        if (types.arbitration) {
+            tags.push(`
+                <span class="client-status-chip" title="Арбитражный суд">
+                    <i class="ri-scales-2-line" aria-hidden="true"></i>
+                </span>
+            `);
+        }
+        if (types.tret) {
+            tags.push(`
+                <span class="client-status-chip" title="Третейский суд">
+                    <i class="ri-team-line" aria-hidden="true"></i>
+                </span>
+            `);
+        }
     }
-    tags.push(`<span class="client-status-chip ${client.finManagerPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}">${client.finManagerPaid ? 'ФУ оплачен' : 'ФУ не оплачен'}</span>`);
-    tags.push(`<span class="client-status-chip ${client.courtDepositPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}">${client.courtDepositPaid ? 'Депозит оплачен' : 'Депозит не оплачен'}</span>`);
+    tags.push(`
+        <span class="client-status-chip ${client.finManagerPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}" title="${client.finManagerPaid ? 'Финансовый управляющий оплачен' : 'Финансовый управляющий не оплачен'}">
+            <i class="ri-bank-card-line" aria-hidden="true"></i>
+        </span>
+    `);
+    tags.push(`
+        <span class="client-status-chip ${client.courtDepositPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}" title="${client.courtDepositPaid ? 'Депозит оплачен' : 'Депозит не оплачен'}">
+            <i class="ri-safe-2-line" aria-hidden="true"></i>
+        </span>
+    `);
     container.innerHTML = tags.join('');
 }
 
@@ -3308,20 +3334,59 @@ function renderClientManager(client) {
     const managers = getManagers();
     if (client.managerId) {
         const manager = managers.find(m => String(m.id) === String(client.managerId));
-        const lines = [];
-        lines.push('<span class="text-muted small">Клиент закреплён за менеджером</span>');
-        lines.push(`<strong>${escapeHtml(manager ? manager.name : 'Менеджер')}</strong>`);
-        const details = [];
-        if (client.managerPercent) details.push(`${client.managerPercent}%`);
-        if (client.managerFullyPaid) details.push('оплачен');
-        if (client.isFinManager) details.push('ФУ');
-        if (details.length > 0) {
-            lines.push(`<span class="text-muted small">${details.join(' · ')}</span>`);
+        const badges = [];
+        if (client.managerPercent) {
+            badges.push(`
+                <span class="client-manager-badge" title="Процент менеджера">
+                    <i class="ri-percent-line" aria-hidden="true"></i>
+                    <span>${client.managerPercent}%</span>
+                </span>
+            `);
         }
-        lines.push('<span class="text-muted small">Изменить менеджера можно во вкладке «Менеджеры»</span>');
-        block.innerHTML = lines.join('');
+        if (client.managerFullyPaid) {
+            badges.push(`
+                <span class="client-manager-badge client-manager-badge--success" title="Вознаграждение выплачено">
+                    <i class="ri-check-line" aria-hidden="true"></i>
+                </span>
+            `);
+        }
+        if (client.isFinManager) {
+            badges.push(`
+                <span class="client-manager-badge" title="Финансовый управляющий">
+                    <i class="ri-bank-card-line" aria-hidden="true"></i>
+                </span>
+            `);
+        }
+        block.innerHTML = `
+            <div class="client-manager-indicator__header">
+                <span class="client-manager-indicator__icon" aria-hidden="true">
+                    <i class="ri-user-star-line"></i>
+                </span>
+                <div class="client-manager-indicator__main">
+                    <strong>${escapeHtml(manager ? manager.name : 'Менеджер')}</strong>
+                </div>
+            </div>
+            ${badges.length ? `<div class="client-manager-indicator__badges">${badges.join('')}</div>` : ''}
+            <button type="button" class="client-manager-indicator__hint" title="Изменить менеджера во вкладке «Менеджеры»">
+                <i class="ri-exchange-line" aria-hidden="true"></i>
+                <span class="visually-hidden">Изменить менеджера во вкладке «Менеджеры»</span>
+            </button>
+        `;
     } else {
-        block.innerHTML = '<strong>Менеджер не назначен</strong><span class="text-muted small">Назначьте менеджера во вкладке «Менеджеры»</span>';
+        block.innerHTML = `
+            <div class="client-manager-indicator__header">
+                <span class="client-manager-indicator__icon client-manager-indicator__icon--empty" aria-hidden="true">
+                    <i class="ri-user-search-line"></i>
+                </span>
+                <div class="client-manager-indicator__main">
+                    <strong>Менеджер не назначен</strong>
+                </div>
+            </div>
+            <button type="button" class="client-manager-indicator__hint" title="Назначьте менеджера во вкладке «Менеджеры»">
+                <i class="ri-exchange-line" aria-hidden="true"></i>
+                <span class="visually-hidden">Назначьте менеджера во вкладке «Менеджеры»</span>
+            </button>
+        `;
     }
     updateClientStatusTags(client);
 }
