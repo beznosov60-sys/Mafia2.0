@@ -118,6 +118,186 @@ function getCourtTypeBadge(client) {
     return '';
 }
 
+function escapeHtml(value) {
+    if (value === undefined || value === null) {
+        return '';
+    }
+
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function formatCurrencyDisplay(value) {
+    if (value === undefined || value === null || value === '') {
+        return '—';
+    }
+
+    const normalized = String(value).replace(/\s+/g, '').replace(',', '.');
+    const number = Number(normalized);
+
+    if (!Number.isNaN(number)) {
+        try {
+            return number.toLocaleString('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                maximumFractionDigits: 0
+            });
+        } catch (error) {
+            console.warn('Не удалось отформатировать сумму', value, error);
+        }
+    }
+
+    return escapeHtml(value);
+}
+
+function formatDateDisplay(value) {
+    if (!value) {
+        return '—';
+    }
+
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return '—';
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString('ru-RU');
+    }
+
+    const isoParts = trimmed.split('-');
+    if (isoParts.length === 3) {
+        const [year, month, day] = isoParts.map(part => Number(part));
+        if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
+            const candidate = new Date(year, month - 1, day);
+            if (!Number.isNaN(candidate.getTime())) {
+                return candidate.toLocaleDateString('ru-RU');
+            }
+        }
+    }
+
+    const dotParts = trimmed.split('.');
+    if (dotParts.length === 3) {
+        const [day, month, year] = dotParts.map(part => Number(part));
+        if (!Number.isNaN(day) && !Number.isNaN(month)) {
+            const normalizedYear = !Number.isNaN(year) ? (year < 100 ? 2000 + year : year) : undefined;
+            if (normalizedYear !== undefined) {
+                const candidate = new Date(normalizedYear, month - 1, day);
+                if (!Number.isNaN(candidate.getTime())) {
+                    return candidate.toLocaleDateString('ru-RU');
+                }
+            }
+        }
+    }
+
+    return escapeHtml(trimmed);
+}
+
+function formatPaymentMonths(value) {
+    if (value === undefined || value === null) {
+        return '—';
+    }
+
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return '—';
+    }
+
+    if (/^\d+$/.test(trimmed)) {
+        return `${escapeHtml(trimmed)} мес.`;
+    }
+
+    return escapeHtml(trimmed);
+}
+
+function formatPhoneDisplay(value) {
+    if (!value) {
+        return '—';
+    }
+
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return '—';
+    }
+
+    const tel = trimmed.replace(/[^+\d]/g, '');
+    return `<a href="tel:${escapeAttribute(tel)}">${escapeHtml(trimmed)}</a>`;
+}
+
+function formatCourtLink(value) {
+    if (!value) {
+        return '—';
+    }
+
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return '—';
+    }
+
+    return `<a href="${escapeAttribute(trimmed)}" target="_blank" rel="noopener">Судебное дело</a>`;
+}
+
+function buildClientDetailsMarkup(client) {
+    const stage = client.stage ? escapeHtml(client.stage) : '—';
+    const subStage = client.subStage ? escapeHtml(client.subStage) : '—';
+    const phone = formatPhoneDisplay(client.phone);
+    const totalAmount = formatCurrencyDisplay(client.totalAmount);
+    const paymentMonths = formatPaymentMonths(client.paymentMonths);
+    const paymentStartDate = formatDateDisplay(client.paymentStartDate);
+    const caseNumber = client.caseNumber ? escapeHtml(client.caseNumber) : '—';
+    const courtLink = formatCourtLink(client.arbitrLink);
+    const tasksCount = Array.isArray(client.tasks) ? client.tasks.length : 0;
+
+    return `
+        <dl class="client-card__details-grid">
+            <div class="client-card__detail">
+                <dt>Этап</dt>
+                <dd>${stage}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Подэтап</dt>
+                <dd>${subStage}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Телефон</dt>
+                <dd>${phone}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Сумма</dt>
+                <dd>${totalAmount}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Платежей</dt>
+                <dd>${paymentMonths}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Старт оплаты</dt>
+                <dd>${paymentStartDate}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>№ дела</dt>
+                <dd>${caseNumber}</dd>
+            </div>
+            <div class="client-card__detail">
+                <dt>Суд</dt>
+                <dd>${courtLink}</dd>
+            </div>
+        </dl>
+        <div class="client-card__details-footer">
+            <span class="client-card__tasks">Задач: ${tasksCount}</span>
+            <a class="client-card__link" href="client-card.html?id=${client.id}">Открыть карточку</a>
+        </div>
+    `;
+}
+
 function buildStageProgress(currentStage) {
     const currentIndex = stageOrder.indexOf(currentStage);
     return stageOrder
@@ -916,48 +1096,69 @@ function displayClientsList() {
         const hasCourtDate = Boolean(client.courtDate);
         const courtDateText = hasCourtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'Нет даты';
 
+        const favoriteIcon = client.favorite ? '<i class="ri-star-fill client-card__favorite" aria-hidden="true"></i>' : '';
+
         li.innerHTML = `
             <div class="client-card__inner${client.favorite ? ' client-card__inner--favorite' : ''}" data-client-id="${client.id}">
-                <div class="client-card__info">
-                    <div class="client-card__name-row">
-                        <span class="client-card__name">${fullName}</span>
-                        ${getCourtTypeBadge(client)}
-                    </div>
-                    <div class="client-card__meta">
-                        <div class="client-card__payments" role="group" aria-label="Статус платежей">
-                            <i class="ri-wallet-3-line" aria-hidden="true"></i>
-                            <div class="client-card__payments-track">
-                                ${paymentsHtml}
+                <div class="client-card__header">
+                    <div class="client-card__header-main">
+                        <div class="client-card__name-row">
+                            ${favoriteIcon}
+                            <span class="client-card__name">${fullName}</span>
+                            ${getCourtTypeBadge(client)}
+                        </div>
+                        <div class="client-card__meta">
+                            <div class="client-card__payments" role="group" aria-label="Статус платежей">
+                                <span class="client-card__payments-icon" aria-hidden="true"><i class="ri-money-ruble-circle-line"></i></span>
+                                <div class="client-card__payments-track">
+                                    ${paymentsHtml}
+                                </div>
+                            </div>
+                            <div class="client-card__court"${hasCourtDate ? '' : ' data-empty="true"'}>
+                                <i class="ri-gavel-line" aria-hidden="true"></i>
+                                <span class="client-card__court-date">${courtDateText}</span>
                             </div>
                         </div>
-                        <div class="client-card__court"${hasCourtDate ? '' : ' data-empty="true"'}>
-                            <i class="ri-gavel-line" aria-hidden="true"></i>
-                            <span class="client-card__court-date">${courtDateText}</span>
-                        </div>
                     </div>
+                    <button class="client-card__toggle" type="button" aria-expanded="false" aria-label="Показать информацию о клиенте">
+                        <i class="ri-arrow-down-s-line client-card__toggle-icon" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <button class="client-card__open" type="button" aria-label="Открыть карточку клиента">
-                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
-                </button>
+                <div class="client-card__details" hidden>
+                    ${buildClientDetailsMarkup(client)}
+                </div>
             </div>
         `;
 
         const inner = li.querySelector('.client-card__inner');
-        const openBtn = li.querySelector('.client-card__open');
+        const header = li.querySelector('.client-card__header');
+        const toggleBtn = li.querySelector('.client-card__toggle');
+        const details = li.querySelector('.client-card__details');
         const paymentSquares = li.querySelectorAll('.payment-square');
 
-        const openClientCard = () => {
-            window.location.href = `client-card.html?id=${client.id}`;
+        const setExpanded = (expanded) => {
+            toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            toggleBtn.setAttribute('aria-label', expanded ? 'Скрыть информацию о клиенте' : 'Показать информацию о клиенте');
+            details.hidden = !expanded;
+            inner.classList.toggle('client-card__inner--expanded', expanded);
         };
 
-        inner.addEventListener('click', (event) => {
+        const toggleDetails = () => {
+            const shouldExpand = toggleBtn.getAttribute('aria-expanded') !== 'true';
+            setExpanded(shouldExpand);
+        };
+
+        header.addEventListener('click', (event) => {
             if (event.target.closest('.payment-square')) return;
-            openClientCard();
+            if (event.target.closest('.client-card__payments')) return;
+            if (event.target.closest('.client-card__toggle')) return;
+            if (event.target.closest('a')) return;
+            toggleDetails();
         });
 
-        openBtn.addEventListener('click', (event) => {
+        toggleBtn.addEventListener('click', (event) => {
             event.stopPropagation();
-            openClientCard();
+            toggleDetails();
         });
 
         paymentSquares.forEach(square => {
