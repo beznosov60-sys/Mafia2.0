@@ -45,6 +45,60 @@ a.btn:active {
     text-decoration: none;
 }
 
+.form-control,
+.form-select {
+    border-radius: 14px;
+    border: 1px solid var(--neutral-500);
+    background: linear-gradient(145deg, var(--neutral-100), #f4f4ff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 20px -18px rgba(20, 20, 43, 0.45);
+    color: var(--neutral-900);
+    padding: 0.6rem 0.95rem;
+    min-height: 44px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.form-control::placeholder {
+    color: var(--neutral-600);
+    opacity: 0.85;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(112, 102, 255, 0.14);
+    background: linear-gradient(145deg, #ffffff, #f4f4ff);
+    color: var(--neutral-900);
+}
+
+.form-control:disabled,
+.form-select:disabled,
+.form-control[readonly] {
+    background: var(--neutral-300);
+    border-color: var(--neutral-500);
+    color: var(--neutral-700);
+    box-shadow: none;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .btn {
+    border-radius: 0 14px 14px 0;
+    border-left: 1px solid var(--neutral-500);
+}
+
+.form-check-input {
+    border-radius: 8px;
+    border-color: var(--neutral-500);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 16px -12px rgba(67, 57, 242, 0.7);
+}
+
 .text-purple {
     color: var(--purple-700);
 }
@@ -2841,22 +2895,31 @@ body.dark-theme {
 
 .client-overview-card__actions {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 12px;
 }
 
-.client-overview-card__primary-actions {
+.client-overview-card__primary-actions,
+.client-overview-card__quick-actions {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 8px;
 }
 
 .client-overview-card__quick-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    gap: 10px;
+}
+
+.client-overview-card__actions .btn,
+.client-overview-card__actions .btn-icon {
+    min-height: 44px;
+}
+
+.client-overview-card__actions .btn-icon {
+    width: 44px;
+    height: 44px;
 }
 
 .client-view-only {
