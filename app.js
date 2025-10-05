@@ -831,7 +831,6 @@ function displayCourtThisMonth() {
                 <div class="court-task">${client.subStage || ''}</div>
                 <div class="court-date-pay">
                     <span class="court-date">${dateText}</span>
-                    <button class="court-payments-btn" onclick="event.stopPropagation(); showPaymentsModal('${client.id}')">Платежи</button>
                     <button class="court-toggle" data-client="${client.id}" disabled title="Раздел в разработке"><i class="ri-more-2-line"></i></button>
                 </div>
             </div>
@@ -852,7 +851,7 @@ function displayCourtThisMonth() {
         }
 
         li.addEventListener('click', (event) => {
-            if (!event.target.closest('.court-toggle') && !event.target.closest('.court-payments-btn') && !event.target.closest('a')) {
+            if (!event.target.closest('.court-toggle') && !event.target.closest('a')) {
                 window.location.href = `client-card.html?id=${client.id}`;
             }
         });
@@ -893,74 +892,86 @@ function displayClientsList() {
             .filter(Boolean)
             .join(' ')
             .trim() || 'Без имени';
-        const courtDateHtml = client.courtDate
-            ? `<span class="client-card__date"><i class="ri-calendar-line" aria-hidden="true"></i>${new Date(client.courtDate).toLocaleDateString('ru-RU')}</span>`
-            : '';
-        const subStageHtml = client.subStage
-            ? `<div class="client-card__substage" title="${client.subStage}">${client.subStage}</div>`
-            : '';
-        const courtLinkHtml = client.arbitrLink
-            ? `<a href="${client.arbitrLink}" target="_blank" rel="noopener" class="client-card__link"><i class="ri-external-link-line" aria-hidden="true"></i><span>Суд</span></a>`
-            : '';
+        const schedule = getPaymentSchedule(client);
+        const paidStates = schedule.map((item, index) => {
+            if (Array.isArray(client.paidMonths) && typeof client.paidMonths[index] !== 'undefined') {
+                return Boolean(client.paidMonths[index]);
+            }
+            return Boolean(item.paid);
+        });
+        const paymentsHtml = schedule.length
+            ? schedule.map((_, index) => {
+                const isPaid = paidStates[index];
+                return `
+                    <button
+                        type="button"
+                        class="payment-square${isPaid ? ' payment-square--filled' : ''}"
+                        data-payment-index="${index}"
+                        aria-pressed="${isPaid ? 'true' : 'false'}"
+                        aria-label="Платёж ${index + 1}: ${isPaid ? 'оплачен' : 'не оплачен'}"
+                    ></button>
+                `;
+            }).join('')
+            : '<span class="client-card__payments-empty">—</span>';
+        const hasCourtDate = Boolean(client.courtDate);
+        const courtDateText = hasCourtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : 'Нет даты';
 
         li.innerHTML = `
             <div class="client-card__inner${client.favorite ? ' client-card__inner--favorite' : ''}" data-client-id="${client.id}">
-                <div class="client-card__header">
-                    <div class="client-card__name">${fullName}${getCourtTypeBadge(client)}</div>
-                    <div class="client-card__header-actions">
-                        ${courtDateHtml}
-                        <button class="client-card__toggle" type="button" aria-expanded="false" aria-label="Показать детали клиента">
-                            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
-                        </button>
+                <div class="client-card__info">
+                    <div class="client-card__name-row">
+                        <span class="client-card__name">${fullName}</span>
+                        ${getCourtTypeBadge(client)}
                     </div>
-                </div>
-                <div class="client-card__body" hidden>
-                    <div class="client-card__stage">
-                        <div class="client-card__stage-title">${client.stage || 'Без стадии'}</div>
-                        <div class="client-card__progress" role="presentation">
-                            ${buildStageProgress(client.stage)}
+                    <div class="client-card__meta">
+                        <div class="client-card__payments" role="group" aria-label="Статус платежей">
+                            <i class="ri-wallet-3-line" aria-hidden="true"></i>
+                            <div class="client-card__payments-track">
+                                ${paymentsHtml}
+                            </div>
+                        </div>
+                        <div class="client-card__court"${hasCourtDate ? '' : ' data-empty="true"'}>
+                            <i class="ri-gavel-line" aria-hidden="true"></i>
+                            <span class="client-card__court-date">${courtDateText}</span>
                         </div>
                     </div>
-                    ${subStageHtml}
-                    <div class="client-card__footer">
-                        <button class="client-card__payment" type="button">
-                            <i class="ri-wallet-3-line" aria-hidden="true"></i>
-                            <span>Платежи</span>
-                        </button>
-                        ${courtLinkHtml}
-                    </div>
                 </div>
+                <button class="client-card__open" type="button" aria-label="Открыть карточку клиента">
+                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                </button>
             </div>
         `;
 
-        const toggleBtn = li.querySelector('.client-card__toggle');
-        const body = li.querySelector('.client-card__body');
         const inner = li.querySelector('.client-card__inner');
-        const paymentBtn = li.querySelector('.client-card__payment');
+        const openBtn = li.querySelector('.client-card__open');
+        const paymentSquares = li.querySelectorAll('.payment-square');
 
-        toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const willOpen = body.hasAttribute('hidden');
-            if (willOpen) {
-                body.removeAttribute('hidden');
-            } else {
-                body.setAttribute('hidden', '');
-            }
-            toggleBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            toggleBtn.classList.toggle('client-card__toggle--open', willOpen);
-            inner.classList.toggle('client-card__inner--expanded', willOpen);
-        });
-
-        paymentBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            showPaymentsModal(client.id);
-        });
-
-        li.addEventListener('click', (event) => {
-            if (event.target.closest('.client-card__toggle') || event.target.closest('.client-card__payment') || event.target.closest('a')) {
-                return;
-            }
+        const openClientCard = () => {
             window.location.href = `client-card.html?id=${client.id}`;
+        };
+
+        inner.addEventListener('click', (event) => {
+            if (event.target.closest('.payment-square')) return;
+            openClientCard();
+        });
+
+        openBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            openClientCard();
+        });
+
+        paymentSquares.forEach(square => {
+            square.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const index = Number(square.dataset.paymentIndex);
+                const willBePaid = !square.classList.contains('payment-square--filled');
+                paidStates[index] = willBePaid;
+                square.classList.toggle('payment-square--filled', willBePaid);
+                square.setAttribute('aria-pressed', willBePaid ? 'true' : 'false');
+
+                client.paidMonths = paidStates.slice();
+                localStorage.setItem('clients', JSON.stringify(clients));
+            });
         });
 
         ul.appendChild(li);
@@ -2586,76 +2597,6 @@ function showAddTaskModal(dateStr) {
         }
     });
 }
-
-// Показ модального окна платежей
-window.showPaymentsModal = function(clientId) {
-    const modalEl = document.getElementById('paymentsModal');
-    if (modalEl.classList.contains('show')) return;
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
-    const client = clients.find(c => String(c.id) === String(clientId));
-    const paymentsTableBody = document.getElementById('paymentsTableBody');
-    if (!client || !paymentsTableBody) return;
-
-    paymentsTableBody.innerHTML = '';
-
-    // Месячные платежи
-    const schedule = getPaymentSchedule(client);
-    if (schedule.length > 0) {
-        schedule.forEach((p, i) => {
-            paymentsTableBody.innerHTML += `
-                <tr>
-                    <td>Месяц ${i + 1}</td>
-                    <td>${new Date(p.date).toLocaleDateString('ru-RU')}</td>
-                    <td>${p.amount}</td>
-                    <td>${p.paid ? 'Оплачен' : 'Не оплачен'}</td>
-                </tr>
-            `;
-        });
-    } else {
-        paymentsTableBody.innerHTML += '<tr><td colspan="4" class="text-center">Нет данных о платежах</td></tr>';
-    }
-
-    // --- Категория: Прочие платежи ---
-    paymentsTableBody.innerHTML += `
-        <tr class="table-secondary">
-            <td colspan="4" style="text-align:center;font-weight:bold;">Прочие платежи</td>
-        </tr>
-        <tr>
-            <td>Финансовый управляющий</td>
-            <td>-</td>
-            <td>17000</td>
-            <td>
-                <input type="checkbox" id="finManagerPaid${client.id}" ${client.finManagerPaid ? 'checked' : ''}>
-                <label for="finManagerPaid${client.id}">${client.finManagerPaid ? 'Оплачен' : 'Не оплачен'}</label>
-            </td>
-        </tr>
-        <tr>
-            <td>Депозит в суд</td>
-            <td>-</td>
-            <td>25000</td>
-            <td>
-                <input type="checkbox" id="courtDepositPaid${client.id}" ${client.courtDepositPaid ? 'checked' : ''}>
-                <label for="courtDepositPaid${client.id}">${client.courtDepositPaid ? 'Оплачен' : 'Не оплачен'}</label>
-            </td>
-        </tr>
-    `;
-
-    setTimeout(() => {
-        document.getElementById(`finManagerPaid${client.id}`).onchange = function() {
-            client.finManagerPaid = this.checked;
-            localStorage.setItem('clients', JSON.stringify(clients));
-            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
-        };
-        document.getElementById(`courtDepositPaid${client.id}`).onchange = function() {
-            client.courtDepositPaid = this.checked;
-            localStorage.setItem('clients', JSON.stringify(clients));
-            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
-        };
-    }, 100);
-
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modal.show();
-};
 
 // Сохранение консультации
 window.saveConsultation = function() {
