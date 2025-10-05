@@ -149,15 +149,15 @@
                         </div>
                         <div class="client-process-field">
                             <span class="form-label d-block">Тип суда</span>
-                            <div class="client-court-types">
-                                <label class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="courtTypeArbitration">
-                                    <span class="form-check-label">Арбитражный суд</span>
-                                </label>
-                                <label class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="courtTypeTret">
-                                    <span class="form-check-label">Третейский суд</span>
-                                </label>
+                            <div class="client-court-types" role="group" aria-label="Тип суда">
+                                <button type="button" class="court-type-toggle" id="courtTypeArbitrationToggle" data-type="arbitration" aria-pressed="false" title="Арбитражный суд">
+                                    <span class="court-type-toggle__abbr">АС</span>
+                                    <span class="visually-hidden">Арбитражный суд</span>
+                                </button>
+                                <button type="button" class="court-type-toggle" id="courtTypeTretToggle" data-type="tret" aria-pressed="false" title="Третейский суд">
+                                    <span class="court-type-toggle__abbr">ТС</span>
+                                    <span class="visually-hidden">Третейский суд</span>
+                                </button>
                             </div>
                         </div>
                     </div>
