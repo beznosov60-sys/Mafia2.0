@@ -1296,8 +1296,8 @@ function setupClientCardInteractions() {
     document.getElementById('clientSubStageSelect')?.addEventListener('change', (event) => handleSubStageChange(event.target.value));
     document.getElementById('clientCourtDateInput')?.addEventListener('change', (event) => handleCourtDateChange(event.target.value));
     document.getElementById('clientCourtLinkInput')?.addEventListener('change', (event) => handleCourtLinkChange(event.target.value));
-    document.getElementById('courtTypeArbitration')?.addEventListener('change', handleCourtTypeChange);
-    document.getElementById('courtTypeTret')?.addEventListener('change', handleCourtTypeChange);
+    document.getElementById('courtTypeArbitrationToggle')?.addEventListener('click', () => toggleCourtType('arbitration'));
+    document.getElementById('courtTypeTretToggle')?.addEventListener('click', () => toggleCourtType('tret'));
     document.getElementById('finManagerPaidToggle')?.addEventListener('change', (event) => toggleExtraPayment('finManagerPaid', event.target.checked));
     document.getElementById('courtDepositPaidToggle')?.addEventListener('change', (event) => toggleExtraPayment('courtDepositPaid', event.target.checked));
 }
@@ -1504,10 +1504,33 @@ function handleCourtLinkChange(value) {
     commitCurrentClient();
 }
 
+function setCourtTypeButtonState(button, active) {
+    if (!button) return;
+    const isActive = Boolean(active);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    button.classList.toggle('is-active', isActive);
+}
+
+function isCourtTypeActive(type) {
+    const id = type === 'arbitration' ? 'courtTypeArbitrationToggle' : 'courtTypeTretToggle';
+    const button = document.getElementById(id);
+    return button?.getAttribute('aria-pressed') === 'true';
+}
+
+function toggleCourtType(type) {
+    if (!currentClientData) return;
+    const id = type === 'arbitration' ? 'courtTypeArbitrationToggle' : 'courtTypeTretToggle';
+    const button = document.getElementById(id);
+    if (!button || button.hasAttribute('disabled')) return;
+    const nextState = button.getAttribute('aria-pressed') !== 'true';
+    setCourtTypeButtonState(button, nextState);
+    handleCourtTypeChange();
+}
+
 function handleCourtTypeChange() {
     if (!currentClientData) return;
-    const arbitration = document.getElementById('courtTypeArbitration')?.checked;
-    const tret = document.getElementById('courtTypeTret')?.checked;
+    const arbitration = isCourtTypeActive('arbitration');
+    const tret = isCourtTypeActive('tret');
     currentClientData.courtTypes = {
         arbitration: Boolean(arbitration),
         tret: Boolean(tret)
@@ -1652,10 +1675,8 @@ function loadClientCard(clientId) {
     const courtLinkInput = document.getElementById('clientCourtLinkInput');
     if (courtLinkInput) courtLinkInput.value = currentClientData.arbitrLink || '';
 
-    const arbitrationCheckbox = document.getElementById('courtTypeArbitration');
-    if (arbitrationCheckbox) arbitrationCheckbox.checked = Boolean(currentClientData.courtTypes?.arbitration);
-    const tretCheckbox = document.getElementById('courtTypeTret');
-    if (tretCheckbox) tretCheckbox.checked = Boolean(currentClientData.courtTypes?.tret);
+    setCourtTypeButtonState(document.getElementById('courtTypeArbitrationToggle'), Boolean(currentClientData.courtTypes?.arbitration));
+    setCourtTypeButtonState(document.getElementById('courtTypeTretToggle'), Boolean(currentClientData.courtTypes?.tret));
 
     const stageSelect = document.getElementById('clientStageSelect');
     const subStageSelect = document.getElementById('clientSubStageSelect');
