@@ -2841,8 +2841,22 @@ body.dark-theme {
 
 .client-overview-card__actions {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.client-overview-card__primary-actions {
+    display: flex;
+    align-items: center;
     gap: 8px;
+}
+
+.client-overview-card__quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .client-view-only {
@@ -2850,7 +2864,7 @@ body.dark-theme {
 }
 
 .client-edit-only {
-    display: none;
+    display: none !important;
 }
 
 .client-card-container.is-editing .client-view-only {
@@ -2858,7 +2872,18 @@ body.dark-theme {
 }
 
 .client-card-container.is-editing .client-edit-only {
+    display: inline-flex !important;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 1.2rem;
 }
 
 .client-name-editor {
