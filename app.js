@@ -43,6 +43,10 @@ let summaryExpenseChart = null;
 let summaryTransactionsChart = null;
 let clientExpenseChart = null;
 let clientTransactionsChart = null;
+let clientsCache = [];
+let currentClientIndex = -1;
+let currentClientData = null;
+let isClientEditing = false;
 
 const DEFAULT_UPDATES = [
     { date: '01.06.2024', text: 'Добавлена история выполненных задач клиента.' },
@@ -922,12 +926,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
         const fromManager = urlParams.get('fromManager');
+        setupClientCardInteractions();
         if (clientId) {
             currentClientId = clientId;
             loadClientCard(clientId);
-            document.getElementById('assignManagerBtn')?.addEventListener('click', () => openAssignManagerForClient(clientId));
-            document.getElementById('saveClientManager')?.addEventListener('click', () => saveClientManager(clientId));
-            document.getElementById('completedTasksBtn')?.addEventListener('click', showCompletedTasks);
             if (fromManager) {
                 const backLink = document.getElementById('backLink');
                 if (backLink) backLink.href = `managers.html#managerCard${fromManager}`;
@@ -1232,161 +1234,514 @@ function loadClientForEdit(clientId) {
 }
 
 // Загрузка клиента для карточки
+function setupClientCardInteractions() {
+    const root = document.getElementById('clientCardRoot');
+    if (!root || root.dataset.initialized) return;
+    root.dataset.initialized = 'true';
+
+    const editBtn = document.getElementById('editClientBtn');
+    if (editBtn) editBtn.addEventListener('click', enterClientEditMode);
+
+    const saveBtn = document.getElementById('saveClientBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveClientInlineChanges);
+
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', cancelClientInlineChanges);
+
+    const toggleHistoryBtn = document.getElementById('toggleTaskHistoryBtn');
+    const historySection = document.getElementById('completedTasksSection');
+    if (toggleHistoryBtn && historySection) {
+        toggleHistoryBtn.addEventListener('click', () => {
+            const expanded = toggleHistoryBtn.getAttribute('aria-expanded') === 'true';
+            const nextState = !expanded;
+            toggleHistoryBtn.setAttribute('aria-expanded', String(nextState));
+            historySection.classList.toggle('is-open', nextState);
+        });
+    }
+
+    const hideHistoryBtn = document.getElementById('hideTaskHistoryBtn');
+    if (hideHistoryBtn && historySection && toggleHistoryBtn) {
+        hideHistoryBtn.addEventListener('click', () => {
+            historySection.classList.remove('is-open');
+            toggleHistoryBtn.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    document.getElementById('clientPrevBtn')?.addEventListener('click', () => navigateClient(-1));
+    document.getElementById('clientNextBtn')?.addEventListener('click', () => navigateClient(1));
+
+    const switcher = document.getElementById('clientSwitcher');
+    if (switcher) {
+        switcher.addEventListener('change', () => {
+            const selectedId = switcher.value;
+            if (selectedId && selectedId !== String(currentClientId)) {
+                if (isClientEditing) {
+                    alert('Сохраните или отмените изменения перед переключением клиента.');
+                    switcher.value = currentClientId || '';
+                    return;
+                }
+                loadClientCard(selectedId);
+            }
+        });
+    }
+
+    document.getElementById('openCourtLinkBtn')?.addEventListener('click', () => {
+        const input = document.getElementById('clientCourtLinkInput');
+        if (!input) return;
+        const link = (input.value || '').trim();
+        if (link) window.open(link, '_blank');
+    });
+
+    document.getElementById('clientStageSelect')?.addEventListener('change', (event) => handleStageChange(event.target.value));
+    document.getElementById('clientSubStageSelect')?.addEventListener('change', (event) => handleSubStageChange(event.target.value));
+    document.getElementById('clientCourtDateInput')?.addEventListener('change', (event) => handleCourtDateChange(event.target.value));
+    document.getElementById('clientCourtLinkInput')?.addEventListener('change', (event) => handleCourtLinkChange(event.target.value));
+    document.getElementById('courtTypeArbitration')?.addEventListener('change', handleCourtTypeChange);
+    document.getElementById('courtTypeTret')?.addEventListener('change', handleCourtTypeChange);
+    document.getElementById('finManagerPaidToggle')?.addEventListener('change', (event) => toggleExtraPayment('finManagerPaid', event.target.checked));
+    document.getElementById('courtDepositPaidToggle')?.addEventListener('change', (event) => toggleExtraPayment('courtDepositPaid', event.target.checked));
+}
+
+function formatClientFullName(client) {
+    if (!client) return '';
+    return [client.firstName, client.middleName, client.lastName].filter(Boolean).join(' ').trim();
+}
+
+function formatClientDate(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('ru-RU');
+}
+
+function updateClientSwitcherOptions() {
+    const switcher = document.getElementById('clientSwitcher');
+    if (!switcher) return;
+    switcher.innerHTML = '';
+    clientsCache.forEach((client, index) => {
+        const option = document.createElement('option');
+        const name = formatClientFullName(client) || client.id;
+        option.value = client.id;
+        option.textContent = name;
+        if (index === currentClientIndex) option.selected = true;
+        switcher.appendChild(option);
+    });
+    switcher.disabled = clientsCache.length === 0;
+    const prevBtn = document.getElementById('clientPrevBtn');
+    const nextBtn = document.getElementById('clientNextBtn');
+    if (prevBtn) prevBtn.disabled = currentClientIndex <= 0;
+    if (nextBtn) nextBtn.disabled = currentClientIndex >= clientsCache.length - 1;
+}
+
+function navigateClient(step) {
+    if (isClientEditing) {
+        alert('Сохраните или отмените изменения перед переключением клиента.');
+        return;
+    }
+    if (!Array.isArray(clientsCache) || clientsCache.length === 0) return;
+    const targetIndex = currentClientIndex + step;
+    if (targetIndex < 0 || targetIndex >= clientsCache.length) return;
+    const client = clientsCache[targetIndex];
+    if (client) {
+        loadClientCard(client.id);
+    }
+}
+
+function setClientEditMode(enabled) {
+    const root = document.getElementById('clientCardRoot');
+    if (!root) return;
+    isClientEditing = enabled;
+    root.classList.toggle('is-editing', enabled);
+    const inputs = root.querySelectorAll('.client-field__input, #clientFirstNameInput, #clientMiddleNameInput, #clientLastNameInput');
+    inputs.forEach(input => {
+        if (input.dataset.static === 'true') {
+            input.setAttribute('disabled', 'disabled');
+            return;
+        }
+        if (enabled) {
+            input.removeAttribute('disabled');
+        } else {
+            input.setAttribute('disabled', 'disabled');
+        }
+    });
+    const notes = document.getElementById('clientNotes');
+    if (notes) {
+        if (enabled) {
+            notes.removeAttribute('readonly');
+        } else {
+            notes.setAttribute('readonly', 'readonly');
+        }
+    }
+}
+
+function applyClientValuesToInputs(client) {
+    const firstNameInput = document.getElementById('clientFirstNameInput');
+    if (firstNameInput) firstNameInput.value = client.firstName || '';
+    const middleNameInput = document.getElementById('clientMiddleNameInput');
+    if (middleNameInput) middleNameInput.value = client.middleName || '';
+    const lastNameInput = document.getElementById('clientLastNameInput');
+    if (lastNameInput) lastNameInput.value = client.lastName || '';
+    const phoneInput = document.getElementById('clientPhoneInput');
+    if (phoneInput) phoneInput.value = client.phone || '';
+    const totalInput = document.getElementById('clientTotalAmountInput');
+    if (totalInput) totalInput.value = client.totalAmount ?? '';
+    const monthsInput = document.getElementById('clientPaymentMonthsInput');
+    if (monthsInput) monthsInput.value = client.paymentMonths ?? '';
+    const startInput = document.getElementById('clientPaymentStartInput');
+    if (startInput) startInput.value = client.paymentStartDate || '';
+    const notes = document.getElementById('clientNotes');
+    if (notes) notes.value = client.notes || '';
+    const caseNumberInput = document.getElementById('clientCaseNumberInput');
+    if (caseNumberInput) caseNumberInput.value = client.caseNumber || '';
+}
+
+function enterClientEditMode() {
+    if (!currentClientData) return;
+    applyClientValuesToInputs(currentClientData);
+    setClientEditMode(true);
+}
+
+function saveClientInlineChanges() {
+    if (!isClientEditing || !currentClientData) return;
+    const firstName = (document.getElementById('clientFirstNameInput')?.value || '').trim();
+    const middleName = (document.getElementById('clientMiddleNameInput')?.value || '').trim();
+    const lastName = (document.getElementById('clientLastNameInput')?.value || '').trim();
+    const phone = (document.getElementById('clientPhoneInput')?.value || '').trim();
+    const totalValue = document.getElementById('clientTotalAmountInput')?.value;
+    const monthsValue = document.getElementById('clientPaymentMonthsInput')?.value;
+    const paymentStart = document.getElementById('clientPaymentStartInput')?.value || '';
+    const caseNumber = (document.getElementById('clientCaseNumberInput')?.value || '').trim();
+    const notes = document.getElementById('clientNotes')?.value || '';
+
+    const totalAmount = totalValue === '' ? 0 : Number(totalValue);
+    const paymentMonths = monthsValue === '' ? 0 : parseInt(monthsValue, 10);
+
+    if (Number.isNaN(totalAmount) || Number.isNaN(paymentMonths)) {
+        alert('Проверьте введённые суммы и количество месяцев.');
+        return;
+    }
+
+    const previousPaid = Array.isArray(currentClientData.paidMonths) ? currentClientData.paidMonths.slice() : [];
+    const newPaid = [];
+    for (let i = 0; i < paymentMonths; i++) {
+        newPaid[i] = Boolean(previousPaid[i]);
+    }
+
+    currentClientData.firstName = firstName;
+    currentClientData.middleName = middleName;
+    currentClientData.lastName = lastName;
+    currentClientData.phone = phone;
+    currentClientData.totalAmount = totalAmount;
+    currentClientData.paymentMonths = paymentMonths;
+    currentClientData.paymentStartDate = paymentStart;
+    currentClientData.paidMonths = newPaid;
+    currentClientData.caseNumber = caseNumber;
+    currentClientData.notes = notes;
+
+    commitCurrentClient();
+    setClientEditMode(false);
+    loadClientCard(currentClientId);
+}
+
+function cancelClientInlineChanges() {
+    if (!isClientEditing) return;
+    setClientEditMode(false);
+    loadClientCard(currentClientId);
+}
+
+function commitCurrentClient() {
+    if (!Array.isArray(clientsCache) || currentClientIndex === -1 || !currentClientData) return;
+    clientsCache[currentClientIndex] = currentClientData;
+    localStorage.setItem('clients', JSON.stringify(clientsCache));
+    refetchCalendarEvents();
+}
+
+function updateStageSummary(client) {
+    const stageEl = document.getElementById('clientStageSummary');
+    if (!stageEl) return;
+    if (client.stage) {
+        stageEl.textContent = client.subStage ? `${client.stage} · ${client.subStage}` : client.stage;
+    } else {
+        stageEl.textContent = 'Этап не назначен';
+    }
+}
+
+function handleStageChange(stage) {
+    if (!currentClientData) return;
+    currentClientData.stage = stage || '';
+    if (!currentClientData.stage || !(subStages[currentClientData.stage] || []).includes(currentClientData.subStage)) {
+        currentClientData.subStage = '';
+    }
+    const subStageSelect = document.getElementById('clientSubStageSelect');
+    if (subStageSelect) {
+        updateSubStageOptions(currentClientData.stage, subStageSelect);
+        subStageSelect.value = currentClientData.subStage || '';
+    }
+    commitCurrentClient();
+    updateStageSummary(currentClientData);
+    renderCompletedTasks(currentClientData);
+}
+
+function handleSubStageChange(subStage) {
+    if (!currentClientData) return;
+    currentClientData.subStage = subStage || '';
+    commitCurrentClient();
+    updateStageSummary(currentClientData);
+    renderCompletedTasks(currentClientData);
+}
+
+function handleCourtDateChange(value) {
+    if (!currentClientData) return;
+    currentClientData.courtDate = value || '';
+    commitCurrentClient();
+    const dateEl = document.getElementById('nextCourtDate');
+    if (dateEl) dateEl.textContent = formatClientDate(currentClientData.courtDate);
+}
+
+function handleCourtLinkChange(value) {
+    if (!currentClientData) return;
+    currentClientData.arbitrLink = value ? value.trim() : '';
+    commitCurrentClient();
+}
+
+function handleCourtTypeChange() {
+    if (!currentClientData) return;
+    const arbitration = document.getElementById('courtTypeArbitration')?.checked;
+    const tret = document.getElementById('courtTypeTret')?.checked;
+    currentClientData.courtTypes = {
+        arbitration: Boolean(arbitration),
+        tret: Boolean(tret)
+    };
+    commitCurrentClient();
+    updateClientStatusTags(currentClientData);
+}
+
+function toggleExtraPayment(field, value) {
+    if (!currentClientData) return;
+    currentClientData[field] = Boolean(value);
+    commitCurrentClient();
+    renderClientPayments(currentClientData);
+    updateClientStatusTags(currentClientData);
+}
+
+function updateExtraPaymentTile(tileId, statusId, paid) {
+    const tile = document.getElementById(tileId);
+    if (tile) tile.dataset.paid = paid ? 'true' : 'false';
+    const statusEl = document.getElementById(statusId);
+    if (statusEl) statusEl.textContent = paid ? 'Оплачен' : 'Не оплачен';
+}
+
+function updateClientStatusTags(client) {
+    const container = document.getElementById('clientStatusTags');
+    if (!container) return;
+    const tags = [];
+    const managers = getManagers();
+    if (client.managerId) {
+        const manager = managers.find(m => String(m.id) === String(client.managerId));
+        const managerName = manager ? manager.name : 'Менеджер назначен';
+        tags.push(`<span class="client-status-chip">Менеджер: ${escapeHtml(managerName)}</span>`);
+    } else {
+        tags.push('<span class="client-status-chip client-status-chip--alert">Менеджер не назначен</span>');
+    }
+    const types = client.courtTypes || {};
+    if (types.arbitration || types.tret) {
+        let label = '';
+        if (types.arbitration && types.tret) label = 'АС/ТС';
+        else if (types.arbitration) label = 'АС';
+        else label = 'ТС';
+        tags.push(`<span class="client-status-chip">${label}</span>`);
+    }
+    tags.push(`<span class="client-status-chip ${client.finManagerPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}">${client.finManagerPaid ? 'ФУ оплачен' : 'ФУ не оплачен'}</span>`);
+    tags.push(`<span class="client-status-chip ${client.courtDepositPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}">${client.courtDepositPaid ? 'Депозит оплачен' : 'Депозит не оплачен'}</span>`);
+    container.innerHTML = tags.join('');
+}
+
+function updateTaskHint(client) {
+    const hint = document.getElementById('clientTasksHint');
+    if (!hint) return;
+    const activeCount = (window.tasks || []).filter(task => !task.completed).length;
+    hint.textContent = activeCount > 0 ? `Активных задач: ${activeCount}` : 'Активных задач нет';
+    if (client && client.stage) {
+        hint.dataset.stage = client.stage;
+    }
+}
+
+function handleMonthlyPaymentToggle(index, checked, amount) {
+    if (!currentClientData) return;
+    currentClientData.paidMonths = currentClientData.paidMonths || [];
+    currentClientData.paidMonths[index] = checked;
+    if (checked) {
+        recordManagerPayment(currentClientData, amount, new Date().toISOString().split('T')[0], { type: 'month', index });
+    } else {
+        removeManagerPayment(currentClientData, { type: 'month', index });
+    }
+    commitCurrentClient();
+}
+
 function loadClientCard(clientId) {
     const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => String(c.id) === String(clientId));
-    if (!client) {
+    const index = clients.findIndex(c => String(c.id) === String(clientId));
+    if (index === -1) {
         alert('Клиент не найден!');
         window.location.href = 'index.html';
         return;
     }
 
-    const fullName = [client.firstName, client.middleName, client.lastName].filter(Boolean).join(' ');
-    document.getElementById('clientName').textContent = fullName;
-    const courtBadgeEl = document.getElementById('courtTypeBadge');
-    if (courtBadgeEl) {
-        const types = client.courtTypes || {};
-        let text = '';
-        if (types.arbitration && types.tret) text = 'АС/ТС';
-        else if (types.arbitration) text = 'АС';
-        else if (types.tret) text = 'ТС';
-        courtBadgeEl.textContent = text;
-        courtBadgeEl.style.display = text ? 'inline-block' : 'none';
+    clientsCache = clients;
+    currentClientIndex = index;
+    currentClientData = clientsCache[currentClientIndex];
+    currentClientId = String(currentClientData.id);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', currentClientId);
+    window.history.replaceState({}, '', url);
+
+    setClientEditMode(false);
+
+    updateClientSwitcherOptions();
+
+    const fullName = formatClientFullName(currentClientData);
+    const nameHeading = document.getElementById('clientNameHeading');
+    if (nameHeading) nameHeading.textContent = fullName || '—';
+
+    const dealInfoEl = document.getElementById('dealInfo');
+    if (dealInfoEl) {
+        if (currentClientData.caseNumber) {
+            dealInfoEl.textContent = `Дело №${currentClientData.caseNumber}`;
+            dealInfoEl.classList.remove('text-muted');
+        } else {
+            dealInfoEl.textContent = '—';
+            dealInfoEl.classList.add('text-muted');
+        }
     }
-    document.getElementById('dealInfo').textContent = client.caseNumber ? `Дело №${client.caseNumber}` : '';
-    document.getElementById('clientPhone').textContent = client.phone || '';
-    document.getElementById('clientStage').textContent = client.stage || '';
-    renderClientManager(client);
-    document.getElementById('nextCourtDate').textContent = client.courtDate ? new Date(client.courtDate).toLocaleDateString('ru-RU') : '—';
-    document.getElementById('activeAccount').textContent = client.totalAmount ? `${client.totalAmount} ₽` : '0 ₽';
-    const monthly = client.paymentMonths ? Math.round((client.totalAmount || 0) / client.paymentMonths) : 0;
-    document.getElementById('monthlyPayment').textContent = client.paymentMonths ? `${monthly} ₽ / ${client.paymentMonths} мес.` : '—';
-    document.getElementById('clientNotes').value = client.notes || '';
-    if (client.arbitrLink) {
-        const linkBlock = document.getElementById('clientLinkBlock');
-        const linkEl = document.getElementById('clientLink');
-        linkEl.href = client.arbitrLink;
-        linkEl.textContent = client.arbitrLink;
-        linkBlock.classList.remove('d-none');
+
+    const phoneDisplay = document.getElementById('clientPhoneDisplay');
+    if (phoneDisplay) phoneDisplay.textContent = currentClientData.phone || '—';
+    const idDisplay = document.getElementById('clientIdDisplay');
+    if (idDisplay) idDisplay.textContent = currentClientData.id || '—';
+    const caseNumberDisplay = document.getElementById('clientCaseNumberDisplay');
+    if (caseNumberDisplay) caseNumberDisplay.textContent = currentClientData.caseNumber || '—';
+    const totalDisplay = document.getElementById('clientTotalAmountDisplay');
+    if (totalDisplay) totalDisplay.textContent = currentClientData.totalAmount ? formatCurrencyDisplay(currentClientData.totalAmount) : '—';
+    const monthsDisplay = document.getElementById('clientPaymentMonthsDisplay');
+    if (monthsDisplay) monthsDisplay.textContent = currentClientData.paymentMonths ? `${currentClientData.paymentMonths} мес.` : '—';
+    const startDisplay = document.getElementById('clientPaymentStartDisplay');
+    if (startDisplay) startDisplay.textContent = currentClientData.paymentStartDate ? formatClientDate(currentClientData.paymentStartDate) : '—';
+
+    applyClientValuesToInputs(currentClientData);
+
+    const notes = document.getElementById('clientNotes');
+    if (notes) {
+        notes.value = currentClientData.notes || '';
+        notes.setAttribute('readonly', 'readonly');
     }
-    document.getElementById('editClientBtn').onclick = () => {
-        window.location.href = `edit-client.html?id=${client.id}`;
-    };
-    const deleteBtn = document.getElementById('deleteClientBtn');
-    if (deleteBtn) {
-        deleteBtn.onclick = deleteClient;
+
+    const courtDateEl = document.getElementById('nextCourtDate');
+    if (courtDateEl) courtDateEl.textContent = formatClientDate(currentClientData.courtDate);
+
+    const courtDateInput = document.getElementById('clientCourtDateInput');
+    if (courtDateInput) courtDateInput.value = currentClientData.courtDate || '';
+    const courtLinkInput = document.getElementById('clientCourtLinkInput');
+    if (courtLinkInput) courtLinkInput.value = currentClientData.arbitrLink || '';
+
+    const arbitrationCheckbox = document.getElementById('courtTypeArbitration');
+    if (arbitrationCheckbox) arbitrationCheckbox.checked = Boolean(currentClientData.courtTypes?.arbitration);
+    const tretCheckbox = document.getElementById('courtTypeTret');
+    if (tretCheckbox) tretCheckbox.checked = Boolean(currentClientData.courtTypes?.tret);
+
+    const stageSelect = document.getElementById('clientStageSelect');
+    const subStageSelect = document.getElementById('clientSubStageSelect');
+    if (stageSelect) {
+        stageSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Выберите этап';
+        stageSelect.appendChild(placeholder);
+        stageOrder.forEach(stage => {
+            const option = document.createElement('option');
+            option.value = stage;
+            option.textContent = stage;
+            stageSelect.appendChild(option);
+        });
+        stageSelect.value = currentClientData.stage || '';
     }
+    if (subStageSelect) {
+        updateSubStageOptions(currentClientData.stage, subStageSelect);
+        subStageSelect.value = currentClientData.subStage || '';
+    }
+    updateStageSummary(currentClientData);
+
+    const accountValue = document.getElementById('activeAccount');
+    if (accountValue) {
+        accountValue.textContent = currentClientData.totalAmount ? formatCurrencyDisplay(currentClientData.totalAmount) : '0 ₽';
+    }
+
     const financeBtn = document.getElementById('financeBtn');
-    if (financeBtn) {
+    if (financeBtn && !financeBtn.dataset.bound) {
         financeBtn.classList.add('disabled');
         financeBtn.removeAttribute('href');
         financeBtn.addEventListener('click', (e) => e.preventDefault());
+        financeBtn.dataset.bound = 'true';
     }
-    window.tasks = client.tasks || [];
+
+    renderClientManager(currentClientData);
+    renderClientPayments(currentClientData);
+
+    window.tasks = currentClientData.tasks || [];
     renderTaskList();
-    renderClientPayments(client);
-    const taskCollapseEl = document.getElementById('clientTasksCollapse');
-    const taskToggle = document.querySelector('[data-bs-target="#clientTasksCollapse"]');
-    if (taskCollapseEl && taskToggle) {
-        taskCollapseEl.addEventListener('shown.bs.collapse', () => taskToggle.textContent = 'Скрыть');
-        taskCollapseEl.addEventListener('hidden.bs.collapse', () => taskToggle.textContent = 'Показать');
-        if (window.tasks.length > 0) {
-            const collapse = new bootstrap.Collapse(taskCollapseEl, {toggle: false});
-            collapse.show();
-        }
-    }
-    const payCollapseEl = document.getElementById('paymentScheduleCollapse');
-    const payToggle = document.querySelector('[data-bs-target="#paymentScheduleCollapse"]');
-    if (payCollapseEl && payToggle) {
-        payCollapseEl.addEventListener('shown.bs.collapse', () => payToggle.textContent = 'Скрыть');
-        payCollapseEl.addEventListener('hidden.bs.collapse', () => payToggle.textContent = 'Показать');
-    }
+    renderCompletedTasks(currentClientData);
+    updateTaskHint(currentClientData);
 }
 
 function renderClientPayments(client) {
-    const tbody = document.getElementById('paymentScheduleBody');
-    if (!tbody) return;
+    const grid = document.getElementById('paymentScheduleGrid');
+    if (!grid) return;
+    const totalEl = document.getElementById('paymentSummaryTotal');
+    if (totalEl) totalEl.textContent = client.totalAmount ? formatCurrencyDisplay(client.totalAmount) : '—';
     const schedule = getPaymentSchedule(client);
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => String(c.id) === String(client.id));
-    tbody.innerHTML = '';
+    const monthlyEl = document.getElementById('paymentSummaryMonthly');
+    const monthlyAmount = schedule.length > 0 ? schedule[0].amount : 0;
+    if (monthlyEl) {
+        monthlyEl.textContent = monthlyAmount ? formatCurrencyDisplay(monthlyAmount) : '—';
+    }
+
+    grid.innerHTML = '';
     if (schedule.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center">Нет данных</td></tr>';
+        const empty = document.createElement('div');
+        empty.className = 'text-muted';
+        empty.textContent = 'Нет ежемесячных платежей';
+        grid.appendChild(empty);
     } else {
-        schedule.forEach((p, idx) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${new Date(p.date).toLocaleDateString('ru-RU')}</td>
-                <td>${p.amount}</td>
-                <td>
-                    <input type="checkbox" id="paidMonth${idx}" ${p.paid ? 'checked' : ''}>
-                    <label for="paidMonth${idx}">${p.paid ? 'Оплачен' : 'Не оплачен'}</label>
-                </td>`;
-            tbody.appendChild(tr);
+        schedule.forEach((payment, index) => {
+            const tile = document.createElement('label');
+            tile.className = `payment-tile${payment.paid ? ' payment-tile--paid' : ''}`;
+            const dateText = formatClientDate(payment.date);
+            tile.innerHTML = `
+                <input type="checkbox" ${payment.paid ? 'checked' : ''}>
+                <span class="payment-tile__date">${dateText}</span>
+                <span class="payment-tile__amount">${formatCurrencyDisplay(payment.amount)}</span>
+                <span class="payment-tile__status">${payment.paid ? 'Оплачен' : 'Не оплачен'}</span>
+            `;
+            const checkbox = tile.querySelector('input');
+            checkbox.id = `paidMonth${index}`;
+            checkbox.addEventListener('change', () => {
+                const statusEl = tile.querySelector('.payment-tile__status');
+                if (statusEl) statusEl.textContent = checkbox.checked ? 'Оплачен' : 'Не оплачен';
+                tile.classList.toggle('payment-tile--paid', checkbox.checked);
+                handleMonthlyPaymentToggle(index, checkbox.checked, payment.amount);
+            });
+            grid.appendChild(tile);
         });
     }
 
-    // Добавляем прочие платежи
-    const extraHeader = document.createElement('tr');
-    extraHeader.className = 'table-secondary';
-    extraHeader.innerHTML = '<td colspan="3" class="text-center">Прочие платежи</td>';
-    tbody.appendChild(extraHeader);
+    const finToggle = document.getElementById('finManagerPaidToggle');
+    if (finToggle) finToggle.checked = Boolean(client.finManagerPaid);
+    const depositToggle = document.getElementById('courtDepositPaidToggle');
+    if (depositToggle) depositToggle.checked = Boolean(client.courtDepositPaid);
 
-    const extraRow = (label, id, checked, amount) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${label}</td>
-            <td>${amount}</td>
-            <td>
-                <input type="checkbox" id="${id}" ${checked ? 'checked' : ''}>
-                <label for="${id}">${checked ? 'Оплачен' : 'Не оплачен'}</label>
-            </td>`;
-        tbody.appendChild(tr);
-    };
-    extraRow('Финансовый управляющий', 'finManagerPaid', client.finManagerPaid, 17000);
-    extraRow('Депозит в суд', 'courtDepositPaid', client.courtDepositPaid, 25000);
-
-    // Обработчики чекбоксов
-    schedule.forEach((p, idx) => {
-        const cb = document.getElementById(`paidMonth${idx}`);
-        if (cb) {
-            cb.onchange = function() {
-                client.paidMonths[idx] = this.checked;
-                if (clientIndex !== -1) {
-                    clients[clientIndex].paidMonths = client.paidMonths;
-                    if (this.checked) {
-                        recordManagerPayment(client, schedule[idx].amount, new Date().toISOString().split('T')[0], { type: 'month', index: idx });
-                    } else {
-                        removeManagerPayment(client, { type: 'month', index: idx });
-                    }
-                    localStorage.setItem('clients', JSON.stringify(clients));
-                }
-                this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
-            };
-        }
-    });
-    const finCb = document.getElementById('finManagerPaid');
-    if (finCb) {
-        finCb.onchange = function() {
-            client.finManagerPaid = this.checked;
-            if (clientIndex !== -1) {
-                clients[clientIndex].finManagerPaid = this.checked;
-                localStorage.setItem('clients', JSON.stringify(clients));
-            }
-            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
-        };
-    }
-    const depositCb = document.getElementById('courtDepositPaid');
-    if (depositCb) {
-        depositCb.onchange = function() {
-            client.courtDepositPaid = this.checked;
-            if (clientIndex !== -1) {
-                clients[clientIndex].courtDepositPaid = this.checked;
-                localStorage.setItem('clients', JSON.stringify(clients));
-            }
-            this.nextElementSibling.textContent = this.checked ? 'Оплачен' : 'Не оплачен';
-        };
-    }
+    updateExtraPaymentTile('finManagerTile', 'finManagerStatus', Boolean(client.finManagerPaid));
+    updateExtraPaymentTile('courtDepositTile', 'courtDepositStatus', Boolean(client.courtDepositPaid));
+    updateClientStatusTags(client);
 }
 
 function saveClientData(client) {
@@ -2436,9 +2791,11 @@ function showToast(message) {
 
 // --- Управление задачами ---
 function addTask() {
-    const text = document.getElementById('taskText').value.trim();
-    const deadline = document.getElementById('taskDeadline').value;
+    const textInput = document.getElementById('taskText');
+    const deadlineInput = document.getElementById('taskDeadline');
     const colorInput = document.getElementById('taskColor');
+    const text = textInput ? textInput.value.trim() : '';
+    const deadline = deadlineInput ? deadlineInput.value : '';
     const color = colorInput ? colorInput.value : '#28a745';
     if (!text) {
         alert('Введите текст задачи!');
@@ -2452,105 +2809,149 @@ function addTask() {
         completed: false
     };
     window.tasks.push(task);
-    renderTaskList();
-    renderCompletedTasks();
-    document.getElementById('taskText').value = '';
-    document.getElementById('taskDeadline').value = '';
-    if (colorInput) colorInput.value = '#28a745';
-    // Сохраняем задачи в клиенте
-    const urlParams = new URLSearchParams(window.location.search);
-    const clientId = urlParams.get('id');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
-    if (clientIndex !== -1) {
-        clients[clientIndex].tasks = window.tasks;
-        localStorage.setItem('clients', JSON.stringify(clients));
+    if (currentClientData) {
+        currentClientData.tasks = window.tasks;
+        commitCurrentClient();
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('id');
+        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+        if (clientIndex !== -1) {
+            clients[clientIndex].tasks = window.tasks;
+            localStorage.setItem('clients', JSON.stringify(clients));
+        }
     }
+    renderTaskList();
+    renderCompletedTasks(currentClientData);
+    updateTaskHint(currentClientData);
+    if (textInput) textInput.value = '';
+    if (deadlineInput) deadlineInput.value = '';
+    if (colorInput) colorInput.value = '#28a745';
 }
 function renderTaskList() {
     const list = document.getElementById('taskList');
     if (!list) return;
     list.innerHTML = '';
-    window.tasks.forEach((task, idx) => {
-        if (task.completed) return;
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-start task-item';
-        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
-        const textWithDeadline = `${task.text} (${task.deadline ? task.deadline : 'Без срока'})`;
-        li.innerHTML = `
-            <span class="task-text" onclick="this.classList.toggle('expanded')" title="${textWithDeadline}">${textWithDeadline}</span>
-            <div>
-                <button class="client-btn client-btn-complete me-2" onclick="completeTask(${idx})">Выполнено</button>
-                <button class="btn btn-sm btn-danger" onclick="removeTask(${idx})">Удалить</button>
-            </div>
-        `;
-        list.appendChild(li);
-    });
+    const activeTasks = (window.tasks || []).filter(task => !task.completed);
+    if (activeTasks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-muted';
+        empty.textContent = 'Нет активных задач';
+        list.appendChild(empty);
+    } else {
+        activeTasks.forEach((task, idx) => {
+            const item = document.createElement('div');
+            item.className = 'client-task-item';
+            const color = task.color || '#7066ff';
+            item.style.borderLeftColor = color;
+            const deadlineText = task.deadline ? `Дедлайн: ${formatClientDate(task.deadline)}` : 'Без срока';
+            item.innerHTML = `
+                <div class="client-task-item__info">
+                    <span class="client-task-item__title" onclick="this.classList.toggle('expanded')" title="${escapeHtml(task.text)}">${escapeHtml(task.text)}</span>
+                    <span class="client-task-item__meta">${deadlineText}</span>
+                </div>
+                <div class="client-task-item__actions">
+                    <button type="button" class="client-task-item__action client-task-item__action--complete" onclick="completeTask(${idx})">Выполнено</button>
+                    <button type="button" class="client-task-item__action client-task-item__action--delete" onclick="removeTask(${idx})">Удалить</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+    updateTaskHint(currentClientData);
 }
 function removeTask(idx) {
     window.tasks.splice(idx, 1);
-    renderTaskList();
-    renderCompletedTasks();
-    // Сохраняем задачи в клиенте
-    const urlParams = new URLSearchParams(window.location.search);
-    const clientId = urlParams.get('id');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
-    if (clientIndex !== -1) {
-        clients[clientIndex].tasks = window.tasks;
-        localStorage.setItem('clients', JSON.stringify(clients));
+    if (currentClientData) {
+        currentClientData.tasks = window.tasks;
+        commitCurrentClient();
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('id');
+        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+        if (clientIndex !== -1) {
+            clients[clientIndex].tasks = window.tasks;
+            localStorage.setItem('clients', JSON.stringify(clients));
+        }
     }
+    renderTaskList();
+    renderCompletedTasks(currentClientData);
+    updateTaskHint(currentClientData);
 }
 
 function completeTask(idx) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const clientId = urlParams.get('id');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
-    if (clientIndex === -1) return;
     const task = window.tasks[idx];
     if (!task) return;
     task.completed = true;
     task.completedAt = new Date().toISOString();
-    advanceClientStage(clients[clientIndex]);
-    clients[clientIndex].tasks = window.tasks;
-    localStorage.setItem('clients', JSON.stringify(clients));
-    const stageSelect = document.getElementById('stage');
-    const subStageSelect = document.getElementById('subStage');
-    if (stageSelect && subStageSelect) {
-        stageSelect.value = clients[clientIndex].stage;
-        updateSubStageOptions(stageSelect.value, subStageSelect);
-        subStageSelect.value = clients[clientIndex].subStage || '';
+    if (currentClientData) {
+        advanceClientStage(currentClientData);
+        currentClientData.tasks = window.tasks;
+        commitCurrentClient();
+        const stageSelect = document.getElementById('clientStageSelect');
+        const subStageSelect = document.getElementById('clientSubStageSelect');
+        if (stageSelect) stageSelect.value = currentClientData.stage || '';
+        if (subStageSelect) {
+            updateSubStageOptions(currentClientData.stage, subStageSelect);
+            subStageSelect.value = currentClientData.subStage || '';
+        }
+        updateStageSummary(currentClientData);
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('id');
+        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
+        if (clientIndex === -1) return;
+        advanceClientStage(clients[clientIndex]);
+        clients[clientIndex].tasks = window.tasks;
+        localStorage.setItem('clients', JSON.stringify(clients));
     }
     renderTaskList();
-    renderCompletedTasks();
+    renderCompletedTasks(currentClientData);
+    updateTaskHint(currentClientData);
 }
 
 function renderCompletedTasks() {
     const list = document.getElementById('completedTaskList');
-    const stageInfo = document.getElementById('currentStageInfo');
-    const urlParams = new URLSearchParams(window.location.search);
-    const clientId = urlParams.get('id');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const client = clients.find(c => String(c.id) === String(clientId));
+    const stageInfo = document.getElementById('completedTasksStage');
+    const historySection = document.getElementById('completedTasksSection');
+    const toggleBtn = document.getElementById('toggleTaskHistoryBtn');
+    const client = currentClientData;
     if (stageInfo && client) {
-        stageInfo.textContent = client.stage ? `Этап: ${client.stage}${client.subStage ? ' - ' + client.subStage : ''}` : '';
+        stageInfo.textContent = client.stage ? `Этап: ${client.stage}${client.subStage ? ' · ' + client.subStage : ''}` : 'Этап не назначен';
     }
-    if (!list) return;
+    if (!list || !historySection || !toggleBtn) return;
     list.innerHTML = '';
-    window.tasks.filter(t => t.completed).forEach(task => {
+    const history = (window.tasks || []).filter(task => task.completed);
+    if (history.length === 0) {
+        toggleBtn.disabled = true;
+        historySection.classList.remove('is-open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        const emptyItem = document.createElement('li');
+        emptyItem.className = 'client-task-history__empty text-muted';
+        emptyItem.textContent = 'Нет выполненных задач';
+        list.appendChild(emptyItem);
+        return;
+    }
+    toggleBtn.disabled = false;
+    history.forEach(task => {
         const li = document.createElement('li');
-        li.className = 'list-group-item';
-        li.style.borderLeft = `5px solid ${task.color || '#28a745'}`;
-        li.textContent = `${task.text} (${task.completedAt ? new Date(task.completedAt).toLocaleDateString('ru-RU') : ''})`;
+        li.style.borderLeftColor = task.color || '#7066ff';
+        const completedDate = task.completedAt ? formatClientDate(task.completedAt) : '';
+        const meta = completedDate ? ` (${completedDate})` : '';
+        li.textContent = `${task.text}${meta}`;
         list.appendChild(li);
     });
 }
 
 window.showCompletedTasks = function() {
-    renderCompletedTasks();
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('completedTasksModal'));
-    modal.show();
+    renderCompletedTasks(currentClientData);
+    const historySection = document.getElementById('completedTasksSection');
+    const toggleBtn = document.getElementById('toggleTaskHistoryBtn');
+    if (historySection) historySection.classList.add('is-open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
 };
 
 function advanceClientStage(client) {
@@ -2902,18 +3303,27 @@ window.deleteConsultation = function(consultId, dateStr) {
 
 // ------------------ Работа с менеджерами ------------------
 function renderClientManager(client) {
-    const block = document.getElementById('clientManagerBlock');
+    const block = document.getElementById('clientManagerIndicator');
     if (!block) return;
     const managers = getManagers();
     if (client.managerId) {
-        const m = managers.find(m => String(m.id) === String(client.managerId));
-        if (m) {
-            const percentText = client.managerFullyPaid ? ' (оплачен)' : (client.managerPercent ? ' (' + client.managerPercent + '%)' : '');
-            block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-success"><span class="green-dot"></span>${m.name}${percentText}${client.finManagerName ? ' ФУ: ' + client.finManagerName : (client.isFinManager ? ' ФУ' : '')}</span>`;
-            return;
+        const manager = managers.find(m => String(m.id) === String(client.managerId));
+        const lines = [];
+        lines.push('<span class="text-muted small">Клиент закреплён за менеджером</span>');
+        lines.push(`<strong>${escapeHtml(manager ? manager.name : 'Менеджер')}</strong>`);
+        const details = [];
+        if (client.managerPercent) details.push(`${client.managerPercent}%`);
+        if (client.managerFullyPaid) details.push('оплачен');
+        if (client.isFinManager) details.push('ФУ');
+        if (details.length > 0) {
+            lines.push(`<span class="text-muted small">${details.join(' · ')}</span>`);
         }
+        lines.push('<span class="text-muted small">Изменить менеджера можно во вкладке «Менеджеры»</span>');
+        block.innerHTML = lines.join('');
+    } else {
+        block.innerHTML = '<strong>Менеджер не назначен</strong><span class="text-muted small">Назначьте менеджера во вкладке «Менеджеры»</span>';
     }
-    block.innerHTML = `<span class="text-muted small d-block">Ответственный менеджер</span><span class="text-danger"><span class="red-dot"></span> Менеджер не назначен</span>`;
+    updateClientStatusTags(client);
 }
 
 window.openAssignManagerForClient = function(clientId) {

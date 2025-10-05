@@ -2728,18 +2728,611 @@ body.dark-theme {
     position: relative;
 }
 
-.client-info-card,
-.client-court-card,
-.client-notes-card,
+.client-card-container {
+    max-width: 1200px;
+}
+
+.client-overview-card,
+.client-process-card,
 .client-payments-card,
-.client-tasks-card,
-.manager-tasks-card {
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: var(--border-radius);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+.client-tasks-card {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 45px -30px rgba(67, 57, 242, 0.35);
+    padding: 24px;
+}
+
+.client-card-toolbar .btn-back {
+    padding: 10px 16px;
+    font-weight: 500;
+}
+
+.client-card-switcher {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 260px;
+}
+
+.client-card-switcher__label {
+    font-size: 0.875rem;
+    color: var(--neutral-700);
+    font-weight: 500;
+}
+
+.client-card-switcher__controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.client-switcher-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(112, 102, 255, 0.25);
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--purple-600);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.client-switcher-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.client-switcher-btn:hover,
+.client-switcher-btn:focus-visible {
+    background: #fff;
+    box-shadow: 0 12px 30px -18px rgba(67, 57, 242, 0.6);
+    color: var(--purple-700);
+}
+
+.client-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.client-overview-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.client-status-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.client-status-chip,
+.client-status-tags span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    background: rgba(112, 102, 255, 0.12);
+    color: var(--purple-700);
+}
+
+.client-status-chip--success {
+    background: rgba(24, 199, 111, 0.18);
+    color: #0d8a52;
+}
+
+.client-status-chip--alert {
+    background: rgba(227, 73, 85, 0.16);
+    color: #b02a37;
+}
+
+.client-overview-card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.client-view-only {
+    display: inline-flex;
+}
+
+.client-edit-only {
+    display: none;
+}
+
+.client-card-container.is-editing .client-view-only {
+    display: none !important;
+}
+
+.client-card-container.is-editing .client-edit-only {
+    display: inline-flex;
+}
+
+.client-name-editor {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px dashed rgba(112, 102, 255, 0.35);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.client-overview-details {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.client-field {
+    display: grid;
+    grid-template-columns: minmax(120px, 200px) 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.client-field__label {
+    font-size: 0.875rem;
+    color: var(--neutral-700);
+    font-weight: 600;
+}
+
+.client-field__value {
+    font-size: 1rem;
+    color: var(--neutral-900);
+    font-weight: 500;
+}
+
+.client-field__input {
+    display: none;
+}
+
+.client-card-container.is-editing .client-field__value {
+    display: none;
+}
+
+.client-card-container.is-editing .client-field__input {
+    display: block;
+}
+
+.client-card-container.is-editing .client-notes {
+    background: #fff;
+    border-style: solid;
+}
+
+.client-notes {
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+    padding: 16px;
+    resize: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.client-notes[readonly] {
+    background: rgba(255, 255, 255, 0.25);
+    border-style: dashed;
+}
+
+.client-manager-indicator {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(112, 102, 255, 0.08);
+    border: 1px solid rgba(112, 102, 255, 0.2);
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.client-manager-indicator strong {
+    font-weight: 600;
+}
+
+.client-process-card .client-section-header,
+.client-payments-card .client-section-header,
+.client-tasks-card .client-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.client-section-subtitle {
+    font-size: 0.9rem;
+    color: var(--neutral-700);
+    margin: 0;
+}
+
+.client-court-date {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.client-court-date__label {
+    font-size: 0.75rem;
+    color: var(--neutral-600);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.client-court-date__value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--purple-700);
+}
+
+.client-process-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.client-process-grid--secondary {
+    margin-top: 16px;
+}
+
+.client-court-types {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px dashed rgba(112, 102, 255, 0.4);
+}
+
+.client-account-info {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.client-account-info__label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--neutral-600);
+    letter-spacing: 0.08em;
+}
+
+.client-account-info__value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--purple-700);
+}
+
+.client-payment-summary {
+    display: flex;
+    gap: 20px;
+}
+
+.client-payment-summary__item span {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--neutral-600);
+}
+
+.client-payment-summary__item strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 1.1rem;
+    color: var(--neutral-900);
+}
+
+.client-payment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.payment-tile {
+    position: relative;
+    padding: 18px 16px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(112, 102, 255, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 35px -22px rgba(67, 57, 242, 0.45);
+}
+
+.payment-tile input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.payment-tile__date {
+    font-size: 0.85rem;
+    color: var(--neutral-700);
+    font-weight: 600;
+}
+
+.payment-tile__amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--neutral-900);
+}
+
+.payment-tile__status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--neutral-700);
+}
+
+.payment-tile.payment-tile--paid {
+    border-color: rgba(24, 199, 111, 0.35);
+    background: rgba(24, 199, 111, 0.14);
+}
+
+.payment-tile.payment-tile--paid .payment-tile__status {
+    color: #0d8a52;
+}
+
+.client-payment-extras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.payment-extra-card {
     padding: 20px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(112, 102, 255, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.payment-extra-card[data-paid="true"] {
+    border-color: rgba(24, 199, 111, 0.4);
+    background: rgba(24, 199, 111, 0.12);
+}
+
+.payment-extra-card[data-paid="true"] .payment-extra-card__status {
+    color: #0d8a52;
+}
+
+.payment-extra-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--neutral-800);
+}
+
+.payment-extra-card__status {
+    font-size: 0.85rem;
+    color: #b02a37;
+}
+
+.payment-extra-card__amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--neutral-900);
+}
+
+.payment-extra-card__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--purple-700);
+    cursor: pointer;
+}
+
+.payment-extra-card__toggle input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.client-task-form {
+    margin-bottom: 20px;
+}
+
+.client-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.client-task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.6);
+    border-left: 5px solid var(--purple-500);
+    box-shadow: 0 12px 24px -22px rgba(67, 57, 242, 0.45);
+}
+
+.client-task-item__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 70%;
+}
+
+.client-task-item__title {
+    font-weight: 600;
+    color: var(--neutral-900);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-task-item__title.expanded {
+    white-space: normal;
+}
+
+.client-task-item__meta {
+    font-size: 0.85rem;
+    color: var(--neutral-600);
+}
+
+.client-task-item__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.client-task-item__action {
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+.client-task-item__action--complete {
+    background: rgba(24, 199, 111, 0.16);
+    color: #0d8a52;
+}
+
+.client-task-item__action--delete {
+    background: rgba(227, 73, 85, 0.14);
+    color: #b02a37;
+}
+
+.client-task-history {
+    display: none;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(112, 102, 255, 0.25);
+}
+
+.client-task-history.is-open {
+    display: block;
+}
+
+.client-task-history__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: var(--neutral-700);
+    font-weight: 600;
+}
+
+.client-task-history__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.client-task-history__list li {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.55);
+    border-left: 5px solid var(--purple-400);
+    font-size: 0.9rem;
+}
+
+.client-task-history__empty {
+    border: none !important;
+    background: transparent;
+    padding-left: 0;
+}
+
+.client-task-history-toggle {
+    color: var(--purple-700);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.client-task-history-toggle i {
+    transition: transform 0.2s ease;
+}
+
+.client-task-history-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 767.98px) {
+    .client-card-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .client-card-switcher {
+        width: 100%;
+    }
+
+    .client-card-switcher__controls {
+        width: 100%;
+    }
+
+    .client-card-switcher__controls select {
+        flex: 1;
+    }
+
+    .client-overview-card,
+    .client-process-card,
+    .client-payments-card,
+    .client-tasks-card {
+        padding: 20px;
+    }
+
+    .client-payment-summary {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .client-task-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .client-task-item__info {
+        max-width: 100%;
+    }
+
+    .client-task-item__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
 }
 
 .court-date-badge {
