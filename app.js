@@ -116,9 +116,9 @@ window.addAppUpdate = function(date, text) {
 
 function getCourtTypeBadge(client) {
     const types = client.courtTypes || {};
-    if (types.arbitration && types.tret) return '<span class="court-badge">АС/ТС</span>';
-    if (types.arbitration) return '<span class="court-badge">АС</span>';
-    if (types.tret) return '<span class="court-badge">ТС</span>';
+    if (types.arbitration && types.tret) return 'АС/ТС';
+    if (types.arbitration) return 'АС';
+    if (types.tret) return 'ТС';
     return '';
 }
 
@@ -1541,44 +1541,26 @@ function updateClientStatusTags(client) {
         const managerName = manager ? manager.name : 'Менеджер назначен';
         tags.push(`
             <span class="client-status-chip" title="Закреплённый менеджер: ${escapeHtml(managerName)}">
-                <i class="ri-user-star-line" aria-hidden="true"></i>
                 <span>${escapeHtml(managerName)}</span>
             </span>
         `);
     } else {
         tags.push(`
             <span class="client-status-chip client-status-chip--alert" title="Менеджер не назначен">
-                <i class="ri-user-search-line" aria-hidden="true"></i>
+                <span>Нет менеджера</span>
             </span>
         `);
     }
-    const types = client.courtTypes || {};
-    if (types.arbitration || types.tret) {
-        if (types.arbitration) {
-            tags.push(`
-                <span class="client-status-chip" title="Арбитражный суд">
-                    <i class="ri-scales-2-line" aria-hidden="true"></i>
-                </span>
-            `);
-        }
-        if (types.tret) {
-            tags.push(`
-                <span class="client-status-chip" title="Третейский суд">
-                    <i class="ri-team-line" aria-hidden="true"></i>
-                </span>
-            `);
-        }
+
+    const courtBadge = getCourtTypeBadge(client);
+    if (courtBadge) {
+        tags.push(`
+            <span class="client-status-chip" title="Тип суда">
+                <span>${escapeHtml(courtBadge)}</span>
+            </span>
+        `);
     }
-    tags.push(`
-        <span class="client-status-chip ${client.finManagerPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}" title="${client.finManagerPaid ? 'Финансовый управляющий оплачен' : 'Финансовый управляющий не оплачен'}">
-            <i class="ri-bank-card-line" aria-hidden="true"></i>
-        </span>
-    `);
-    tags.push(`
-        <span class="client-status-chip ${client.courtDepositPaid ? 'client-status-chip--success' : 'client-status-chip--alert'}" title="${client.courtDepositPaid ? 'Депозит оплачен' : 'Депозит не оплачен'}">
-            <i class="ri-safe-2-line" aria-hidden="true"></i>
-        </span>
-    `);
+
     container.innerHTML = tags.join('');
 }
 
@@ -1696,11 +1678,6 @@ function loadClientCard(clientId) {
         subStageSelect.value = currentClientData.subStage || '';
     }
     updateStageSummary(currentClientData);
-
-    const accountValue = document.getElementById('activeAccount');
-    if (accountValue) {
-        accountValue.textContent = currentClientData.totalAmount ? formatCurrencyDisplay(currentClientData.totalAmount) : '0 ₽';
-    }
 
     const financeBtn = document.getElementById('financeBtn');
     if (financeBtn && !financeBtn.dataset.bound) {
