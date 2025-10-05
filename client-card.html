@@ -36,7 +36,10 @@
                         </div>
                         <div class="client-overview-card__actions">
                             <div class="client-overview-card__primary-actions">
-                                <button class="btn btn-save client-view-only" id="editClientBtn">Редактировать</button>
+                                <button class="btn btn-icon btn-outline-primary client-view-only" id="editClientBtn" title="Редактировать клиента">
+                                    <i class="ri-pencil-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Редактировать клиента</span>
+                                </button>
                                 <div class="client-edit-only d-flex gap-2">
                                     <button class="btn btn-save" id="saveClientBtn">Сохранить</button>
                                     <button class="btn btn-outline-secondary" id="cancelEditBtn">Отмена</button>
@@ -102,7 +105,6 @@
                             <input type="date" class="form-control client-field__input" id="clientPaymentStartInput" disabled>
                         </div>
                     </div>
-                    <div class="client-manager-indicator" id="clientManagerIndicator"></div>
                     <div class="client-overview-notes mt-4">
                         <span class="client-field__label">Заметки</span>
                         <textarea class="form-control client-notes" id="clientNotes" rows="5" placeholder="Заметки..." readonly></textarea>
@@ -157,12 +159,6 @@
                                     <span class="form-check-label">Третейский суд</span>
                                 </label>
                             </div>
-                        </div>
-                    </div>
-                    <div class="client-process-footer">
-                        <div class="client-account-info">
-                            <span class="client-account-info__label">Активный счёт</span>
-                            <span class="client-account-info__value" id="activeAccount">0 ₽</span>
                         </div>
                     </div>
                 </section>
