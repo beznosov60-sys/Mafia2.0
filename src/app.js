@@ -4206,5 +4206,5 @@ window.showUpdates = function() {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('updatesModal'));
     modal.show();
 };
-    
+
 

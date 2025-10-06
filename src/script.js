@@ -1,0 +1,97 @@
+export default function setup () {
+  return /*html*/`
+  <div class="main-wrapper">
+    <div class="control-panel mb-4">
+      <!-- Поисковая строка -->
+      <div class="search-wrapper mb-3">
+        <div class="search-bar">
+          <i class="ri-search-line"></i>
+          <label for="searchInput" class="visually-hidden">Поиск клиентов</label>
+          <input type="text" id="searchInput" placeholder="поиск клиентов" autocomplete="off">
+        </div>
+        <ul id="searchSuggestions" class="list-group search-suggestions d-none"></ul>
+      </div>
+      <!-- Кнопки -->
+      <div class="icon-buttons">
+        <a href="add-client.html" class="circle-btn" title="Добавить клиента" aria-label="Добавить клиента">
+          <span class="btn-icon" aria-hidden="true"><i class="ri-user-add-line"></i></span>
+          <span class="btn-label">Добавить клиента</span>
+        </a>
+        <a href="managers.html" class="circle-btn" title="Менеджеры" aria-label="Менеджеры">
+          <span class="btn-icon" aria-hidden="true"><i class="ri-user-star-line"></i></span>
+          <span class="btn-label">Менеджеры</span>
+        </a>
+        <button class="circle-btn" id="sidebarToggle" type="button" title="Список клиентов"
+          aria-label="Открыть список клиентов">
+          <span class="btn-icon" aria-hidden="true"><i class="ri-group-line"></i></span>
+          <span class="btn-label">Список клиентов</span>
+        </button>
+        <a href="calendar.html" class="circle-btn" title="Календарь" aria-label="Календарь">
+          <span class="btn-icon" aria-hidden="true"><i class="ri-calendar-event-line"></i></span>
+          <span class="btn-label">Календарь</span>
+        </a>
+        <div class="dropdown">
+          <button class="circle-btn dropdown-toggle" id="importExportBtn" type="button" data-bs-toggle="dropdown"
+            aria-expanded="false" title="Импорт/Экспорт" aria-label="Импорт и экспорт">
+            <span class="btn-icon" aria-hidden="true"><i class="ri-file-transfer-line"></i></span>
+            <span class="btn-label">Импорт / Экспорт</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" id="exportOption">Экспорт в Excel</a></li>
+            <li><a class="dropdown-item" id="importOption">Импорт из Excel</a></li>
+          </ul>
+        </div>
+        <label for="importFile" class="visually-hidden">Импорт из Excel</label>
+        <input type="file" id="importFile" accept=".xlsx" style="display:none" />
+      </div>
+    </div>
+    <!-- Суды в этом месяце -->
+    <div class="accordion w-100 mt-4" id="courtAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="courtHeading">
+          <button class="accordion-button court-toggle collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#courtThisMonthCollapse" aria-expanded="false" aria-controls="courtThisMonthCollapse">
+            <span class="toggle-label">Суды в этом месяце</span>
+            <i class="ri-arrow-down-s-line toggle-icon" aria-hidden="true"></i>
+          </button>
+        </h2>
+        <div id="courtThisMonthCollapse" class="accordion-collapse collapse" aria-labelledby="courtHeading"
+          data-bs-parent="#courtAccordion">
+          <div class="accordion-body court-accordion-body p-0">
+            <ul id="courtThisMonth" class="list-group w-100 court-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Выдвижная панель -->
+  <div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <h5>Все клиенты</h5>
+      <button class="btn btn-close" id="sidebarClose"></button>
+    </div>
+    <div class="sidebar-content">
+      <div id="clientsList"></div>
+      <button class="btn btn-archived" id="showArchivedBtn">Завершённые клиенты</button>
+    </div>
+  </div>
+  <!-- Модальное окно завершённых клиентов -->
+  <div class="modal fade" id="archivedClientsModal" tabindex="-1" aria-labelledby="archivedClientsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="archivedClientsModalLabel">Завершённые клиенты</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-group" id="archivedClientsList"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  `
+}

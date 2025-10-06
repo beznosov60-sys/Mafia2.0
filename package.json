@@ -1,17 +1,18 @@
 {
-  "name": "mafia2.0",
-  "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "name": "crm",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "npm run build && vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.43.0"
+  "devDependencies": {
+    "sass-embedded": "^1.93.2",
+    "sharp": "^0.34.4",
+    "svgo": "^4.0.0",
+    "vite": "^7.1.7",
+    "vite-plugin-image-optimizer": "^2.0.2"
   }
 }
