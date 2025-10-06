@@ -1,5 +1,5 @@
-import './style.scss'
-import setup from './script'
+import '@/scss/style.scss'
+import setup from '@/js/script'
 
 document.querySelector('#app').innerHTML = `${setup()}`
 
