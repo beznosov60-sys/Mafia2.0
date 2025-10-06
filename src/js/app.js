@@ -1,3 +1,6 @@
+import * as bootstrap from 'bootstrap'
+import * as XLSX from 'xlsx/xlsx.mjs';
+
 const subStages = {
     'Договор': ['сбор документов', 'составление заявления', 'отправить заявление'],
     'Подача в суд': [
