@@ -9,138 +9,233 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="client-card-screen">
-    <div class="container py-5">
-        <a href="index.html" class="btn btn-back mb-3" id="backLink">&larr; Назад</a>
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="client-info-card h-100 d-flex flex-column">
-                    <h5 class="mb-3">Информация о клиенте</h5>
-                    <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item">
-                            <span class="fw-semibold" id="clientName"></span>
-                            <span id="courtTypeBadge" class="court-badge ms-2"></span>
-                            <p class="text-muted small mb-0" id="dealInfo"></p>
-                        </li>
-                        <li class="list-group-item">
-                            <span class="text-muted small d-block">Телефон</span>
-                            <span id="clientPhone"></span>
-                        </li>
-                        <li class="list-group-item">
-                            <span class="text-muted small d-block">Ход дела</span>
-                            <span id="clientStage"></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div id="clientManagerBlock">
-                                <span class="text-muted small d-block">Ответственный менеджер</span>
-                                <span class="text-danger"><span class="red-dot"></span> Менеджер не назначен</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm" id="assignManagerBtn" title="Закрепить менеджера"><i class="ri-user-search-line"></i></button>
-                        </li>
-                        <li class="list-group-item d-none" id="clientLinkBlock">
-                            <span class="text-muted small d-block">Ссылка</span>
-                            <a id="clientLink" href="#" target="_blank"></a>
-                        </li>
-                    </ul>
-                    <div class="mt-auto w-100">
-                        <button class="btn btn-save w-100" id="editClientBtn">Редактировать</button>
-                        <button class="btn btn-danger w-100 mt-2 client-delete-btn" id="deleteClientBtn">Удалить</button>
-                        <a href="#" class="btn btn-finance w-100 mt-2 disabled" id="financeBtn" aria-disabled="true" title="Раздел в разработке">Финансы (скоро)</a>
-                    </div>
+    <div class="client-card-container container py-5" id="clientCardRoot">
+        <div class="client-card-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <a href="index.html" class="btn btn-back" id="backLink">&larr; Назад</a>
+            <div class="client-card-switcher">
+                <label for="clientSwitcher" class="client-card-switcher__label">Выберите клиента</label>
+                <div class="client-card-switcher__controls">
+                    <button class="client-switcher-btn" type="button" id="clientPrevBtn" aria-label="Предыдущий клиент">
+                        <i class="ri-arrow-left-s-line"></i>
+                    </button>
+                    <select id="clientSwitcher" class="form-select"></select>
+                    <button class="client-switcher-btn" type="button" id="clientNextBtn" aria-label="Следующий клиент">
+                        <i class="ri-arrow-right-s-line"></i>
+                    </button>
                 </div>
             </div>
-            <div class="col-md-6 d-flex flex-column">
-                <div class="client-court-card mb-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="mb-0">Ближайший суд клиента</h5>
-                        <span class="court-date-badge" id="nextCourtDate"></span>
-                    </div>
-                    <p class="mb-1">Активный счёт: <span class="fw-semibold" id="activeAccount"></span></p>
-                    <p class="mb-3">Ежемесячный платёж: <span class="fw-semibold" id="monthlyPayment"></span></p>
-                </div>
-                <div class="client-payments-card mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">График платежей</h5>
-                        <button class="btn btn-sm btn-show" data-bs-toggle="collapse" data-bs-target="#paymentScheduleCollapse" type="button">Показать</button>
-                    </div>
-                    <div class="collapse" id="paymentScheduleCollapse">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr><th>Дата/Тип</th><th>Сумма</th><th>Статус</th></tr>
-                            </thead>
-                            <tbody id="paymentScheduleBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="client-tasks-card mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Текущие задачи</h5>
+        </div>
+        <div class="client-card-grid row g-4">
+            <div class="col-12 col-xl-5">
+                <section class="client-overview-card h-100">
+                    <div class="client-overview-card__header">
                         <div>
-                            <button class="btn btn-sm btn-show" data-bs-toggle="collapse" data-bs-target="#clientTasksCollapse" type="button">Показать</button>
-                            <button class="btn btn-sm btn-secondary ms-2" id="completedTasksBtn" type="button">История</button>
+                            <div class="client-status-tags" id="clientStatusTags"></div>
+                            <h1 class="client-name" id="clientNameHeading">—</h1>
+                            <p class="client-case text-muted" id="dealInfo"></p>
+                        </div>
+                        <div class="client-overview-card__actions">
+                            <div class="client-overview-card__primary-actions">
+                                <button class="btn btn-icon btn-outline-primary client-view-only" id="editClientBtn" title="Редактировать клиента">
+                                    <i class="ri-pencil-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Редактировать клиента</span>
+                                </button>
+                                <div class="client-edit-only d-flex gap-2">
+                                    <button class="btn btn-save" id="saveClientBtn">Сохранить</button>
+                                    <button class="btn btn-outline-secondary" id="cancelEditBtn">Отмена</button>
+                                </div>
+                            </div>
+                            <div class="client-overview-card__quick-actions">
+                                <button class="btn btn-icon btn-outline-danger" id="deleteClientBtn" title="Удалить клиента">
+                                    <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Удалить клиента</span>
+                                </button>
+                                <a href="#" class="btn btn-icon btn-outline-primary disabled" id="financeBtn" aria-disabled="true" title="Финансы (скоро)">
+                                    <i class="ri-funds-line" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Финансы (скоро)</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <div class="collapse" id="clientTasksCollapse">
-                        <div class="input-group mb-2">
+                    <div class="client-name-editor client-edit-only" id="clientNameEditor">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label for="clientFirstNameInput" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="clientFirstNameInput">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="clientMiddleNameInput" class="form-label">Отчество</label>
+                                <input type="text" class="form-control" id="clientMiddleNameInput">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="clientLastNameInput" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="clientLastNameInput">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-overview-details">
+                        <div class="client-field">
+                            <span class="client-field__label">Телефон</span>
+                            <span class="client-field__value" id="clientPhoneDisplay">—</span>
+                            <input type="tel" class="form-control client-field__input" id="clientPhoneInput" disabled>
+                        </div>
+                        <div class="client-field">
+                            <span class="client-field__label">ID клиента</span>
+                            <span class="client-field__value" id="clientIdDisplay">—</span>
+                            <input type="text" class="form-control client-field__input" id="clientIdInput" disabled data-static="true">
+                        </div>
+                        <div class="client-field">
+                            <span class="client-field__label">Номер дела</span>
+                            <span class="client-field__value" id="clientCaseNumberDisplay">—</span>
+                            <input type="text" class="form-control client-field__input" id="clientCaseNumberInput" disabled>
+                        </div>
+                        <div class="client-field">
+                            <span class="client-field__label">Общая сумма</span>
+                            <span class="client-field__value" id="clientTotalAmountDisplay">—</span>
+                            <input type="number" class="form-control client-field__input" id="clientTotalAmountInput" min="0" disabled>
+                        </div>
+                        <div class="client-field">
+                            <span class="client-field__label">Кол-во месяцев</span>
+                            <span class="client-field__value" id="clientPaymentMonthsDisplay">—</span>
+                            <input type="number" class="form-control client-field__input" id="clientPaymentMonthsInput" min="0" disabled>
+                        </div>
+                        <div class="client-field">
+                            <span class="client-field__label">Дата начала платежей</span>
+                            <span class="client-field__value" id="clientPaymentStartDisplay">—</span>
+                            <input type="date" class="form-control client-field__input" id="clientPaymentStartInput" disabled>
+                        </div>
+                    </div>
+                    <div class="client-overview-notes mt-4">
+                        <span class="client-field__label">Заметки</span>
+                        <textarea class="form-control client-notes" id="clientNotes" rows="5" placeholder="Заметки..." readonly></textarea>
+                    </div>
+                </section>
+            </div>
+            <div class="col-12 col-xl-7 d-flex flex-column gap-4">
+                <section class="client-process-card">
+                    <div class="client-section-header">
+                        <div>
+                            <h5 class="mb-1">Ход дела</h5>
+                            <p class="client-section-subtitle" id="clientStageSummary">—</p>
+                        </div>
+                        <div class="client-court-date">
+                            <span class="client-court-date__label">Ближайший суд</span>
+                            <span class="client-court-date__value" id="nextCourtDate">—</span>
+                        </div>
+                    </div>
+                    <div class="client-process-grid">
+                        <div class="client-process-field">
+                            <label for="clientStageSelect" class="form-label">Этап</label>
+                            <select id="clientStageSelect" class="form-select"></select>
+                        </div>
+                        <div class="client-process-field">
+                            <label for="clientSubStageSelect" class="form-label">Задача</label>
+                            <select id="clientSubStageSelect" class="form-select"></select>
+                        </div>
+                        <div class="client-process-field">
+                            <label for="clientCourtDateInput" class="form-label">Дата суда</label>
+                            <input type="date" class="form-control" id="clientCourtDateInput">
+                        </div>
+                    </div>
+                    <div class="client-process-grid client-process-grid--secondary">
+                        <div class="client-process-field">
+                            <label for="clientCourtLinkInput" class="form-label">Ссылка на суд</label>
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="clientCourtLinkInput" placeholder="https://">
+                                <button class="btn btn-outline-primary" type="button" id="openCourtLinkBtn" title="Открыть ссылку">
+                                    <i class="ri-external-link-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="client-process-field">
+                            <span class="form-label d-block">Тип суда</span>
+                            <div class="client-court-types" role="group" aria-label="Тип суда">
+                                <button type="button" class="court-type-toggle" id="courtTypeArbitrationToggle" data-type="arbitration" aria-pressed="false" title="Арбитражный суд">
+                                    <span class="court-type-toggle__abbr">АС</span>
+                                    <span class="visually-hidden">Арбитражный суд</span>
+                                </button>
+                                <button type="button" class="court-type-toggle" id="courtTypeTretToggle" data-type="tret" aria-pressed="false" title="Третейский суд">
+                                    <span class="court-type-toggle__abbr">ТС</span>
+                                    <span class="visually-hidden">Третейский суд</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="client-payments-card">
+                    <div class="client-section-header align-items-end">
+                        <div>
+                            <h5 class="mb-1">Платежи</h5>
+                            <p class="client-section-subtitle">Контролируйте ежемесячные и обязательные платежи</p>
+                        </div>
+                        <div class="client-payment-summary">
+                            <div class="client-payment-summary__item">
+                                <span>Общая сумма</span>
+                                <strong id="paymentSummaryTotal">—</strong>
+                            </div>
+                            <div class="client-payment-summary__item">
+                                <span>Ежемесячно</span>
+                                <strong id="paymentSummaryMonthly">—</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-payment-grid" id="paymentScheduleGrid"></div>
+                    <div class="client-payment-extras">
+                        <div class="payment-extra-card" id="finManagerTile" data-paid="false">
+                            <div class="payment-extra-card__header">
+                                <span>Финансовый управляющий</span>
+                                <span class="payment-extra-card__status" id="finManagerStatus">Не оплачен</span>
+                            </div>
+                            <div class="payment-extra-card__amount">17 000 ₽</div>
+                            <label class="payment-extra-card__toggle">
+                                <input type="checkbox" id="finManagerPaidToggle">
+                                <span>Оплачено</span>
+                            </label>
+                        </div>
+                        <div class="payment-extra-card" id="courtDepositTile" data-paid="false">
+                            <div class="payment-extra-card__header">
+                                <span>Депозит в суд</span>
+                                <span class="payment-extra-card__status" id="courtDepositStatus">Не оплачен</span>
+                            </div>
+                            <div class="payment-extra-card__amount">25 000 ₽</div>
+                            <label class="payment-extra-card__toggle">
+                                <input type="checkbox" id="courtDepositPaidToggle">
+                                <span>Оплачено</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+                <section class="client-tasks-card flex-grow-1 d-flex flex-column">
+                    <div class="client-section-header">
+                        <div>
+                            <h5 class="mb-1">Задачи</h5>
+                            <p class="client-section-subtitle" id="clientTasksHint">Создавайте задачи и следите за прогрессом клиента</p>
+                        </div>
+                        <button class="btn btn-link client-task-history-toggle" id="toggleTaskHistoryBtn" type="button" aria-expanded="false">
+                            История <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="client-task-form row g-2">
+                        <div class="col-md-6">
                             <input type="text" id="taskText" class="form-control" placeholder="Новая задача">
-                            <input type="date" id="taskDeadline" class="form-control">
-                            <input type="color" id="taskColor" class="form-control form-control-color" value="#28a745" title="Цвет задачи">
-                            <button class="btn btn-outline-primary" onclick="addTask()">Добавить</button>
                         </div>
-                        <ul class="list-group" id="taskList"></ul>
+                        <div class="col-md-3">
+                            <input type="date" id="taskDeadline" class="form-control">
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <input type="color" id="taskColor" class="form-control form-control-color" value="#28a745" title="Цвет задачи">
+                            <button class="btn btn-outline-primary flex-grow-1" type="button" onclick="addTask()">Добавить</button>
+                        </div>
                     </div>
-                </div>
-                <div class="client-notes-card flex-grow-1 d-flex flex-column">
-                    <h5 class="mb-3">Заметки</h5>
-                    <textarea class="form-control flex-grow-1" id="clientNotes" placeholder="Заметки..." readonly></textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Модальное окно закрепления менеджера -->
-    <div class="modal fade" id="assignManagerModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Закрепить менеджера</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="managerSelect" class="form-label">Менеджер</label>
-                        <select id="managerSelect" class="form-select"></select>
+                    <div class="client-task-list" id="taskList"></div>
+                    <div class="client-task-history" id="completedTasksSection">
+                        <div class="client-task-history__header">
+                            <span id="completedTasksStage"></span>
+                            <button class="btn btn-link" id="hideTaskHistoryBtn" type="button">Скрыть</button>
+                        </div>
+                        <ul class="client-task-history__list" id="completedTaskList"></ul>
                     </div>
-                    <div class="mb-3">
-                        <label for="managerPercent" class="form-label">Процент вознаграждения</label>
-                        <input type="number" id="managerPercent" class="form-control">
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" id="isFinManager" class="form-check-input">
-                        <label class="form-check-label" for="isFinManager">Финансовый управляющий</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button class="btn btn-primary" id="saveClientManager">Сохранить</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно выполненных задач -->
-    <div class="modal fade" id="completedTasksModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Выполненные задачи</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="currentStageInfo" class="mb-3"></div>
-                    <ul class="list-group" id="completedTaskList"></ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                </div>
+                </section>
             </div>
         </div>
     </div>
