@@ -1,0 +1,40 @@
+<section class="calendar-page">
+  <div class="card header-card">
+    <div>
+      <h1 class="section-title">Календарь</h1>
+      <p class="page-subtitle">Судебные заседания и задачи по клиентам</p>
+    </div>
+    <div class="month-selector">
+      <label>
+        Месяц
+        <select v-model="selectedMonth">
+          <option v-for="month in monthOptions" :value="month.value" :key="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="card events-card">
+    <h2>События месяца</h2>
+    <ul v-if="visibleEvents.length" class="events-list">
+      <li v-for="event in visibleEvents" :key="event.id" class="event-item">
+        <div class="event-date" :class="{ today: isToday(event.date) }">
+          <span class="event-day">{{ new Date(event.date).getDate() }}</span>
+          <span class="event-month">{{ formatMonthLabel(selectedMonth).split(' ')[0] }}</span>
+        </div>
+        <div class="event-info">
+          <div class="event-title">{{ event.title }}</div>
+          <div class="event-meta">
+            <span class="event-type" :style="{ backgroundColor: event.color }">{{ event.stage }}</span>
+            <span class="event-client">Клиент: {{ event.clientName }}</span>
+            <span class="event-manager">Менеджер: {{ event.manager }}</span>
+            <span class="event-kind">{{ event.type === 'court' ? 'Суд' : event.completed ? 'Задача выполнена' : 'Задача' }}</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+    <p v-else class="empty-state">В выбранный месяц событий нет.</p>
+  </div>
+</section>

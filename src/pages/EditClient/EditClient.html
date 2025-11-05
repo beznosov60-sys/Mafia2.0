@@ -1,0 +1,120 @@
+<section class="edit-client-page">
+  <div class="page-header card">
+    <div>
+      <h1 class="section-title">Редактирование клиента</h1>
+      <p class="page-subtitle">Внесите изменения и сохраните карточку.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="ghost-btn" @click="openCard">Открыть карточку</button>
+      <button type="button" class="ghost-btn" @click="toggleArchive">
+        {{ isArchived ? 'Вернуть в работу' : 'Архивировать' }}
+      </button>
+      <button type="button" class="primary-btn" @click="handleSubmit">Сохранить</button>
+    </div>
+  </div>
+
+  <ul v-if="errors.length" class="errors card">
+    <li v-for="error in errors" :key="error">{{ error }}</li>
+  </ul>
+
+  <div class="page-grid">
+    <div class="card form-card">
+      <div class="form-grid">
+        <div class="form-section">
+          <h2>Основная информация</h2>
+          <label>
+            ФИО клиента
+            <input v-model="form.fullName" type="text" />
+          </label>
+          <label>
+            Телефон
+            <input v-model="form.phone" type="tel" />
+          </label>
+          <label>
+            Электронная почта
+            <input v-model="form.email" type="email" />
+          </label>
+          <label>
+            Город
+            <input v-model="form.city" type="text" />
+          </label>
+          <label>
+            Стадия
+            <select v-model="form.stage">
+              <option v-for="stage in stages" :value="stage" :key="stage">{{ stage }}</option>
+            </select>
+          </label>
+          <label>
+            Подэтап
+            <select v-model="form.subStage">
+              <option v-for="stage in subStages" :value="stage" :key="stage">{{ stage }}</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h2>Менеджер</h2>
+          <label>
+            Имя менеджера
+            <input v-model="form.managerName" type="text" />
+          </label>
+          <label>
+            Телефон менеджера
+            <input v-model="form.managerPhone" type="tel" />
+          </label>
+
+          <h2>Суд</h2>
+          <label>
+            Дата заседания
+            <input v-model="form.courtDate" type="date" />
+          </label>
+          <label>
+            Описание заседания
+            <input v-model="form.courtTitle" type="text" />
+          </label>
+          <div class="checkbox-group">
+            <label>
+              <input v-model="form.courtTypeArbitration" type="checkbox" />
+              Арбитражный суд
+            </label>
+            <label>
+              <input v-model="form.courtTypeTret" type="checkbox" />
+              Третейский суд
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2>Финансы</h2>
+          <label>
+            Сумма договора, ₽
+            <input v-model="form.contractAmount" type="number" min="0" step="1000" />
+          </label>
+          <label>
+            Заметки
+            <textarea v-model="form.notes" rows="8"></textarea>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <aside class="card updates-card">
+      <h2>История обновлений</h2>
+      <p v-if="isArchived" class="badge badge-archived">Клиент в архиве</p>
+      <ul v-if="updates.length" class="updates-list">
+        <li v-for="update in updates" :key="update.id">
+          <div class="update-date">{{ new Date(update.date).toLocaleDateString('ru-RU') }}</div>
+          <p class="update-text">{{ update.text }}</p>
+        </li>
+      </ul>
+      <p v-else class="empty-state">Пока нет обновлений.</p>
+      <div class="new-update">
+        <label>
+          Добавить обновление
+          <textarea v-model="newUpdate" rows="4" placeholder="Что нового произошло?"></textarea>
+        </label>
+        <button type="button" class="primary-btn" @click="addUpdateNote">Добавить</button>
+      </div>
+    </aside>
+  </div>
+</section>

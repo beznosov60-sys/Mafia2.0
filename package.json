@@ -1,11 +1,18 @@
 {
+<<<<<<< HEAD
   "name": "crm",
   "private": true,
   "version": "2.0.0",
+=======
+  "name": "mafia-crm",
+  "version": "2.0.0",
+  "private": true,
+>>>>>>> 4aeb9276f7e7298a19e2a614b311b9d8e06723f1
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+<<<<<<< HEAD
     "preview": "npm run build && vite preview"
   },
   "devDependencies": {
@@ -20,5 +27,18 @@
     "bootstrap": "^5.3.8",
     "remixicon": "^4.6.0",
     "xlsx": "^0.18.5"
+=======
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "sass": "^1.77.2",
+    "vite": "^5.2.0"
+>>>>>>> 4aeb9276f7e7298a19e2a614b311b9d8e06723f1
   }
 }

@@ -1,0 +1,61 @@
+<section class="managers-page">
+  <div class="card header-card">
+    <div>
+      <h1 class="section-title">Команда менеджеров</h1>
+      <p class="page-subtitle">Статистика по активным и завершённым клиентам</p>
+    </div>
+    <div class="totals">
+      <div>
+        <span class="totals-label">Менеджеров</span>
+        <strong class="totals-value">{{ totals.totalManagers }}</strong>
+      </div>
+      <div>
+        <span class="totals-label">Активные клиенты</span>
+        <strong class="totals-value">{{ totals.activeClients }}</strong>
+      </div>
+      <div>
+        <span class="totals-label">Архив</span>
+        <strong class="totals-value">{{ totals.archivedClients }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="manager-grid">
+    <article v-for="manager in managers" :key="manager.id" class="card manager-card">
+      <div class="manager-header">
+        <div>
+          <h2>{{ manager.name }}</h2>
+          <p class="manager-phone" v-if="manager.phone">{{ manager.phone }}</p>
+        </div>
+        <div class="manager-counters">
+          <span class="badge">Всего: {{ manager.total }}</span>
+          <span class="badge positive">В работе: {{ manager.activeCount }}</span>
+          <span class="badge neutral">Архив: {{ manager.archivedCount }}</span>
+        </div>
+      </div>
+
+      <div class="manager-stages">
+        <h3>Клиенты по стадиям</h3>
+        <ul>
+          <li v-for="item in manager.stageSummary" :key="item.stage">
+            <span class="stage-dot" :style="{ backgroundColor: item.color }"></span>
+            <span class="stage-name">{{ item.stage }}</span>
+            <span class="stage-count">{{ item.count }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="manager-clients">
+        <h3>Активные клиенты</h3>
+        <ul v-if="manager.activeClients.length">
+          <li v-for="client in manager.activeClients" :key="client.id">
+            <span class="client-name">{{ client.fullName }}</span>
+            <span class="client-stage">{{ client.stage }}</span>
+            <span class="client-city">{{ client.city }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-state">Нет активных клиентов.</p>
+      </div>
+    </article>
+  </div>
+</section>
