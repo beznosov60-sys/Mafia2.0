@@ -1,13 +1,15 @@
-import { resolve } from 'path'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
+import path from 'path';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      '@bootstrap': resolve(__dirname, 'node_modules/bootstrap'),
+      '@': path.resolve(__dirname, './src'),
+      '@scss': path.resolve(__dirname, './src/scss'),
+      '@bootstrap': path.resolve(__dirname, './node_modules/bootstrap'),
     },
   },
   plugins: [ViteImageOptimizer()],
-})
+});
+
