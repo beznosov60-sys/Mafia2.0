@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM - Редактировать клиента</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%234C6EF5'/%3E%3Cpath d='M4 9.5c0-1.933 1.567-3.5 3.5-3.5S11 7.567 11 9.5a3.5 3.5 0 1 1-7 0Zm3.5-5A2.5 2.5 0 1 0 5 2a2.5 2.5 0 0 0 2.5 2.5Z' fill='white'/%3E%3C/svg%3E">
+    <script type="importmap">
+        {
+            "imports": {
+                "vue": "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js"
+            }
+        }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card col-md-8 p-4 shadow-lg">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="card-title mb-0">Редактировать клиента</h3>
+                <div class="d-flex gap-2">
+                    <button id="favoriteBtn" class="btn icon-btn" data-favorite="false" title="Избранный клиент"><i class="ri-star-line"></i></button>
+                    <button class="btn btn-primary icon-btn disabled" title="Раздел в разработке" disabled><i class="ri-file-download-line"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Личные данные -->
+                <h5 class="mb-3">Личные данные</h5>
+                <div class="mb-3">
+                    <label for="clientId" class="form-label">ID клиента</label>
+                    <input type="text" class="form-control" id="clientId" disabled>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                    <label for="firstName" class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="firstName" placeholder="Введите имя" autocomplete="given-name" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                    <label for="middleName" class="form-label">Отчество</label>
+                    <input type="text" class="form-control" id="middleName" placeholder="Введите отчество" autocomplete="additional-name">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                    <label for="lastName" class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="lastName" placeholder="Введите фамилию" autocomplete="family-name" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                    <label for="birthDate" class="form-label">Дата рождения</label>
+                    <input type="date" class="form-control" id="birthDate" autocomplete="bday">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                    <label for="phone" class="form-label">Номер телефона</label>
+                    <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)" autocomplete="tel">
+                    </div>
+                </div>
+                <!-- Паспортные данные -->
+                <div class="accordion" id="accordionPassport">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="passportHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#passportCollapse" aria-expanded="false" aria-controls="passportCollapse">
+                                Паспортные данные
+                            </button>
+                        </h2>
+                        <div id="passportCollapse" class="accordion-collapse collapse" aria-labelledby="passportHeading" data-bs-parent="#accordionPassport">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passportSeries" class="form-label">Серия паспорта</label>
+                                        <input type="text" class="form-control" id="passportSeries" placeholder="Введите серию паспорта">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passportNumber" class="form-label">Номер паспорта</label>
+                                        <input type="text" class="form-control" id="passportNumber" placeholder="Введите номер паспорта">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passportIssueDate" class="form-label">Дата выдачи паспорта</label>
+                                        <input type="date" class="form-control" id="passportIssueDate">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passportIssuePlace" class="form-label">Место выдачи паспорта</label>
+                                        <input type="text" class="form-control" id="passportIssuePlace" placeholder="Введите место выдачи">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Оплата -->
+                <div class="accordion mt-3" id="accordionPayment">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="paymentHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#paymentCollapse" aria-expanded="false" aria-controls="paymentCollapse">
+                                Оплата
+                            </button>
+                        </h2>
+                        <div id="paymentCollapse" class="accordion-collapse collapse" aria-labelledby="paymentHeading" data-bs-parent="#accordionPayment">
+                            <div class="accordion-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="totalAmount" class="form-label">Общая сумма</label>
+                                        <input type="number" class="form-control" id="totalAmount" min="0" placeholder="Введите сумму">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="paymentMonths" class="form-label">Количество месяцев</label>
+                                        <input type="number" class="form-control" id="paymentMonths" min="0" placeholder="Введите количество месяцев">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="paymentStartDate" class="form-label">Дата начала периода</label>
+                                        <input type="date" class="form-control" id="paymentStartDate">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Дело -->
+                <div class="accordion mt-3" id="accordionCase">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="caseHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#caseCollapse" aria-expanded="false" aria-controls="caseCollapse">
+                                Судебный процесс
+                            </button>
+                        </h2>
+                        <div id="caseCollapse" class="accordion-collapse collapse" aria-labelledby="caseHeading" data-bs-parent="#accordionCase">
+                            <div class="accordion-body">
+                                <div class="mb-3 d-flex align-items-end">
+                                    <div class="flex-grow-1">
+                                        <label for="arbitrLink" class="form-label">Ссылка на арбитр (опционально)</label>
+                                        <input type="url" class="form-control" id="arbitrLink" placeholder="https://example.com">
+                                    </div>
+                                    <button class="arbitr-icon ms-2" id="arbitrButton" disabled>◉</button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="caseNumber" class="form-label">Номер дела (опционально)</label>
+                                        <input type="text" class="form-control" id="caseNumber" placeholder="Введите номер дела">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="stage" class="form-label">Этап</label>
+                                        <select class="form-select" id="stage" required>
+                                            <option value="" disabled>Выберите этап</option>
+                                            <option value="Договор">Договор</option>
+                                            <option value="Подача в суд">Подача в суд</option>
+                                            <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
+                                            <option value="Завершение">Завершение</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="subStage" class="form-label">Задача</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="subStage">
+                                                <option value="">Выберите задачу</option>
+                                            </select>
+                                            <button class="btn btn-primary" id="completeSubStageBtn">Выполнено</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Суд</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="courtArbitrage">
+                                        <label class="form-check-label" for="courtArbitrage">Арбитражный суд</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="courtTret">
+                                        <label class="form-check-label" for="courtTret">Третейский суд</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="courtDate" class="form-label">Дата суда (опционально)</label>
+                                    <input type="date" class="form-control" id="courtDate">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Заметки -->
+                <h5 class="mb-3 mt-3">Заметки</h5>
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Заметки (опционально)</label>
+                    <textarea class="form-control" id="notes" rows="4" placeholder="Введите заметки"></textarea>
+                </div>
+                <!-- Кнопки -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-50" onclick="updateClient()">Сохранить изменения</button>
+                    <a href="javascript:history.back()" class="btn btn-secondary w-50">Отмена</a>
+                    <button id="completeClientBtn" class="btn btn-complete w-100 mt-2" style="display:none;" onclick="completeClientFromEdit()">Завершить клиента</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

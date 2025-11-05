@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM - Добавить клиента</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%234C6EF5'/%3E%3Cpath d='M4 9.5c0-1.933 1.567-3.5 3.5-3.5S11 7.567 11 9.5a3.5 3.5 0 1 1-7 0Zm3.5-5A2.5 2.5 0 1 0 5 2a2.5 2.5 0 0 0 2.5 2.5Z' fill='white'/%3E%3C/svg%3E">
+    <script type="importmap">
+        {
+            "imports": {
+                "vue": "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js"
+            }
+        }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="card mx-auto p-4 shadow-lg" style="max-width: 700px;">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <h3 class="mb-0">Добавить клиента</h3>
+                <button type="button" class="btn-close" onclick="window.location.href='index.html'"></button>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step active" data-step="1">1. Личные данные</div>
+                <div class="step" data-step="2">2. Оплата и этап</div>
+                <div class="step" data-step="3">3. Заметки</div>
+            </div>
+
+            <!-- Шаг 1 -->
+            <div class="form-step active" id="step1">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                    <label for="lastName" class="form-label">Фамилия</label>
+                    <input type="text" class="form-control" id="lastName" autocomplete="family-name" required>
+                    </div>
+                    <div class="col-md-4">
+                    <label for="firstName" class="form-label">Имя</label>
+                    <input type="text" class="form-control" id="firstName" autocomplete="given-name" required>
+                    </div>
+                    <div class="col-md-4">
+                    <label for="middleName" class="form-label">Отчество</label>
+                    <input type="text" class="form-control" id="middleName" autocomplete="additional-name">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Номер телефона</label>
+                    <input type="tel" class="form-control" id="phone" placeholder="Введите телефон (10-12 цифр)" autocomplete="tel">
+                </div>
+                <div id="passportFields" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="passportSeries" class="form-label">Серия паспорта</label>
+                            <input type="text" class="form-control" id="passportSeries">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportNumber" class="form-label">Номер паспорта</label>
+                            <input type="text" class="form-control" id="passportNumber">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportIssueDate" class="form-label">Дата выдачи</label>
+                            <input type="date" class="form-control" id="passportIssueDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passportIssuePlace" class="form-label">Место выдачи</label>
+                            <input type="text" class="form-control" id="passportIssuePlace">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addPassportBtn">
+                    <i class="ri-add-line"></i> Паспортные данные
+                </button>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" id="toStep2">Далее</button>
+                </div>
+            </div>
+
+            <!-- Шаг 2 -->
+            <div class="form-step" id="step2">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="totalAmount" class="form-label">Общая сумма</label>
+                        <input type="number" class="form-control" id="totalAmount" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="paymentMonths" class="form-label">Кол-во месяцев</label>
+                        <input type="number" class="form-control" id="paymentMonths" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="paymentStartDate" class="form-label">Дата начала</label>
+                        <input type="date" class="form-control" id="paymentStartDate">
+                    </div>
+                </div>
+                <div id="paidMonthsContainer" class="mb-3"></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="stage" class="form-label">Этап</label>
+                        <select class="form-select" id="stage">
+                            <option value="" disabled selected>Выберите этап</option>
+                            <option value="Договор">Договор</option>
+                            <option value="Подача в суд">Подача в суд</option>
+                            <option value="Решение суда о банкротстве">Решение суда о банкротстве</option>
+                            <option value="Завершение">Завершение</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="subStage" class="form-label">Задача</label>
+                        <select class="form-select" id="subStage">
+                            <option value="">Выберите задачу</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block">Суд</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="courtArbitrage">
+                        <label class="form-check-label" for="courtArbitrage">Арбитражный суд</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="courtTret">
+                        <label class="form-check-label" for="courtTret">Третейский суд</label>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" id="backToStep1">Назад</button>
+                    <button class="btn btn-primary" id="toStep3">Далее</button>
+                </div>
+            </div>
+
+            <!-- Шаг 3 -->
+            <div class="form-step" id="step3">
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Заметки</label>
+                    <textarea id="notes" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="mb-3 d-flex align-items-end">
+                    <div class="flex-grow-1">
+                        <label for="arbitrLink" class="form-label">Ссылка на суд</label>
+                        <input type="url" class="form-control" id="arbitrLink" placeholder="https://example.com">
+                    </div>
+                    <button class="arbitr-icon ms-2" id="arbitrButton" disabled>◉</button>
+                </div>
+                <div class="mb-3">
+                    <label for="courtDate" class="form-label">Дата суда</label>
+                    <input type="date" class="form-control" id="courtDate">
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" id="backToStep2">Назад</button>
+                    <button class="btn btn-primary" onclick="saveClient()">Сохранить</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+    const steps = Array.from(document.querySelectorAll('.form-step'));
+    const indicators = Array.from(document.querySelectorAll('.step-indicator .step'));
+    function showStep(index) {
+        steps.forEach((step, i) => {
+            step.classList.toggle('active', i === index);
+            indicators[i].classList.toggle('active', i === index);
+        });
+    }
+    document.getElementById('toStep2').addEventListener('click', () => showStep(1));
+    document.getElementById('toStep3').addEventListener('click', () => showStep(2));
+    document.getElementById('backToStep1').addEventListener('click', () => showStep(0));
+    document.getElementById('backToStep2').addEventListener('click', () => showStep(1));
+
+    document.getElementById('addPassportBtn').addEventListener('click', () => {
+        document.getElementById('passportFields').classList.toggle('d-none');
+    });
+
+    document.getElementById('paymentMonths').addEventListener('input', function() {
+        const months = parseInt(this.value) || 0;
+        const container = document.getElementById('paidMonthsContainer');
+        container.innerHTML = '';
+        for (let i = 1; i <= months; i++) {
+            container.innerHTML += `
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="paidMonth${i}">
+                    <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
+                </div>
+            `;
+        }
+    });
+
+      window.saveClient = function() {
+          const paidMonths = [];
+          document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
+          const firstName = document.getElementById('firstName').value.trim();
+          const middleName = document.getElementById('middleName').value.trim();
+          const lastName = document.getElementById('lastName').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+          const clients = JSON.parse(localStorage.getItem('clients')) || [];
+          const existingIds = new Set(clients.map(c => String(c.id)));
+          const clientData = {
+              id: generateClientId(firstName, middleName, lastName, phone, existingIds),
+              firstName: firstName,
+              middleName: middleName,
+              lastName: lastName,
+              phone: phone,
+              passportSeries: document.getElementById('passportSeries').value.trim(),
+              passportNumber: document.getElementById('passportNumber').value.trim(),
+              passportIssueDate: document.getElementById('passportIssueDate').value,
+              passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
+              totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
+              paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
+              paymentStartDate: document.getElementById('paymentStartDate').value,
+              paidMonths: paidMonths,
+              stage: document.getElementById('stage').value,
+              subStage: document.getElementById('subStage').value,
+              courtTypes: {
+                  arbitration: document.getElementById('courtArbitrage').checked,
+                  tret: document.getElementById('courtTret').checked
+              },
+              arbitrLink: document.getElementById('arbitrLink').value.trim(),
+              courtDate: document.getElementById('courtDate').value,
+              notes: document.getElementById('notes').value.trim(),
+              favorite: false,
+              createdAt: new Date().toISOString(),
+              finManagerPaid: false,
+              courtDepositPaid: false,
+              extraPayments: [],
+              managerPayments: [],
+              managerPaidTotal: 0,
+              managerFullyPaid: false
+          };
+          if (!clientData.firstName || !clientData.lastName) {
+              alert('Имя и фамилия обязательны!');
+              return;
+          }
+          if (clientData.phone && !clientData.phone.match(/^\d{10,12}$/)) {
+              alert('Номер телефона должен содержать 10-12 цифр!');
+              return;
+          }
+          clients.push(clientData);
+          localStorage.setItem('clients', JSON.stringify(clients));
+          window.location.href = 'index.html';
+      }
+    </script>
+</body>
+</html>
+
