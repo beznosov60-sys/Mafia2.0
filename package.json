@@ -1,17 +1,25 @@
 {
   "name": "mafia2.0",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "description": "Современное CRM-приложение на Vue 3",
+  "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server.js",
+    "server": "node server.js"
   },
-  "keywords": [],
+  "keywords": ["crm", "vue", "supabase"],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.0"
+    "@supabase/supabase-js": "^2.43.0",
+    "vue": "^3.4.27"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.0"
   }
 }
