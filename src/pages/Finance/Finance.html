@@ -1,0 +1,81 @@
+<section class="finance-page">
+  <div class="card header-card">
+    <h1 class="section-title">Финансовая сводка</h1>
+    <p class="page-subtitle">Контроль поступлений и расходов по всем клиентам</p>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="summary-label">Сумма договоров</span>
+      <strong class="summary-value">{{ formatMoney(summary.contracts) }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Поступления</span>
+      <strong class="summary-value positive">{{ formatMoney(summary.payments) }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Расходы</span>
+      <strong class="summary-value negative">{{ formatMoney(summary.expenses) }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Баланс</span>
+      <strong class="summary-value">{{ formatMoney(summary.balance) }}</strong>
+    </div>
+  </div>
+
+  <div class="card stage-card">
+    <h2>По стадиям</h2>
+    <ul class="stage-list">
+      <li v-for="item in stageBreakdown" :key="item.stage" class="stage-item">
+        <div class="stage-header">
+          <span class="stage-name">{{ item.stage }}</span>
+          <span class="stage-count">{{ item.clientsCount }} клиентов</span>
+        </div>
+        <div class="stage-bars">
+          <div class="bar" :style="{ '--bar-color': item.color }">
+            <span>Поступления: {{ formatMoney(item.payments) }}</span>
+          </div>
+          <div class="bar negative" :style="{ '--bar-color': '#ef4444' }">
+            <span>Расходы: {{ formatMoney(item.expenses) }}</span>
+          </div>
+          <div class="bar" :style="{ '--bar-color': '#22c55e' }">
+            <span>Баланс: {{ formatMoney(item.balance) }}</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card clients-card">
+    <h2>Клиенты</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Клиент</th>
+            <th>Менеджер</th>
+            <th>Стадия</th>
+            <th>Договор</th>
+            <th>Поступления</th>
+            <th>Расходы</th>
+            <th>Баланс</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="client in clientsFinance" :key="client.id" :class="{ archived: client.archived }">
+            <td>
+              <div class="client-name">{{ client.fullName }}</div>
+              <div class="client-id">{{ client.id }}</div>
+            </td>
+            <td>{{ client.manager }}</td>
+            <td>{{ client.stage }}</td>
+            <td>{{ formatMoney(client.contracts) }}</td>
+            <td class="positive">{{ formatMoney(client.payments) }}</td>
+            <td class="negative">{{ formatMoney(client.expenses) }}</td>
+            <td>{{ formatMoney(client.balance) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

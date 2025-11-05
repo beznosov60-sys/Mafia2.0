@@ -1,0 +1,116 @@
+<section class="home-page">
+  <div class="card search-card">
+    <div class="search-header">
+      <h1 class="section-title">Поиск клиентов</h1>
+      <button class="primary-btn" type="button" @click="createClient">Добавить клиента</button>
+    </div>
+    <div class="search-field">
+      <input
+        v-model="query"
+        type="search"
+        placeholder="Введите имя клиента, менеджера, город или телефон"
+        aria-label="Поиск клиентов"
+      />
+    </div>
+    <div class="stage-summary">
+      <div
+        v-for="item in stageSummary"
+        :key="item.stage"
+        class="stage-chip"
+        :style="{ '--stage-color': stageColor(item.stage) }"
+      >
+        <span class="chip-dot"></span>
+        <span class="chip-stage">{{ item.stage }}</span>
+        <span class="chip-count">{{ item.count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="card clients-card">
+      <div class="card-header">
+        <div>
+          <h2>Активные клиенты</h2>
+          <p class="card-subtitle">{{ clients.length }} найдено</p>
+        </div>
+      </div>
+      <ul class="clients-list" v-if="clients.length">
+        <li v-for="client in clients" :key="client.id" class="client-item">
+          <div class="client-info">
+            <div class="client-name">{{ client.fullName }}</div>
+            <div class="client-meta">
+              <span v-if="client.manager?.name" class="meta-item">Менеджер: {{ client.manager.name }}</span>
+              <span v-if="client.city" class="meta-item">{{ client.city }}</span>
+              <span v-if="client.phone" class="meta-item">{{ client.phone }}</span>
+            </div>
+            <div v-if="client.court?.date" class="client-meta court-meta">
+              <span class="meta-item">
+                Суд: {{ client.court.title }} — {{ new Date(client.court.date).toLocaleDateString('ru-RU') }}
+              </span>
+            </div>
+          </div>
+          <div class="client-stage" :style="{ borderColor: stageColor(client.stage) }">
+            <span class="stage-label">{{ client.stage }}</span>
+            <span class="sub-stage" v-if="client.subStage">{{ client.subStage }}</span>
+          </div>
+          <div class="client-actions">
+            <button type="button" class="ghost-btn" @click="openClient(client.id)">Открыть</button>
+            <button type="button" class="ghost-btn" @click="editClient(client.id)">Изменить</button>
+          </div>
+        </li>
+      </ul>
+      <p v-else class="empty-state">Клиенты не найдены. Измените фильтр или добавьте клиента.</p>
+    </div>
+
+    <div class="sidebar-grid">
+      <div class="card info-card">
+        <h2>Суды в этом месяце</h2>
+        <ul v-if="courtsThisMonth.length" class="info-list">
+          <li v-for="event in courtsThisMonth" :key="event.id" class="info-item">
+            <div class="info-title">{{ event.fullName }}</div>
+            <div class="info-meta">
+              <span>{{ new Date(event.date).toLocaleDateString('ru-RU') }}</span>
+              <span>{{ event.title }}</span>
+            </div>
+            <div class="info-meta">
+              <span>Менеджер: {{ event.manager }}</span>
+              <span>Стадия: {{ event.stage }}</span>
+            </div>
+          </li>
+        </ul>
+        <p v-else class="empty-state">В этом месяце заседаний нет.</p>
+      </div>
+
+      <div class="card info-card">
+        <h2>Завершённые клиенты</h2>
+        <p class="card-subtitle">{{ archivedClients.length }} в архиве</p>
+        <ul v-if="archivedClients.length" class="info-list">
+          <li v-for="client in archivedClients.slice(0, 4)" :key="client.id" class="info-item">
+            <div class="info-title">{{ client.fullName }}</div>
+            <div class="info-meta">
+              <span>Менеджер: {{ client.manager?.name || 'Не назначен' }}</span>
+              <span v-if="client.court?.date">{{ new Date(client.court.date).toLocaleDateString('ru-RU') }}</span>
+            </div>
+            <button type="button" class="ghost-btn" @click="openClient(client.id)">Открыть карточку</button>
+          </li>
+        </ul>
+        <p v-else class="empty-state">Пока нет завершённых клиентов.</p>
+      </div>
+
+      <div class="card info-card updates-card">
+        <h2>Последние обновления</h2>
+        <ul v-if="latestUpdates.length" class="info-list">
+          <li v-for="update in latestUpdates" :key="update.id" class="info-item">
+            <div class="info-title">{{ update.clientName }}</div>
+            <div class="info-meta">
+              <span>{{ new Date(update.date).toLocaleDateString('ru-RU') }}</span>
+            </div>
+            <p class="update-text">{{ update.text }}</p>
+            <button type="button" class="ghost-btn" @click="openClient(update.clientId)">Подробнее</button>
+          </li>
+        </ul>
+        <p v-else class="empty-state">Пока нет обновлений по клиентам.</p>
+      </div>
+    </div>
+  </div>
+</section>

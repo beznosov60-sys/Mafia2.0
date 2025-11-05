@@ -1,0 +1,142 @@
+.managers-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.page-subtitle {
+  color: #64748b;
+  margin: 0.25rem 0 0;
+}
+
+.totals {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.totals-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.totals-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.manager-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.manager-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.manager-phone {
+  margin: 0.3rem 0 0;
+  color: #64748b;
+}
+
+.manager-counters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background-color: rgba(148, 163, 184, 0.18);
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.badge.positive {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #166534;
+}
+
+.badge.neutral {
+  background-color: rgba(148, 163, 184, 0.18);
+}
+
+.manager-stages ul,
+.manager-clients ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.manager-stages li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.stage-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.stage-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.stage-count {
+  color: #64748b;
+}
+
+.manager-clients li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background-color: rgba(148, 163, 184, 0.12);
+}
+
+.client-name {
+  font-weight: 600;
+}
+
+.client-stage,
+.client-city {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 700px) {
+  .header-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .manager-counters {
+    align-items: flex-start;
+  }
+}
