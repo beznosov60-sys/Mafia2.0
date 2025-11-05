@@ -1,4 +1,4 @@
-import '@/scss/style.scss'
+import '@scss/style.scss';
 import 'remixicon/fonts/remixicon.css'
 import setup from '@/js/script'
 
