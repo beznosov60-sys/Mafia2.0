@@ -48,6 +48,70 @@ let currentClientIndex = -1;
 let currentClientData = null;
 let isClientEditing = false;
 
+(function setupLoadingOverlay() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return;
+    }
+
+    let overlay = null;
+    let hideTimer = null;
+
+    function ensureOverlay() {
+        if (overlay && document.body.contains(overlay)) {
+            return overlay;
+        }
+
+        overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-busy', 'true');
+        overlay.innerHTML = `
+            <div class="loading-overlay__spinner" aria-hidden="true"></div>
+            <p class="loading-overlay__label">Загружаем CRM...</p>
+        `;
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function showOverlay() {
+        const element = ensureOverlay();
+        element.classList.remove('loading-overlay--hidden');
+        element.setAttribute('aria-busy', 'true');
+        if (hideTimer) {
+            window.clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+    }
+
+    function hideOverlay() {
+        if (!overlay) {
+            return;
+        }
+        overlay.setAttribute('aria-busy', 'false');
+        overlay.classList.add('loading-overlay--hidden');
+        hideTimer = window.setTimeout(() => {
+            overlay?.remove();
+            overlay = null;
+        }, 400);
+    }
+
+    window.appLoadingOverlay = {
+        show: showOverlay,
+        hide: hideOverlay
+    };
+
+    showOverlay();
+
+    if (document.readyState === 'complete') {
+        hideOverlay();
+    } else {
+        window.addEventListener('load', hideOverlay, { once: true });
+    }
+
+    window.addEventListener('app:hydrated', hideOverlay);
+})();
+
 const DEFAULT_UPDATES = [
     { date: '01.06.2024', text: 'Добавлена история выполненных задач клиента.' },
     { date: '01.06.2024', text: 'Исправлены кнопки редактирования и удаления клиентов у менеджеров.' }
@@ -767,6 +831,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!href || href.startsWith('#') || link.target === '_blank') return;
         link.addEventListener('click', function(e) {
             e.preventDefault();
+            window.appLoadingOverlay?.show();
             document.body.classList.remove('loaded');
             setTimeout(() => {
                 window.location.href = href;
@@ -774,7 +839,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     document.getElementById('showArchivedBtn')?.addEventListener('click', showArchivedClients);
-    await syncClientsFromServer();
+    window.appLoadingOverlay?.show();
+    try {
+        await syncClientsFromServer();
+    } catch (error) {
+        console.error('Не удалось синхронизировать клиентов с сервером:', error);
+    } finally {
+        window.dispatchEvent(new Event('app:hydrated'));
+        window.appLoadingOverlay?.hide();
+    }
     if (!localStorage.getItem('consultations')) {
         localStorage.setItem('consultations', JSON.stringify([]));
     }
