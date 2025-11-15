@@ -64,7 +64,7 @@ window.__crmAppReady = false;
         }
 
         overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
+        overlay.className = 'loading-overlay loading-overlay--hidden';
         overlay.setAttribute('role', 'status');
         overlay.setAttribute('aria-live', 'polite');
         overlay.setAttribute('aria-busy', 'true');
@@ -79,6 +79,9 @@ window.__crmAppReady = false;
     function showOverlay() {
         const element = ensureOverlay();
         element.classList.remove('loading-overlay--hidden');
+        requestAnimationFrame(() => {
+            element.classList.add('loading-overlay--visible');
+        });
         element.setAttribute('aria-busy', 'true');
         if (hideTimer) {
             window.clearTimeout(hideTimer);
@@ -91,11 +94,12 @@ window.__crmAppReady = false;
             return;
         }
         overlay.setAttribute('aria-busy', 'false');
+        overlay.classList.remove('loading-overlay--visible');
         overlay.classList.add('loading-overlay--hidden');
         hideTimer = window.setTimeout(() => {
             overlay?.remove();
             overlay = null;
-        }, 400);
+        }, 500);
     }
 
     window.appLoadingOverlay = {
@@ -1157,6 +1161,20 @@ function setupClientCardInteractions() {
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) cancelBtn.addEventListener('click', cancelClientInlineChanges);
 
+    const deleteBtn = document.getElementById('deleteClientBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const confirmationMessage = isClientEditing
+                ? 'Вы редактируете клиента. Удалить без сохранения?'
+                : 'Вы уверены, что хотите удалить этого клиента?';
+            if (!confirm(confirmationMessage)) {
+                return;
+            }
+            deleteClient({ skipConfirmation: true });
+        });
+    }
+
     const toggleHistoryBtn = document.getElementById('toggleTaskHistoryBtn');
     const historySection = document.getElementById('completedTasksSection');
     if (toggleHistoryBtn && historySection) {
@@ -2017,7 +2035,8 @@ function updateClient() {
 }
 
 // Удаление клиента
-function deleteClient() {
+function deleteClient(options = {}) {
+    const { skipConfirmation = false } = options;
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
     if (!clientId) {
@@ -2036,11 +2055,13 @@ function deleteClient() {
         return;
     }
 
-    if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
-        clients.splice(clientIndex, 1);
-        localStorage.setItem('clients', JSON.stringify(clients));
-        window.location.href = 'index.html';
+    if (!skipConfirmation && !confirm('Вы уверены, что хотите удалить этого клиента?')) {
+        return;
     }
+
+    clients.splice(clientIndex, 1);
+    localStorage.setItem('clients', JSON.stringify(clients));
+    window.location.href = 'index.html';
 }
 
 // Сохранение клиента

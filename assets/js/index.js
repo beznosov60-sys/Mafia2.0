@@ -17,74 +17,102 @@
 
     function setupCircleButtonInteractions() {
         const buttons = Array.from(document.querySelectorAll('.icon-buttons .circle-btn'));
-        if (buttons.length === 0) {
+        const container = document.querySelector('.icon-buttons');
+        if (buttons.length === 0 || !container) {
             return;
         }
 
         let activeButton = null;
-        let animationLocked = false;
-        let pendingButton = null;
+        let hoverIntentTimer = null;
 
-        function requestExpand(button) {
-            if (animationLocked && activeButton !== button) {
-                pendingButton = button;
-                return;
-            }
-            if (activeButton && activeButton !== button) {
-                collapse(activeButton);
-            }
-            if (activeButton === button && button.classList.contains('is-expanded')) {
-                return;
-            }
-            activeButton = button;
-            animationLocked = true;
-            button.classList.add('is-expanded');
-            button.addEventListener('transitionend', handleUnlock, { once: true });
+        function expandAllButtons() {
+            buttons.forEach(button => {
+                button.classList.add('is-expanded');
+            });
         }
 
-        function collapse(button) {
-            if (!button.classList.contains('is-expanded')) {
-                return;
-            }
-            animationLocked = true;
-            button.classList.remove('is-expanded');
-            button.addEventListener('transitionend', handleUnlock, { once: true });
-        }
-
-        function handleUnlock(event) {
-            if (event.propertyName !== 'width') {
-                event.target.addEventListener('transitionend', handleUnlock, { once: true });
-                return;
-            }
-            animationLocked = false;
-            if (!event.target.classList.contains('is-expanded')) {
-                if (activeButton === event.target) {
-                    activeButton = null;
+        function collapseAllButtons() {
+            buttons.forEach(button => {
+                if (button === activeButton) {
+                    button.classList.add('is-expanded');
+                    return;
                 }
+                button.classList.remove('is-expanded');
+            });
+        }
+
+        function clearActiveButton() {
+            if (!activeButton) {
+                return;
             }
-            if (pendingButton) {
-                const buttonToExpand = pendingButton;
-                pendingButton = null;
-                requestExpand(buttonToExpand);
+            activeButton.classList.remove('is-active');
+            activeButton = null;
+            collapseAllButtons();
+        }
+
+        function setActiveButton(button) {
+            if (activeButton === button) {
+                clearActiveButton();
+                return;
             }
+
+            if (activeButton) {
+                activeButton.classList.remove('is-active', 'is-expanded');
+            }
+
+            activeButton = button;
+            activeButton.classList.add('is-active', 'is-expanded');
+            buttons.forEach(otherButton => {
+                if (otherButton !== activeButton) {
+                    otherButton.classList.remove('is-expanded', 'is-active');
+                }
+            });
         }
 
         buttons.forEach(button => {
-            const handlePointerLeave = () => {
-                collapse(button);
-                if (pendingButton === button) {
-                    pendingButton = null;
+            button.addEventListener('pointerenter', () => {
+                if (activeButton) {
+                    return;
                 }
-            };
-            button.addEventListener('pointerenter', () => requestExpand(button));
-            button.addEventListener('focus', () => requestExpand(button));
-            button.addEventListener('pointerleave', handlePointerLeave);
-            button.addEventListener('blur', () => {
-                collapse(button);
-                if (pendingButton === button) {
-                    pendingButton = null;
-                }
+                window.clearTimeout(hoverIntentTimer);
+                hoverIntentTimer = window.setTimeout(expandAllButtons, 30);
             });
+
+            button.addEventListener('focus', () => {
+                if (activeButton) {
+                    return;
+                }
+                expandAllButtons();
+            });
+
+            button.addEventListener('click', () => {
+                setActiveButton(button);
+            });
+
+            button.addEventListener('blur', () => {
+                if (activeButton) {
+                    return;
+                }
+                window.requestAnimationFrame(() => {
+                    if (!container.matches(':hover') && document.activeElement !== button) {
+                        collapseAllButtons();
+                    }
+                });
+            });
+        });
+
+        container.addEventListener('pointerleave', () => {
+            if (activeButton) {
+                return;
+            }
+            window.clearTimeout(hoverIntentTimer);
+            collapseAllButtons();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                clearActiveButton();
+            }
         });
     }
 
