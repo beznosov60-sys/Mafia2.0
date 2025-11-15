@@ -45,3 +45,9 @@
     transform: translateX(0);
     padding: 0.45rem 0.9rem;
 }
+
+.home-screen .circle-btn.is-active {
+    background: var(--purple-700);
+    box-shadow: 0 28px 48px -18px rgba(67, 57, 242, 0.6);
+    transform: translateY(-3px);
+}
