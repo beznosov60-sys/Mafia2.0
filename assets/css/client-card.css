@@ -1,0 +1,4 @@
+/* Client card page specific tweaks */
+#clientCardRoot .client-task-item {
+    margin-bottom: 10px;
+}

@@ -48,6 +48,8 @@ let currentClientIndex = -1;
 let currentClientData = null;
 let isClientEditing = false;
 
+window.__crmAppReady = false;
+
 (function setupLoadingOverlay() {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
         return;
@@ -826,19 +828,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.body.classList.add('loaded');
-    document.querySelectorAll('a').forEach(link => {
-        const href = link.getAttribute('href');
-        if (!href || href.startsWith('#') || link.target === '_blank') return;
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.appLoadingOverlay?.show();
-            document.body.classList.remove('loaded');
-            setTimeout(() => {
-                window.location.href = href;
-            }, 300);
-        });
-    });
-    document.getElementById('showArchivedBtn')?.addEventListener('click', showArchivedClients);
+    setupLinkTransitions();
+
     window.appLoadingOverlay?.show();
     try {
         await syncClientsFromServer();
@@ -848,187 +839,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.dispatchEvent(new Event('app:hydrated'));
         window.appLoadingOverlay?.hide();
     }
+
     if (!localStorage.getItem('consultations')) {
         localStorage.setItem('consultations', JSON.stringify([]));
     }
-    // Показ клиентов с судом в текущем месяце и привязка поиска (только на index.html)
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-        displayCourtThisMonth();
-        document.getElementById('searchButton')?.addEventListener('click', searchClients);
-        const searchInput = document.getElementById('searchInput');
-        searchInput?.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                searchClients();
-            }
-        });
-        searchInput?.addEventListener('input', searchClients);
-        // Инициализация панели
-        document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
-        document.getElementById('sidebarClose')?.addEventListener('click', toggleSidebar);
-        displayClientsList();
-        document.getElementById('exportOption')?.addEventListener('click', exportClientsToExcel);
-        document.getElementById('importOption')?.addEventListener('click', () => document.getElementById('importFile')?.click());
-        document.getElementById('importFile')?.addEventListener('change', importClientsFromExcel);
 
-        document.addEventListener('click', (e) => {
-            const sidebar = document.getElementById('sidebar');
-            if (!sidebar) return;
-            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !e.target.closest('#sidebarToggle')) {
-                sidebar.classList.remove('open');
-            }
-        });
-    }
-    // Страница финансов клиента
-    if (window.location.pathname.includes('finance.html')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const clientId = urlParams.get('id');
-        if (clientId) {
-            loadFinancePage(clientId);
-        } else {
-            alert('Клиент не найден!');
-            window.location.href = 'index.html';
-        }
-    }
-    // Загрузка данных для редактирования (только на edit-client.html)
-    if (window.location.pathname.includes('edit-client.html')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const clientId = urlParams.get('id');
-        if (clientId) {
-            loadClientForEdit(clientId);
-        } else {
-            alert('Клиент не найден!');
-            window.location.href = 'index.html';
-        }
-        const arbitrInput = document.getElementById('arbitrLink');
-        const arbitrButton = document.getElementById('arbitrButton');
-        const courtDateInput = document.getElementById('courtDate');
-        const stageSelect = document.getElementById('stage');
-        const subStageSelect = document.getElementById('subStage');
-        const completeSubStageBtn = document.getElementById('completeSubStageBtn');
-        const favoriteBtn = document.getElementById('favoriteBtn');
-        const completeBtn = document.getElementById('completeClientBtn');
-        arbitrButton.addEventListener('click', openArbitrLink);
-        arbitrInput.addEventListener('input', () => {
-            arbitrButton.disabled = !arbitrInput.value.trim();
-            updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
-        });
-        courtDateInput.addEventListener('input', () => {
-            updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
-        });
-        stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
-        updateSubStageOptions(stageSelect.value, subStageSelect);
-        completeSubStageBtn?.addEventListener('click', completeSubStage);
-        if (completeSubStageBtn) {
-            function updateSubStageButton() {
-                completeSubStageBtn.disabled = !subStageSelect.value;
-            }
-            subStageSelect.addEventListener('change', updateSubStageButton);
-            updateSubStageButton();
-        }
-        favoriteBtn?.addEventListener('click', function() {
-            const fav = favoriteBtn.dataset.favorite === 'true';
-            favoriteBtn.dataset.favorite = (!fav).toString();
-            favoriteBtn.innerHTML = fav ? '<i class="ri-star-line"></i>' : '<i class="ri-star-fill"></i>';
-        });
-        function updateCompleteBtnVisibility() {
-            if (!completeBtn) return;
-            completeBtn.style.display =
-                stageSelect.value === 'Завершение' && subStageSelect.value === 'ждем доки от суда'
-                    ? 'block'
-                    : 'none';
-        }
-        window.updateCompleteBtnVisibility = updateCompleteBtnVisibility;
-        if (stageSelect && completeBtn && subStageSelect) {
-            stageSelect.addEventListener('change', updateCompleteBtnVisibility);
-            subStageSelect.addEventListener('change', updateCompleteBtnVisibility);
-            updateCompleteBtnVisibility();
-        }
-        window.completeClientFromEdit = function() {
-            const clientIdVal = document.getElementById('clientId').value.trim();
-            if (!clientIdVal) return;
-            if (confirm('Завершить клиента?')) {
-                if (window.completeClient) {
-                    window.completeClient(clientIdVal);
-                    window.location.href = 'index.html';
-                } else {
-                    alert('Функция завершения не найдена!');
-                }
-            }
-        };
-    }
-    // Инициализация кнопки арбитр и чекбокса документов на add-client.html
-    if (window.location.pathname.includes('add-client.html')) {
-        const arbitrInput = document.getElementById('arbitrLink');
-        const arbitrButton = document.getElementById('arbitrButton');
-        const courtDateInput = document.getElementById('courtDate');
-        const stageSelect = document.getElementById('stage');
-        const subStageSelect = document.getElementById('subStage');
-        arbitrButton.addEventListener('click', openArbitrLink);
-        arbitrInput.addEventListener('input', () => {
-            arbitrButton.disabled = !arbitrInput.value.trim();
-            updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
-        });
-        courtDateInput.addEventListener('input', () => {
-            updateArbitrButtonTitle(arbitrButton, courtDateInput.value);
-        });
-        stageSelect.addEventListener('change', () => updateSubStageOptions(stageSelect.value, subStageSelect));
-        updateSubStageOptions(stageSelect.value, subStageSelect);
-    }
-    // Инициализация календаря (только на calendar.html)
-    if (window.location.pathname.includes('calendar.html')) {
-        initCalendar();
-        renderDayActions(new Date().toISOString().split('T')[0]);
-    }
-    if (window.location.pathname.includes('managers.html')) {
-        renderManagersPage();
-        document.getElementById('createManagerBtn')?.addEventListener('click', openCreateManagerModal);
-        document.getElementById('saveManagerBtn')?.addEventListener('click', saveManager);
-        document.getElementById('saveAssignedClientBtn')?.addEventListener('click', saveAssignedClient);
-        document.getElementById('saveManagerPaymentBtn')?.addEventListener('click', saveManagerPayment);
-        document.getElementById('issueManagerSalaryBtn')?.addEventListener('click', issueManagerSalary);
-        document.getElementById('managerSalaryDate')?.addEventListener('change', () => updateManagerSalaryUI());
-        document.getElementById('managerHasSalary')?.addEventListener('change', function() {
-            document.getElementById('managerSalaryWrapper').style.display = this.checked ? '' : 'none';
-        });
-    }
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-        document.getElementById('updatesBtn')?.addEventListener('click', showUpdates);
-    }
-    // Загрузка карточки клиента (только на client-card.html)
-    if (window.location.pathname.includes('client-card.html')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const clientId = urlParams.get('id');
-        const fromManager = urlParams.get('fromManager');
-        setupClientCardInteractions();
-        if (clientId) {
-            currentClientId = clientId;
-            loadClientCard(clientId);
-            if (fromManager) {
-                const backLink = document.getElementById('backLink');
-                if (backLink) backLink.href = `managers.html#managerCard${fromManager}`;
-            }
-        } else {
-            alert('Клиент не найден!');
-            window.location.href = 'index.html';
-        }
-    }
-    // Проверка наличия клиентов
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
-    if (clients.length === 0) {
-        // Можно убрать или оставить для отладки
-        // console.warn('Нет клиентов в базе. Добавьте клиента для теста.');
-    }
-    // Проверка sidebar
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    if (!sidebarToggle && (window.location.pathname.includes('index.html') || window.location.pathname === '/')) {
-        // console.warn('Кнопка sidebarToggle не найдена');
-    }
-    // Проверка поиска
-    const searchButton = document.getElementById('searchButton');
-    if (!searchButton && (window.location.pathname.includes('index.html') || window.location.pathname === '/')) {
-        // console.warn('Кнопка поиска не найдена');
-    }
+    window.dispatchEvent(new Event('app:ready'));
+    window.__crmAppReady = true;
 });
+
+function setupLinkTransitions() {
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || link.target === '_blank') {
+            return;
+        }
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.appLoadingOverlay?.show();
+            document.body.classList.remove('loaded');
+            window.setTimeout(() => {
+                window.location.href = href;
+            }, 300);
+        });
+    });
+}
 
 // Открытие/закрытие боковой панели
 function toggleSidebar() {
@@ -2213,6 +2049,15 @@ function saveClient() {
     const middleName = document.getElementById('middleName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
     const phone = document.getElementById('phone').value.trim();
+    const paidMonthsCheckboxes = Array.from(document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]'));
+    const paidMonths = paidMonthsCheckboxes.length > 0
+        ? paidMonthsCheckboxes.map(cb => cb.checked)
+        : new Array(parseInt(document.getElementById('paymentMonths').value, 10) || 0).fill(false);
+    if (phone && !/^\d{10,12}$/.test(phone)) {
+        alert('Номер телефона должен содержать 10-12 цифр!');
+        return;
+    }
+    const tasks = Array.isArray(window.tasks) ? window.tasks : [];
     const client = {
         id: generateClientId(firstName, middleName, lastName, phone),
         firstName,
@@ -2227,7 +2072,7 @@ function saveClient() {
         totalAmount: parseInt(document.getElementById('totalAmount').value) || 0,
         paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
         paymentStartDate: document.getElementById('paymentStartDate').value,
-        paidMonths: new Array(parseInt(document.getElementById('paymentMonths').value) || 0).fill(false),
+        paidMonths,
         arbitrLink: document.getElementById('arbitrLink').value.trim(),
         caseNumber: document.getElementById('caseNumber').value.trim(),
         stage: document.getElementById('stage').value,
@@ -2236,7 +2081,7 @@ function saveClient() {
         notes: document.getElementById('notes').value.trim(),
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: new Date().toISOString(),
-        tasks: window.tasks || [],
+        tasks,
         finManagerPaid: false,
         courtDepositPaid: false,
         paymentAdjustments: {},
@@ -2303,6 +2148,7 @@ function generateContractPDF() {
 function renderDayActions(dateStr) {
     const list = document.getElementById('dayActionsList');
     if (!list) return;
+    list.dataset.currentDate = dateStr || '';
     const selectedDateLabel = document.getElementById('tasksSelectedDate');
     if (selectedDateLabel && dateStr) {
         const parts = dateStr.split('-').map(Number);

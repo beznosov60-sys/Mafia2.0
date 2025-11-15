@@ -1,0 +1,47 @@
+/* Index (home) page overrides */
+.home-screen .circle-btn {
+    width: var(--btn-size);
+    justify-content: center;
+    gap: 0;
+}
+
+.home-screen .circle-btn:hover,
+.home-screen .circle-btn:focus,
+.home-screen .circle-btn:focus-visible {
+    width: var(--btn-size);
+    justify-content: center;
+    gap: 0;
+}
+
+.home-screen .circle-btn.is-expanded,
+.home-screen .circle-btn.is-expanded:hover,
+.home-screen .circle-btn.is-expanded:focus,
+.home-screen .circle-btn.is-expanded:focus-visible {
+    width: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
+    justify-content: flex-start;
+    gap: 12px;
+    background: var(--purple-600);
+}
+
+.home-screen .circle-btn .btn-label {
+    opacity: 0;
+    max-width: 0;
+    transform: translateX(12px);
+    padding: 0.45rem 0;
+}
+
+.home-screen .circle-btn:hover .btn-label,
+.home-screen .circle-btn:focus-visible .btn-label,
+.home-screen .circle-btn:focus .btn-label {
+    opacity: 0;
+    max-width: 0;
+    transform: translateX(12px);
+    padding: 0.45rem 0;
+}
+
+.home-screen .circle-btn.is-expanded .btn-label {
+    opacity: 1;
+    max-width: max(0px, calc(clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width)) - var(--btn-size) - 32px));
+    transform: translateX(0);
+    padding: 0.45rem 0.9rem;
+}

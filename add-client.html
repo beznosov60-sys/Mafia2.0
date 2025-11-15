@@ -14,7 +14,8 @@
     </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/add-client.css">
 </head>
 <body>
     <div class="container py-5">
@@ -157,93 +158,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="app.js"></script>
-    <script>
-    const steps = Array.from(document.querySelectorAll('.form-step'));
-    const indicators = Array.from(document.querySelectorAll('.step-indicator .step'));
-    function showStep(index) {
-        steps.forEach((step, i) => {
-            step.classList.toggle('active', i === index);
-            indicators[i].classList.toggle('active', i === index);
-        });
-    }
-    document.getElementById('toStep2').addEventListener('click', () => showStep(1));
-    document.getElementById('toStep3').addEventListener('click', () => showStep(2));
-    document.getElementById('backToStep1').addEventListener('click', () => showStep(0));
-    document.getElementById('backToStep2').addEventListener('click', () => showStep(1));
-
-    document.getElementById('addPassportBtn').addEventListener('click', () => {
-        document.getElementById('passportFields').classList.toggle('d-none');
-    });
-
-    document.getElementById('paymentMonths').addEventListener('input', function() {
-        const months = parseInt(this.value) || 0;
-        const container = document.getElementById('paidMonthsContainer');
-        container.innerHTML = '';
-        for (let i = 1; i <= months; i++) {
-            container.innerHTML += `
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="paidMonth${i}">
-                    <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
-                </div>
-            `;
-        }
-    });
-
-      window.saveClient = function() {
-          const paidMonths = [];
-          document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]').forEach(cb => paidMonths.push(cb.checked));
-          const firstName = document.getElementById('firstName').value.trim();
-          const middleName = document.getElementById('middleName').value.trim();
-          const lastName = document.getElementById('lastName').value.trim();
-          const phone = document.getElementById('phone').value.trim();
-          const clients = JSON.parse(localStorage.getItem('clients')) || [];
-          const existingIds = new Set(clients.map(c => String(c.id)));
-          const clientData = {
-              id: generateClientId(firstName, middleName, lastName, phone, existingIds),
-              firstName: firstName,
-              middleName: middleName,
-              lastName: lastName,
-              phone: phone,
-              passportSeries: document.getElementById('passportSeries').value.trim(),
-              passportNumber: document.getElementById('passportNumber').value.trim(),
-              passportIssueDate: document.getElementById('passportIssueDate').value,
-              passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
-              totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
-              paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
-              paymentStartDate: document.getElementById('paymentStartDate').value,
-              paidMonths: paidMonths,
-              stage: document.getElementById('stage').value,
-              subStage: document.getElementById('subStage').value,
-              courtTypes: {
-                  arbitration: document.getElementById('courtArbitrage').checked,
-                  tret: document.getElementById('courtTret').checked
-              },
-              arbitrLink: document.getElementById('arbitrLink').value.trim(),
-              courtDate: document.getElementById('courtDate').value,
-              notes: document.getElementById('notes').value.trim(),
-              favorite: false,
-              createdAt: new Date().toISOString(),
-              finManagerPaid: false,
-              courtDepositPaid: false,
-              extraPayments: [],
-              managerPayments: [],
-              managerPaidTotal: 0,
-              managerFullyPaid: false
-          };
-          if (!clientData.firstName || !clientData.lastName) {
-              alert('Имя и фамилия обязательны!');
-              return;
-          }
-          if (clientData.phone && !clientData.phone.match(/^\d{10,12}$/)) {
-              alert('Номер телефона должен содержать 10-12 цифр!');
-              return;
-          }
-          clients.push(clientData);
-          localStorage.setItem('clients', JSON.stringify(clients));
-          window.location.href = 'index.html';
-      }
-    </script>
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/add-client.js"></script>
 </body>
 </html>
 

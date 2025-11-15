@@ -1,0 +1,4 @@
+/* Managers page additional spacing */
+#managersRoot .manager-task-item {
+    margin-bottom: 12px;
+}

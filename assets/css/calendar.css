@@ -1,0 +1,14 @@
+/* Calendar page refinements */
+.calendar-card.is-week-view .calendar-event .event-text {
+    white-space: normal;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    overflow: visible;
+    text-overflow: initial;
+}
+
+.calendar-card.is-week-view .event-dot {
+    width: 12px;
+    height: 12px;
+    margin-top: 4px;
+}

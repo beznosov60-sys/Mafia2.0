@@ -3917,50 +3917,6 @@ body.dark-theme {
     gap: 10px;
 }
 
-.calendar-card.is-week-view .calendar-event .event-text {
-    white-space: normal;
-    font-size: 0.95rem;
-    line-height: 1.35;
-    overflow: visible;
-    text-overflow: initial;
-}
-
-.calendar-card.is-week-view .event-dot {
-    width: 12px;
-    height: 12px;
-    margin-top: 4px;
-}
-
-/* Multi-step add-client form */
-.form-step { display: none; }
-.form-step.active { display: block; }
-.step-indicator {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 2px solid var(--neutral-400);
-    margin-bottom: 1rem;
-}
-.step-indicator .step {
-    flex: 1;
-    text-align: center;
-    padding: 0.5rem 0;
-    color: var(--neutral-600);
-    position: relative;
-    font-weight: 500;
-}
-.step-indicator .step.active {
-    color: var(--primary-color);
-}
-.step-indicator .step.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--primary-color);
-}
-
 button, .btn, .circle-btn, .client-btn, .btn-complete {
     transition: transform 0.1s ease, background-color 0.2s, box-shadow 0.2s;
 }
@@ -3990,58 +3946,6 @@ button:active, .btn:active, .circle-btn:active, .client-btn:active, .btn-complet
 
 .consultation-item {
     cursor: pointer;
-}
-
-.finance-screen {
-    background: linear-gradient(135deg, var(--purple-100), var(--purple-300));
-    min-height: 100vh;
-    padding: 20px 0;
-}
-
-.finance-metric-card {
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: var(--border-radius);
-    backdrop-filter: blur(10px);
-    padding: 15px;
-    text-align: center;
-}
-
-.finance-summary-card {
-    background: #fff;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-16);
-    box-shadow: var(--shadow-elev-1);
-}
-
-.btn-finance {
-    background-color: var(--primary-color);
-    color: #fff;
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 10px 15px;
-    transition: opacity 0.2s;
-}
-
-.btn-finance:hover {
-    background-color: var(--primary-color-dark);
-    color: #fff;
-}
-
-.btn-finance.disabled {
-    background-color: #f8d7da;
-    color: #6c757d;
-    border: 2px dashed #dc3545;
-    cursor: not-allowed;
-}
-
-.finance-menu-card {
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.finance-menu-card:hover {
-    transform: scale(1.02);
 }
 
 .table {
