@@ -2066,14 +2066,22 @@ function deleteClient(options = {}) {
 
 // Сохранение клиента
 function saveClient() {
-    const firstName = document.getElementById('firstName').value.trim();
-    const middleName = document.getElementById('middleName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const phone = document.getElementById('phone').value.trim();
+    const getInputValue = (id, { trim = true } = {}) => {
+        const element = document.getElementById(id);
+        if (!element) return '';
+        const value = element.value ?? '';
+        return trim ? value.trim() : value;
+    };
+
+    const firstName = getInputValue('firstName');
+    const middleName = getInputValue('middleName');
+    const lastName = getInputValue('lastName');
+    const phone = getInputValue('phone');
+    const paymentMonthsValue = parseInt(getInputValue('paymentMonths', { trim: false }), 10) || 0;
     const paidMonthsCheckboxes = Array.from(document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]'));
     const paidMonths = paidMonthsCheckboxes.length > 0
         ? paidMonthsCheckboxes.map(cb => cb.checked)
-        : new Array(parseInt(document.getElementById('paymentMonths').value, 10) || 0).fill(false);
+        : new Array(paymentMonthsValue).fill(false);
     if (phone && !/^\d{10,12}$/.test(phone)) {
         alert('Номер телефона должен содержать 10-12 цифр!');
         return;
@@ -2084,22 +2092,22 @@ function saveClient() {
         firstName,
         middleName,
         lastName,
-        birthDate: document.getElementById('birthDate').value,
+        birthDate: getInputValue('birthDate', { trim: false }),
         phone,
-        passportSeries: document.getElementById('passportSeries').value.trim(),
-        passportNumber: document.getElementById('passportNumber').value.trim(),
-        passportIssueDate: document.getElementById('passportIssueDate').value,
-        passportIssuePlace: document.getElementById('passportIssuePlace').value.trim(),
-        totalAmount: parseInt(document.getElementById('totalAmount').value) || 0,
-        paymentMonths: parseInt(document.getElementById('paymentMonths').value) || 0,
-        paymentStartDate: document.getElementById('paymentStartDate').value,
+        passportSeries: getInputValue('passportSeries'),
+        passportNumber: getInputValue('passportNumber'),
+        passportIssueDate: getInputValue('passportIssueDate', { trim: false }),
+        passportIssuePlace: getInputValue('passportIssuePlace'),
+        totalAmount: parseInt(getInputValue('totalAmount', { trim: false }), 10) || 0,
+        paymentMonths: paymentMonthsValue,
+        paymentStartDate: getInputValue('paymentStartDate', { trim: false }),
         paidMonths,
-        arbitrLink: document.getElementById('arbitrLink').value.trim(),
-        caseNumber: document.getElementById('caseNumber').value.trim(),
-        stage: document.getElementById('stage').value,
-        subStage: document.getElementById('subStage').value,
-        courtDate: document.getElementById('courtDate').value,
-        notes: document.getElementById('notes').value.trim(),
+        arbitrLink: getInputValue('arbitrLink'),
+        caseNumber: getInputValue('caseNumber'),
+        stage: getInputValue('stage', { trim: false }),
+        subStage: getInputValue('subStage', { trim: false }),
+        courtDate: getInputValue('courtDate', { trim: false }),
+        notes: getInputValue('notes'),
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: new Date().toISOString(),
         tasks,
