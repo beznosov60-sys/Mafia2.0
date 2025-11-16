@@ -1,15 +1,68 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const mysql = require('mysql2/promise');
 
 (async () => {
-  const { createClient } = await import('@supabase/supabase-js');
-
-  const supabaseUrl = 'https://zktbasskylvqprofkinb.supabase.co';
-  const supabaseKey = process.env.SUPABASE_KEY;
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const {
+    MYSQL_HOST = 'localhost',
+    MYSQL_USER = 'root',
+    MYSQL_PASSWORD = '',
+    MYSQL_DATABASE = 'crm_app'
+  } = process.env;
 
   const serverRoot = __dirname;
+
+  const TABLE_DEFINITIONS = {
+    clients: `
+      CREATE TABLE IF NOT EXISTS clients (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        external_id VARCHAR(255),
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_external_id (external_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `,
+    managers: `
+      CREATE TABLE IF NOT EXISTS managers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `,
+    tasks: `
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        client_id INT,
+        manager_id INT,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+        due_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_tasks_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+        CONSTRAINT fk_tasks_manager FOREIGN KEY (manager_id) REFERENCES managers(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `,
+    payments: `
+      CREATE TABLE IF NOT EXISTS payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        client_id INT NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        currency VARCHAR(10) DEFAULT 'USD',
+        paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT,
+        CONSTRAINT fk_payments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `
+  };
 
   const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -27,6 +80,42 @@ const path = require('path');
     '.ttf': 'font/ttf',
     '.map': 'application/json; charset=utf-8'
   };
+
+  async function ensureDatabaseAndTables() {
+    const bootstrapConnection = await mysql.createConnection({
+      host: MYSQL_HOST,
+      user: MYSQL_USER,
+      password: MYSQL_PASSWORD,
+      multipleStatements: true
+    });
+
+    await bootstrapConnection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+    );
+    await bootstrapConnection.end();
+
+    const pool = mysql.createPool({
+      host: MYSQL_HOST,
+      user: MYSQL_USER,
+      password: MYSQL_PASSWORD,
+      database: MYSQL_DATABASE,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+
+    const tableStatus = {};
+    for (const [tableName, createStatement] of Object.entries(TABLE_DEFINITIONS)) {
+      await pool.query(createStatement);
+      const [rows] = await pool.query('SHOW TABLES LIKE ?', [tableName]);
+      tableStatus[tableName] = rows.length > 0;
+    }
+
+    return { pool, tableStatus };
+  }
+
+  const { pool, tableStatus } = await ensureDatabaseAndTables();
+  console.log('MySQL tables checked/created:', tableStatus);
 
   function resolveStaticPath(requestUrl) {
     try {
@@ -97,77 +186,107 @@ const path = require('path');
   }
 
   const server = http.createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/api/clients') {
-    const { data, error } = await supabase.from('clients').select('*');
-    if (error) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: error.message }));
-    } else {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(data));
-    }
-    return;
-  }
-
-  if (req.method === 'POST' && req.url === '/api/clients') {
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end', async () => {
+    if (req.method === 'GET' && req.url === '/api/clients') {
       try {
-        const clients = JSON.parse(body || '[]');
+        const [rows] = await pool.query('SELECT * FROM clients ORDER BY id DESC');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(rows));
+      } catch (error) {
+        console.error('Failed to fetch clients from MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to fetch clients' }));
+      }
+      return;
+    }
 
-        // Fetch existing client IDs to determine which should be removed
-        const { data: existing, error: existingError } = await supabase
-          .from('clients')
-          .select('id');
-        if (existingError) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: existingError.message }));
-          return;
-        }
+    if (req.method === 'POST' && req.url === '/api/clients') {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', async () => {
+        try {
+          const clients = JSON.parse(body || '[]');
 
-        const payloadIds = clients.map(c => c.id);
-        const idsToDelete = existing
-          .map(row => row.id)
-          .filter(id => !payloadIds.includes(id));
-
-        if (idsToDelete.length > 0) {
-          const { error: deleteError } = await supabase
-            .from('clients')
-            .delete()
-            .in('id', idsToDelete);
-          if (deleteError) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: deleteError.message }));
+          if (!Array.isArray(clients)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Payload must be an array of clients' }));
             return;
           }
+
+          const connection = await pool.getConnection();
+          try {
+            await connection.beginTransaction();
+
+            const [existing] = await connection.query('SELECT id FROM clients');
+            const existingIds = existing.map(row => row.id);
+            const payloadIds = clients
+              .map(client => client.id)
+              .filter(id => id !== undefined && id !== null);
+
+            const idsToDelete = existingIds.filter(id => !payloadIds.includes(id));
+            if (idsToDelete.length > 0) {
+              await connection.query('DELETE FROM clients WHERE id IN (?)', [idsToDelete]);
+            }
+
+            const insertOrUpdateClient = `
+              INSERT INTO clients (id, external_id, full_name, email, phone)
+              VALUES (?, ?, ?, ?, ?)
+              ON DUPLICATE KEY UPDATE
+                external_id = VALUES(external_id),
+                full_name = VALUES(full_name),
+                email = VALUES(email),
+                phone = VALUES(phone),
+                updated_at = CURRENT_TIMESTAMP;
+            `;
+
+            for (const client of clients) {
+              await connection.query(insertOrUpdateClient, [
+                client.id || null,
+                client.external_id || null,
+                client.full_name || client.name || 'Без имени',
+                client.email || null,
+                client.phone || null
+              ]);
+            }
+
+            await connection.commit();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'ok' }));
+          } catch (error) {
+            await connection.rollback();
+            console.error('Failed to upsert clients into MySQL:', error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to save clients' }));
+          } finally {
+            connection.release();
+          }
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
         }
+      });
+      return;
+    }
 
-        const { error } = await supabase.from('clients').upsert(clients);
-        if (error) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: error.message }));
-          return;
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok' }));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON' }));
-      }
-    });
-    return;
-  }
+    if (req.method === 'GET' && req.url === '/api/db-status') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          database: MYSQL_DATABASE,
+          tables: tableStatus
+        })
+      );
+      return;
+    }
 
-  // Serve static files
-  const filePath = resolveStaticPath(req.url);
-  if (!filePath) {
-    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Bad request');
-    return;
-  }
+    // Serve static files
+    const filePath = resolveStaticPath(req.url);
+    if (!filePath) {
+      res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Bad request');
+      return;
+    }
 
-  await serveStaticFile(filePath, res);
+    await serveStaticFile(filePath, res);
   });
 
   const PORT = process.env.PORT || 3000;
