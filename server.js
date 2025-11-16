@@ -369,6 +369,81 @@ const mysql = require('mysql2/promise');
       return;
     }
 
+    if (req.method === 'GET' && req.url === '/api/managers') {
+      try {
+        const [rows] = await pool.query('SELECT * FROM managers ORDER BY id DESC');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(rows));
+      } catch (error) {
+        console.error('Failed to fetch managers from MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to fetch managers' }));
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/managers') {
+      try {
+        const payload = await parseJsonBody(req);
+
+        if (!Array.isArray(payload)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Payload must be an array of managers' }));
+          return;
+        }
+
+        const connection = await pool.getConnection();
+        try {
+          await connection.beginTransaction();
+
+          const [existing] = await connection.query('SELECT id FROM managers');
+          const existingIds = existing.map(row => row.id);
+          const payloadIds = payload
+            .map(manager => manager.id)
+            .filter(id => id !== undefined && id !== null);
+
+          const idsToDelete = existingIds.filter(id => !payloadIds.includes(id));
+          if (idsToDelete.length > 0) {
+            await connection.query('DELETE FROM managers WHERE id IN (?)', [idsToDelete]);
+          }
+
+          const insertOrUpdateManager = `
+            INSERT INTO managers (id, full_name, email, phone)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              full_name = VALUES(full_name),
+              email = VALUES(email),
+              phone = VALUES(phone),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+
+          for (const manager of payload) {
+            await connection.query(insertOrUpdateManager, [
+              manager.id || null,
+              manager.full_name || manager.name || manager.title || 'Без имени',
+              manager.email || null,
+              manager.phone || manager.telephone || null
+            ]);
+          }
+
+          await connection.commit();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'ok' }));
+        } catch (error) {
+          await connection.rollback();
+          console.error('Failed to upsert managers into MySQL:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Failed to save managers' }));
+        } finally {
+          connection.release();
+        }
+      } catch (error) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      }
+      return;
+    }
+
     if (req.method === 'GET' && req.url === '/api/db-status') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
