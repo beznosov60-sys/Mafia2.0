@@ -3077,7 +3077,7 @@ function showAddTaskModal(dateStr) {
         return;
     }
     let modalDiv = document.createElement('div');
-    modalDiv.className = 'modal fade';
+    modalDiv.className = 'modal fade crm-modal';
     const dateTitle = dateStr ? ` на ${new Date(dateStr).toLocaleDateString('ru-RU')}` : '';
     const ownerOptions = [
         clients.length ? `<optgroup label="Клиенты">${clients.map(c => `<option value="client-${c.id}">${c.firstName} ${c.lastName}</option>`).join('')}</optgroup>` : '',
