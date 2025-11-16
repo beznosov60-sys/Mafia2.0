@@ -48,6 +48,103 @@ let currentClientIndex = -1;
 let currentClientData = null;
 let isClientEditing = false;
 
+const STORAGE_DEFAULTS = {
+    clients: [],
+    archivedClients: [],
+    managers: [],
+    consultations: [],
+    managerPayments: {}
+};
+
+const STORAGE_KEYS = Object.keys(STORAGE_DEFAULTS);
+let isRestoringStorage = false;
+let originalLocalStorageSetItem = null;
+
+function patchLocalStorageWithServerSync() {
+    if (typeof localStorage === 'undefined') {
+        return;
+    }
+
+    if (originalLocalStorageSetItem) {
+        return;
+    }
+
+    originalLocalStorageSetItem = localStorage.setItem.bind(localStorage);
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+    const originalClear = localStorage.clear.bind(localStorage);
+
+    const persistToServer = (key, value) => {
+        if (isRestoringStorage) return;
+        fetch('/api/storage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value })
+        }).catch(error => console.error('Не удалось сохранить данные в MySQL:', error));
+    };
+
+    const removeFromServer = key => {
+        if (isRestoringStorage) return;
+        fetch('/api/storage', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key })
+        }).catch(error => console.error('Не удалось удалить данные в MySQL:', error));
+    };
+
+    localStorage.setItem = function(key, value) {
+        originalLocalStorageSetItem(key, value);
+        persistToServer(key, value);
+    };
+
+    localStorage.removeItem = function(key) {
+        originalRemoveItem(key);
+        removeFromServer(key);
+    };
+
+    localStorage.clear = function() {
+        const keys = Object.keys(localStorage);
+        originalClear();
+        if (isRestoringStorage) return;
+
+        if (keys.length === 0) return;
+        fetch('/api/storage/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(error => console.error('Не удалось очистить данные в MySQL:', error));
+    };
+}
+
+async function bootstrapServerStorage() {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+        return;
+    }
+
+    patchLocalStorageWithServerSync();
+
+    try {
+        const response = await fetch('/api/storage');
+        if (response.ok) {
+            const { items = [] } = await response.json();
+            isRestoringStorage = true;
+            items.forEach(({ key, value }) => {
+                if (typeof key === 'string' && typeof value === 'string') {
+                    originalLocalStorageSetItem(key, value);
+                }
+            });
+            isRestoringStorage = false;
+        }
+    } catch (error) {
+        console.error('Не удалось загрузить данные из MySQL:', error);
+    }
+
+    STORAGE_KEYS.forEach(key => {
+        if (localStorage.getItem(key) !== null) return;
+        const defaultValue = STORAGE_DEFAULTS[key];
+        const serialized = JSON.stringify(defaultValue);
+        localStorage.setItem(key, serialized);
+    });
+}
+
 window.__crmAppReady = false;
 
 (function setupLoadingOverlay() {
@@ -393,9 +490,6 @@ function buildStageProgress(currentStage) {
         .join('');
 }
 
-// Ранее клиенты синхронизировались с сервером. Теперь хранение происходит
-// только в localStorage, поэтому при первом запуске инициализируем пустой
-// список клиентов, если он отсутствует.
 async function syncClientsFromServer() {
     if (!localStorage.getItem('clients')) {
         localStorage.setItem('clients', JSON.stringify([]));
@@ -836,6 +930,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.appLoadingOverlay?.show();
     try {
+        await bootstrapServerStorage();
         await syncClientsFromServer();
     } catch (error) {
         console.error('Не удалось синхронизировать клиентов с сервером:', error);
