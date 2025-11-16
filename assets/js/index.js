@@ -23,95 +23,86 @@
         }
 
         let activeButton = null;
-        let hoverIntentTimer = null;
+        let hoveredButton = null;
 
-        function expandAllButtons() {
-            buttons.forEach(button => {
-                button.classList.add('is-expanded');
+        function updateButtonStates() {
+            buttons.forEach((button) => {
+                const isActive = button === activeButton;
+                const shouldExpand = isActive || (!activeButton && button === hoveredButton);
+
+                button.classList.toggle('is-active', isActive);
+                button.classList.toggle('is-expanded', shouldExpand);
             });
-        }
-
-        function collapseAllButtons() {
-            buttons.forEach(button => {
-                if (button === activeButton) {
-                    button.classList.add('is-expanded');
-                    return;
-                }
-                button.classList.remove('is-expanded');
-            });
-        }
-
-        function clearActiveButton() {
-            if (!activeButton) {
-                return;
-            }
-            activeButton.classList.remove('is-active');
-            activeButton = null;
-            collapseAllButtons();
         }
 
         function setActiveButton(button) {
             if (activeButton === button) {
-                clearActiveButton();
-                return;
+                activeButton = null;
+            } else {
+                activeButton = button;
+                hoveredButton = button;
             }
-
-            if (activeButton) {
-                activeButton.classList.remove('is-active', 'is-expanded');
-            }
-
-            activeButton = button;
-            activeButton.classList.add('is-active', 'is-expanded');
-            buttons.forEach(otherButton => {
-                if (otherButton !== activeButton) {
-                    otherButton.classList.remove('is-expanded', 'is-active');
-                }
-            });
+            updateButtonStates();
         }
 
-        buttons.forEach(button => {
+        function setHoveredButton(button) {
+            if (hoveredButton === button) {
+                return;
+            }
+            hoveredButton = button;
+            updateButtonStates();
+        }
+
+        function clearHoveredButton(button) {
+            if (hoveredButton !== button) {
+                return;
+            }
+            hoveredButton = null;
+            updateButtonStates();
+        }
+
+        buttons.forEach((button) => {
             button.addEventListener('pointerenter', () => {
-                if (activeButton) {
-                    return;
+                if (!activeButton) {
+                    setHoveredButton(button);
                 }
-                window.clearTimeout(hoverIntentTimer);
-                hoverIntentTimer = window.setTimeout(expandAllButtons, 30);
+            });
+
+            button.addEventListener('pointerleave', () => {
+                if (!activeButton) {
+                    clearHoveredButton(button);
+                }
             });
 
             button.addEventListener('focus', () => {
-                if (activeButton) {
-                    return;
+                if (!activeButton) {
+                    setHoveredButton(button);
                 }
-                expandAllButtons();
+            });
+
+            button.addEventListener('blur', () => {
+                if (!activeButton) {
+                    clearHoveredButton(button);
+                }
             });
 
             button.addEventListener('click', () => {
                 setActiveButton(button);
             });
-
-            button.addEventListener('blur', () => {
-                if (activeButton) {
-                    return;
-                }
-                window.requestAnimationFrame(() => {
-                    if (!container.matches(':hover') && document.activeElement !== button) {
-                        collapseAllButtons();
-                    }
-                });
-            });
         });
 
         container.addEventListener('pointerleave', () => {
-            if (activeButton) {
-                return;
+            if (!activeButton) {
+                hoveredButton = null;
+                updateButtonStates();
             }
-            window.clearTimeout(hoverIntentTimer);
-            collapseAllButtons();
         });
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
-                clearActiveButton();
+                activeButton = null;
+                hoveredButton = null;
+                updateButtonStates();
             }
         });
     }
