@@ -14,63 +14,64 @@ const mysql = require('mysql2/promise');
   const serverRoot = __dirname;
 
   const TABLE_DEFINITIONS = {
-    clients: `
-      CREATE TABLE IF NOT EXISTS clients (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        external_id VARCHAR(255),
-        full_name VARCHAR(255) NOT NULL,
-        email VARCHAR(255),
-        phone VARCHAR(50),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_external_id (external_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `,
-    managers: `
-      CREATE TABLE IF NOT EXISTS managers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        full_name VARCHAR(255) NOT NULL,
-        email VARCHAR(255),
-        phone VARCHAR(50),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `,
-    tasks: `
-      CREATE TABLE IF NOT EXISTS tasks (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        client_id INT,
-        manager_id INT,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
-        due_date DATE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        CONSTRAINT fk_tasks_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
-        CONSTRAINT fk_tasks_manager FOREIGN KEY (manager_id) REFERENCES managers(id) ON DELETE SET NULL
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `,
-    payments: `
-      CREATE TABLE IF NOT EXISTS payments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        client_id INT NOT NULL,
-        amount DECIMAL(12, 2) NOT NULL,
-        currency VARCHAR(10) DEFAULT 'USD',
-        paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        notes TEXT,
-        CONSTRAINT fk_payments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `,
-    storage: `
-      CREATE TABLE IF NOT EXISTS storage (
-        `key` VARCHAR(255) NOT NULL,
-        `value` LONGTEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (`key`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `
-  };
+  clients: `
+    CREATE TABLE IF NOT EXISTS clients (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      external_id VARCHAR(255),
+      full_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_external_id (external_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `,
+  managers: `
+    CREATE TABLE IF NOT EXISTS managers (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `,
+  tasks: `
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      client_id INT,
+      manager_id INT,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+      due_date DATE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_tasks_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+      CONSTRAINT fk_tasks_manager FOREIGN KEY (manager_id) REFERENCES managers(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `,
+  payments: `
+    CREATE TABLE IF NOT EXISTS payments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      client_id INT NOT NULL,
+      amount DECIMAL(12, 2) NOT NULL,
+      currency VARCHAR(10) DEFAULT 'USD',
+      paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      notes TEXT,
+      CONSTRAINT fk_payments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `,
+  storage: `
+    CREATE TABLE IF NOT EXISTS storage (
+      \`key\` VARCHAR(255) NOT NULL,
+      \`value\` LONGTEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (\`key\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `
+};
+
 
   const APP_DATA_DEFAULTS = {
     clients: [],
