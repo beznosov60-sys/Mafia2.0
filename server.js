@@ -61,6 +61,14 @@ const mysql = require('mysql2/promise');
         notes TEXT,
         CONSTRAINT fk_payments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `,
+    storage: `
+      CREATE TABLE IF NOT EXISTS storage (
+        `key` VARCHAR(255) NOT NULL,
+        `value` LONGTEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`key`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `
   };
 
@@ -116,6 +124,25 @@ const mysql = require('mysql2/promise');
 
   const { pool, tableStatus } = await ensureDatabaseAndTables();
   console.log('MySQL tables checked/created:', tableStatus);
+
+  async function parseJsonBody(req) {
+    return new Promise((resolve, reject) => {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', () => {
+        if (!body) {
+          resolve({});
+          return;
+        }
+        try {
+          resolve(JSON.parse(body));
+        } catch (error) {
+          reject(error);
+        }
+      });
+      req.on('error', reject);
+    });
+  }
 
   function resolveStaticPath(requestUrl) {
     try {
@@ -186,6 +213,81 @@ const mysql = require('mysql2/promise');
   }
 
   const server = http.createServer(async (req, res) => {
+    if (req.method === 'GET' && req.url === '/api/storage') {
+      try {
+        const [rows] = await pool.query('SELECT `key`, `value` FROM storage');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ items: rows }));
+      } catch (error) {
+        console.error('Failed to read storage from MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load storage' }));
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/storage') {
+      try {
+        const payload = await parseJsonBody(req);
+        if (!payload || typeof payload.key !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Key is required' }));
+          return;
+        }
+
+        await pool.query(
+          `INSERT INTO storage (
+            \`key\`, \`value\`
+          ) VALUES (?, ?)
+          ON DUPLICATE KEY UPDATE
+            \`value\` = VALUES(\`value\`),
+            updated_at = CURRENT_TIMESTAMP;`,
+          [payload.key, payload.value ?? '']
+        );
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'saved' }));
+      } catch (error) {
+        console.error('Failed to save storage to MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to save storage' }));
+      }
+      return;
+    }
+
+    if (req.method === 'DELETE' && req.url === '/api/storage') {
+      try {
+        const payload = await parseJsonBody(req);
+        if (!payload || typeof payload.key !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Key is required' }));
+          return;
+        }
+
+        await pool.query('DELETE FROM storage WHERE `key` = ?', [payload.key]);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'deleted' }));
+      } catch (error) {
+        console.error('Failed to delete storage from MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to delete storage' }));
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/storage/clear') {
+      try {
+        await pool.query('TRUNCATE TABLE storage');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'cleared' }));
+      } catch (error) {
+        console.error('Failed to clear storage table:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to clear storage' }));
+      }
+      return;
+    }
+
     if (req.method === 'GET' && req.url === '/api/clients') {
       try {
         const [rows] = await pool.query('SELECT * FROM clients ORDER BY id DESC');
