@@ -60,6 +60,21 @@ const STORAGE_KEYS = Object.keys(STORAGE_DEFAULTS);
 let isRestoringStorage = false;
 let originalLocalStorageSetItem = null;
 
+async function persistArrayToEndpoint(value, endpoint) {
+    try {
+        const parsed = JSON.parse(value ?? '[]');
+        if (!Array.isArray(parsed)) return;
+
+        await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsed)
+        });
+    } catch (error) {
+        console.error(`Не удалось сохранить данные в MySQL по адресу ${endpoint}:`, error);
+    }
+}
+
 function patchLocalStorageWithServerSync() {
     if (typeof localStorage === 'undefined') {
         return;
@@ -75,6 +90,17 @@ function patchLocalStorageWithServerSync() {
 
     const persistToServer = (key, value) => {
         if (isRestoringStorage) return;
+
+        if (key === 'clients') {
+            persistArrayToEndpoint(value, '/api/clients');
+            return;
+        }
+
+        if (key === 'managers') {
+            persistArrayToEndpoint(value, '/api/managers');
+            return;
+        }
+
         fetch('/api/storage', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -84,6 +110,12 @@ function patchLocalStorageWithServerSync() {
 
     const removeFromServer = key => {
         if (isRestoringStorage) return;
+
+        if (key === 'clients' || key === 'managers') {
+            persistToServer(key, '[]');
+            return;
+        }
+
         fetch('/api/storage', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
@@ -122,9 +154,14 @@ async function bootstrapServerStorage() {
     patchLocalStorageWithServerSync();
 
     try {
-        const response = await fetch('/api/storage');
-        if (response.ok) {
-            const { items = [] } = await response.json();
+        const [storageResponse, clientsResponse, managersResponse] = await Promise.all([
+            fetch('/api/storage'),
+            fetch('/api/clients'),
+            fetch('/api/managers')
+        ]);
+
+        if (storageResponse.ok) {
+            const { items = [] } = await storageResponse.json();
             isRestoringStorage = true;
             items.forEach(({ key, value }) => {
                 if (typeof key === 'string' && typeof value === 'string') {
@@ -132,6 +169,16 @@ async function bootstrapServerStorage() {
                 }
             });
             isRestoringStorage = false;
+        }
+
+        if (clientsResponse.ok) {
+            const clients = await clientsResponse.json();
+            localStorage.setItem('clients', JSON.stringify(Array.isArray(clients) ? clients : []));
+        }
+
+        if (managersResponse.ok) {
+            const managers = await managersResponse.json();
+            localStorage.setItem('managers', JSON.stringify(Array.isArray(managers) ? managers : []));
         }
     } catch (error) {
         console.error('Не удалось загрузить данные из MySQL:', error);
@@ -491,14 +538,30 @@ function buildStageProgress(currentStage) {
 }
 
 async function syncClientsFromServer() {
-    if (!localStorage.getItem('clients')) {
-        localStorage.setItem('clients', JSON.stringify([]));
+    try {
+        const response = await fetch('/api/clients');
+        if (!response.ok) throw new Error('Failed to load clients');
+        const clients = await response.json();
+        localStorage.setItem('clients', JSON.stringify(Array.isArray(clients) ? clients : []));
+    } catch (error) {
+        console.error('Не удалось синхронизировать клиентов из MySQL:', error);
+        if (!localStorage.getItem('clients')) {
+            localStorage.setItem('clients', JSON.stringify([]));
+        }
     }
 }
 
 async function syncManagersFromServer() {
-    if (!localStorage.getItem('managers')) {
-        localStorage.setItem('managers', JSON.stringify([]));
+    try {
+        const response = await fetch('/api/managers');
+        if (!response.ok) throw new Error('Failed to load managers');
+        const managers = await response.json();
+        localStorage.setItem('managers', JSON.stringify(Array.isArray(managers) ? managers : []));
+    } catch (error) {
+        console.error('Не удалось синхронизировать менеджеров из MySQL:', error);
+        if (!localStorage.getItem('managers')) {
+            localStorage.setItem('managers', JSON.stringify([]));
+        }
     }
 }
 
@@ -932,6 +995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await bootstrapServerStorage();
         await syncClientsFromServer();
+        await syncManagersFromServer();
     } catch (error) {
         console.error('Не удалось синхронизировать клиентов с сервером:', error);
     } finally {
