@@ -87,6 +87,6 @@
     if (window.__crmAppReady) {
         initEditClientPage();
     } else {
-        window.addEventListener('app:ready', initEditClientPage, { once: true });
+        window.addEventListener('app-ready', initEditClientPage, { once: true });
     }
 })();

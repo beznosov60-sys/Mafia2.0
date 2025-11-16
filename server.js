@@ -72,6 +72,15 @@ const mysql = require('mysql2/promise');
     `
   };
 
+  const APP_DATA_DEFAULTS = {
+    clients: [],
+    archivedClients: [],
+    managers: [],
+    consultations: [],
+    managerPayments: {}
+  };
+  const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
+
   const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'application/javascript; charset=utf-8',
@@ -144,6 +153,25 @@ const mysql = require('mysql2/promise');
     });
   }
 
+  function buildAppDataFromRows(rows = []) {
+    const payload = { ...APP_DATA_DEFAULTS };
+
+    for (const entry of rows) {
+      const key = entry?.key;
+      if (!APP_DATA_KEYS.includes(key)) continue;
+      try {
+        const parsed = JSON.parse(entry.value || 'null');
+        if (parsed !== null && parsed !== undefined) {
+          payload[key] = parsed;
+        }
+      } catch (error) {
+        console.error('Failed to parse stored app data row', key, error);
+      }
+    }
+
+    return payload;
+  }
+
   function resolveStaticPath(requestUrl) {
     try {
       const [rawPath] = requestUrl.split('?');
@@ -213,6 +241,55 @@ const mysql = require('mysql2/promise');
   }
 
   const server = http.createServer(async (req, res) => {
+    if (req.method === 'GET' && req.url === '/api/app-data') {
+      try {
+        const [rows] = await pool.query('SELECT `key`, `value` FROM storage WHERE `key` IN (?)', [APP_DATA_KEYS]);
+        const payload = buildAppDataFromRows(rows);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(payload));
+      } catch (error) {
+        console.error('Failed to fetch app data from MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load app data' }));
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/app-data') {
+      try {
+        const payload = await parseJsonBody(req);
+        if (!payload || typeof payload !== 'object') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid payload' }));
+          return;
+        }
+
+        const entries = APP_DATA_KEYS
+          .filter(key => Object.prototype.hasOwnProperty.call(payload, key))
+          .map(key => [key, JSON.stringify(payload[key] ?? APP_DATA_DEFAULTS[key])]);
+
+        if (entries.length === 0) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No valid keys to save' }));
+          return;
+        }
+
+        await pool.query(
+          `INSERT INTO storage (\`key\`, \`value\`) VALUES ?
+           ON DUPLICATE KEY UPDATE \`value\` = VALUES(\`value\`), updated_at = CURRENT_TIMESTAMP;`,
+          [entries]
+        );
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'saved', updated: entries.map(([key]) => key) }));
+      } catch (error) {
+        console.error('Failed to save app data to MySQL:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to save app data' }));
+      }
+      return;
+    }
+
     if (req.method === 'GET' && req.url === '/api/storage') {
       try {
         const [rows] = await pool.query('SELECT `key`, `value` FROM storage');

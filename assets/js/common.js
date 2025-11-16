@@ -48,148 +48,90 @@ let currentClientIndex = -1;
 let currentClientData = null;
 let isClientEditing = false;
 
-const STORAGE_DEFAULTS = {
+const APP_DATA_DEFAULTS = {
     clients: [],
     archivedClients: [],
     managers: [],
     consultations: [],
-    managerPayments: {}
+    managerPayments: {},
 };
 
-const STORAGE_KEYS = Object.keys(STORAGE_DEFAULTS);
-let isRestoringStorage = false;
-let originalLocalStorageSetItem = null;
+const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
+const appData = APP_DATA_KEYS.reduce((acc, key) => {
+    acc[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [...APP_DATA_DEFAULTS[key]] : { ...APP_DATA_DEFAULTS[key] };
+    return acc;
+}, {});
 
-async function persistArrayToEndpoint(value, endpoint) {
+function createAppStorage(store) {
+    const parseValue = value => {
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            return value;
+        }
+    };
+
+    const persistKey = async key => {
+        if (!APP_DATA_KEYS.includes(key)) return;
+        try {
+            await fetch('/api/app-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [key]: store[key] ?? APP_DATA_DEFAULTS[key] })
+            });
+        } catch (error) {
+            console.error(`Не удалось сохранить данные ${key} в MySQL:`, error);
+        }
+    };
+
+    return {
+        getItem(key) {
+            if (!(key in store)) return null;
+            return JSON.stringify(store[key]);
+        },
+        setItem(key, value) {
+            store[key] = parseValue(value);
+            persistKey(key);
+        },
+        removeItem(key) {
+            if (!(key in store)) return;
+            delete store[key];
+            persistKey(key);
+        },
+        clear() {
+            APP_DATA_KEYS.forEach(key => {
+                store[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [] : {};
+                persistKey(key);
+            });
+        }
+    };
+}
+
+const appStorage = createAppStorage(appData);
+
+async function loadAppDataFromServer() {
     try {
-        const parsed = JSON.parse(value ?? '[]');
-        if (!Array.isArray(parsed)) return;
+        const response = await fetch('/api/app-data');
+        if (!response.ok) {
+            throw new Error('Failed to load application data');
+        }
 
-        await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(parsed)
+        const payload = await response.json();
+        APP_DATA_KEYS.forEach(key => {
+            if (payload[key] !== undefined) {
+                appData[key] = payload[key];
+            } else {
+                appData[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [] : {};
+            }
         });
     } catch (error) {
-        console.error(`Не удалось сохранить данные в MySQL по адресу ${endpoint}:`, error);
-    }
-}
-
-function patchLocalStorageWithServerSync() {
-    if (typeof localStorage === 'undefined') {
-        return;
-    }
-
-    if (originalLocalStorageSetItem) {
-        return;
-    }
-
-    originalLocalStorageSetItem = localStorage.setItem.bind(localStorage);
-    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
-    const originalClear = localStorage.clear.bind(localStorage);
-
-    const persistToServer = (key, value) => {
-        if (isRestoringStorage) return;
-
-        if (key === 'clients') {
-            persistArrayToEndpoint(value, '/api/clients');
-            return;
-        }
-
-        if (key === 'managers') {
-            persistArrayToEndpoint(value, '/api/managers');
-            return;
-        }
-
-        fetch('/api/storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, value })
-        }).catch(error => console.error('Не удалось сохранить данные в MySQL:', error));
-    };
-
-    const removeFromServer = key => {
-        if (isRestoringStorage) return;
-
-        if (key === 'clients' || key === 'managers') {
-            persistToServer(key, '[]');
-            return;
-        }
-
-        fetch('/api/storage', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key })
-        }).catch(error => console.error('Не удалось удалить данные в MySQL:', error));
-    };
-
-    localStorage.setItem = function(key, value) {
-        originalLocalStorageSetItem(key, value);
-        persistToServer(key, value);
-    };
-
-    localStorage.removeItem = function(key) {
-        originalRemoveItem(key);
-        removeFromServer(key);
-    };
-
-    localStorage.clear = function() {
-        const keys = Object.keys(localStorage);
-        originalClear();
-        if (isRestoringStorage) return;
-
-        if (keys.length === 0) return;
-        fetch('/api/storage/clear', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        }).catch(error => console.error('Не удалось очистить данные в MySQL:', error));
-    };
-}
-
-async function bootstrapServerStorage() {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-        return;
-    }
-
-    patchLocalStorageWithServerSync();
-
-    try {
-        const [storageResponse, clientsResponse, managersResponse] = await Promise.all([
-            fetch('/api/storage'),
-            fetch('/api/clients'),
-            fetch('/api/managers')
-        ]);
-
-        if (storageResponse.ok) {
-            const { items = [] } = await storageResponse.json();
-            isRestoringStorage = true;
-            items.forEach(({ key, value }) => {
-                if (typeof key === 'string' && typeof value === 'string') {
-                    originalLocalStorageSetItem(key, value);
-                }
-            });
-            isRestoringStorage = false;
-        }
-
-        if (clientsResponse.ok) {
-            const clients = await clientsResponse.json();
-            localStorage.setItem('clients', JSON.stringify(Array.isArray(clients) ? clients : []));
-        }
-
-        if (managersResponse.ok) {
-            const managers = await managersResponse.json();
-            localStorage.setItem('managers', JSON.stringify(Array.isArray(managers) ? managers : []));
-        }
-    } catch (error) {
         console.error('Не удалось загрузить данные из MySQL:', error);
+        APP_DATA_KEYS.forEach(key => {
+            if (appData[key] === undefined) {
+                appData[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [] : {};
+            }
+        });
     }
-
-    STORAGE_KEYS.forEach(key => {
-        if (localStorage.getItem(key) !== null) return;
-        const defaultValue = STORAGE_DEFAULTS[key];
-        const serialized = JSON.stringify(defaultValue);
-        localStorage.setItem(key, serialized);
-    });
 }
 
 window.__crmAppReady = false;
@@ -270,21 +212,21 @@ const DEFAULT_UPDATES = [
 const UPDATES_STORAGE_KEY = 'appUpdates';
 
 function saveAppUpdates(updates) {
-    if (typeof localStorage === 'undefined' || !Array.isArray(updates)) return;
-    localStorage.setItem(UPDATES_STORAGE_KEY, JSON.stringify(updates));
+    if (typeof appStorage === 'undefined' || !Array.isArray(updates)) return;
+    appStorage.setItem(UPDATES_STORAGE_KEY, JSON.stringify(updates));
 }
 
 function loadAppUpdates() {
-    if (typeof localStorage === 'undefined') {
+    if (typeof appStorage === 'undefined') {
         return DEFAULT_UPDATES.map(update => ({ ...update }));
     }
 
     let storedUpdates = [];
     try {
-        const raw = localStorage.getItem(UPDATES_STORAGE_KEY);
+        const raw = appStorage.getItem(UPDATES_STORAGE_KEY);
         storedUpdates = raw ? JSON.parse(raw) : [];
     } catch (error) {
-        console.error('Не удалось прочитать обновления из localStorage:', error);
+        console.error('Не удалось прочитать обновления из appStorage:', error);
         storedUpdates = [];
     }
 
@@ -542,11 +484,11 @@ async function syncClientsFromServer() {
         const response = await fetch('/api/clients');
         if (!response.ok) throw new Error('Failed to load clients');
         const clients = await response.json();
-        localStorage.setItem('clients', JSON.stringify(Array.isArray(clients) ? clients : []));
+        appStorage.setItem('clients', JSON.stringify(Array.isArray(clients) ? clients : []));
     } catch (error) {
         console.error('Не удалось синхронизировать клиентов из MySQL:', error);
-        if (!localStorage.getItem('clients')) {
-            localStorage.setItem('clients', JSON.stringify([]));
+        if (!appStorage.getItem('clients')) {
+            appStorage.setItem('clients', JSON.stringify([]));
         }
     }
 }
@@ -556,17 +498,17 @@ async function syncManagersFromServer() {
         const response = await fetch('/api/managers');
         if (!response.ok) throw new Error('Failed to load managers');
         const managers = await response.json();
-        localStorage.setItem('managers', JSON.stringify(Array.isArray(managers) ? managers : []));
+        appStorage.setItem('managers', JSON.stringify(Array.isArray(managers) ? managers : []));
     } catch (error) {
         console.error('Не удалось синхронизировать менеджеров из MySQL:', error);
-        if (!localStorage.getItem('managers')) {
-            localStorage.setItem('managers', JSON.stringify([]));
+        if (!appStorage.getItem('managers')) {
+            appStorage.setItem('managers', JSON.stringify([]));
         }
     }
 }
 
 function getManagers() {
-    const managers = JSON.parse(localStorage.getItem('managers')) || [];
+    const managers = JSON.parse(appStorage.getItem('managers')) || [];
     let requiresSave = false;
     managers.forEach(manager => {
         if (!manager) return;
@@ -591,7 +533,7 @@ function getManagers() {
 }
 
 function saveManagers(managers) {
-    localStorage.setItem('managers', JSON.stringify(managers));
+    appStorage.setItem('managers', JSON.stringify(managers));
 }
 
 
@@ -690,7 +632,7 @@ function generateClientId(firstName, middleName, lastName, phone, existingIds) {
         .map(name => (name && name.trim() ? name.trim()[0].toUpperCase() : ''))
         .join('');
     const digits = (phone || '').replace(/\D/g, '').slice(-4);
-    const ids = existingIds || new Set((JSON.parse(localStorage.getItem('clients')) || []).map(c => String(c.id)));
+    const ids = existingIds || new Set((JSON.parse(appStorage.getItem('clients')) || []).map(c => String(c.id)));
     return ensureUniqueId(letters + digits, ids);
 }
 
@@ -702,11 +644,11 @@ window.openClient = function(id, managerId) {
 };
 
 function exportClientsToExcel() {
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
-    const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients') || '[]');
+    const archivedClients = JSON.parse(appStorage.getItem('archivedClients')) || [];
     const allClients = clients.concat(archivedClients.map(c => ({ ...c, archived: true })));
     const managers = getManagers();
-    const managerPayments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const managerPayments = JSON.parse(appStorage.getItem('managerPayments')) || {};
 
     const clientData = allClients.map(c => ({
         'ID': c.id,
@@ -965,13 +907,13 @@ function importClientsFromExcel(event) {
             });
         }
 
-        localStorage.setItem('clients', JSON.stringify(clients));
-        localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
+        appStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('archivedClients', JSON.stringify(archivedClients));
         if (managers.length > 0) {
-            localStorage.setItem('managers', JSON.stringify(managers));
+            appStorage.setItem('managers', JSON.stringify(managers));
         }
         if (Object.keys(managerPayments).length > 0) {
-            localStorage.setItem('managerPayments', JSON.stringify(managerPayments));
+            appStorage.setItem('managerPayments', JSON.stringify(managerPayments));
         }
 
         alert('Импорт завершён');
@@ -993,9 +935,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.appLoadingOverlay?.show();
     try {
-        await bootstrapServerStorage();
-        await syncClientsFromServer();
-        await syncManagersFromServer();
+        await loadAppDataFromServer();
     } catch (error) {
         console.error('Не удалось синхронизировать клиентов с сервером:', error);
     } finally {
@@ -1003,10 +943,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.appLoadingOverlay?.hide();
     }
 
-    if (!localStorage.getItem('consultations')) {
-        localStorage.setItem('consultations', JSON.stringify([]));
+    if (!appStorage.getItem('consultations')) {
+        appStorage.setItem('consultations', JSON.stringify([]));
     }
 
+    window.dispatchEvent(new Event('app-ready'));
     window.dispatchEvent(new Event('app:ready'));
     window.__crmAppReady = true;
 });
@@ -1051,7 +992,7 @@ function updateArbitrButtonTitle(button, courtDate) {
 
 // Показ клиентов с судом в текущем месяце
 function displayCourtThisMonth() {
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    const clients = JSON.parse(appStorage.getItem('clients') || '[]');
     const courtThisMonthDiv = document.getElementById('courtThisMonth');
     if (!courtThisMonthDiv) return;
 
@@ -1117,7 +1058,7 @@ function displayCourtThisMonth() {
 
 // Отображение списка клиентов в боковой панели
 function displayClientsList() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const listDiv = document.getElementById('clientsList');
     if (!listDiv) return;
 
@@ -1245,7 +1186,7 @@ function displayClientsList() {
                 square.setAttribute('aria-pressed', willBePaid ? 'true' : 'false');
 
                 client.paidMonths = paidStates.slice();
-                localStorage.setItem('clients', JSON.stringify(clients));
+                appStorage.setItem('clients', JSON.stringify(clients));
             });
         });
 
@@ -1257,7 +1198,7 @@ function displayClientsList() {
 
 // Загрузка клиента для редактирования
 function loadClientForEdit(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) {
         console.error('Клиент не найден:', clientId);
@@ -1538,7 +1479,7 @@ function cancelClientInlineChanges() {
 function commitCurrentClient() {
     if (!Array.isArray(clientsCache) || currentClientIndex === -1 || !currentClientData) return;
     clientsCache[currentClientIndex] = currentClientData;
-    localStorage.setItem('clients', JSON.stringify(clientsCache));
+    appStorage.setItem('clients', JSON.stringify(clientsCache));
     refetchCalendarEvents();
 }
 
@@ -1696,7 +1637,7 @@ function handleMonthlyPaymentToggle(index, checked, amount) {
 }
 
 function loadClientCard(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const index = clients.findIndex(c => String(c.id) === String(clientId));
     if (index === -1) {
         alert('Клиент не найден!');
@@ -1855,11 +1796,11 @@ function renderClientPayments(client) {
 }
 
 function saveClientData(client) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const idx = clients.findIndex(c => String(c.id) === String(client.id));
     if (idx !== -1) {
         clients[idx] = client;
-        localStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('clients', JSON.stringify(clients));
     }
 }
 
@@ -1877,12 +1818,12 @@ function recordManagerPayment(client, amount, date, info = {}) {
     }
     let salary = Math.round((amount * percent) / 100);
     if (salary > remaining) salary = remaining;
-    const store = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const store = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const managerData = store[client.managerId] || {};
     const history = managerData.history || [];
     history.push({ clientId: client.id, amount: salary, date });
     store[client.managerId] = { ...managerData, history };
-    localStorage.setItem('managerPayments', JSON.stringify(store));
+    appStorage.setItem('managerPayments', JSON.stringify(store));
 
     client.managerPayments = client.managerPayments || [];
     client.managerPayments.push({ ...info, date, amount: salary });
@@ -1906,14 +1847,14 @@ function removeManagerPayment(client, info = {}) {
     if (idx === -1) return;
     const payment = client.managerPayments.splice(idx, 1)[0];
     if (!client.managerId) return;
-    const store = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const store = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const managerData = store[client.managerId] || {};
     const history = managerData.history || [];
     const hIdx = history.findIndex(h => h.clientId === client.id && h.amount === payment.amount && h.date === payment.date);
     if (hIdx !== -1) {
         history.splice(hIdx, 1);
         store[client.managerId] = { ...managerData, history };
-        localStorage.setItem('managerPayments', JSON.stringify(store));
+        appStorage.setItem('managerPayments', JSON.stringify(store));
     }
     client.managerPaidTotal = (client.managerPaidTotal || 0) - (payment.amount || 0);
     if (client.managerPaidTotal < 0) client.managerPaidTotal = 0;
@@ -2058,7 +1999,7 @@ function renderClientCharts(client) {
 }
 
 function loadFinancePage(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) {
         alert('Клиент не найден!');
@@ -2104,10 +2045,10 @@ function updateClient() {
         return;
     }
 
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const existingClient = clients.find(c => String(c.id) === String(clientId));
     if (!existingClient) {
-        console.error('Клиент не найден в localStorage:', clientId);
+        console.error('Клиент не найден в appStorage:', clientId);
         alert('Клиент не найден!');
         window.location.href = 'index.html';
         return;
@@ -2182,11 +2123,11 @@ function updateClient() {
     const index = clients.findIndex(c => String(c.id) === String(clientId));
     if (index !== -1) {
         clients[index] = updatedClient;
-        localStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('clients', JSON.stringify(clients));
         const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
         window.location.href = returnUrl;
     } else {
-        console.error('Клиент не найден в localStorage:', clientId);
+        console.error('Клиент не найден в appStorage:', clientId);
         alert('Клиент не найден!');
         const returnUrl = document.referrer || `client-card.html?id=${clientId}`;
         window.location.href = returnUrl;
@@ -2205,10 +2146,10 @@ function deleteClient(options = {}) {
         return;
     }
 
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) {
-        console.error('Клиент не найден в localStorage:', clientId);
+        console.error('Клиент не найден в appStorage:', clientId);
         alert('Клиент не найден!');
         window.location.href = 'index.html';
         return;
@@ -2219,7 +2160,7 @@ function deleteClient(options = {}) {
     }
 
     clients.splice(clientIndex, 1);
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     window.location.href = 'index.html';
 }
 
@@ -2286,16 +2227,16 @@ function saveClient() {
         return;
     }
 
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     clients.push(client);
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     window.location.href = 'index.html';
 }
 
 // Поиск клиентов
 function searchClients() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const list = document.getElementById('searchSuggestions');
     if (!list) return;
     list.innerHTML = '';
@@ -2355,8 +2296,8 @@ function renderDayActions(dateStr) {
         }
     }
 
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     const managers = getManagers();
 
     const clientTasks = clients
@@ -2444,11 +2385,11 @@ function renderDayActions(dateStr) {
 }
 
 function confirmPayment(clientId, paymentIndex, dateStr) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client || !client.paidMonths || paymentIndex >= client.paidMonths.length) return;
     client.paidMonths[paymentIndex] = true;
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     if (dateStr) {
         renderDayActions(dateStr);
     }
@@ -2458,7 +2399,7 @@ function confirmPayment(clientId, paymentIndex, dateStr) {
 
 function getDebtors() {
     const today = new Date().toISOString().split('T')[0];
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     return clients.flatMap(client =>
         getPaymentSchedule(client)
             .map((p, idx) => ({ client, payment: p, idx }))
@@ -2529,8 +2470,8 @@ function initCalendar() {
         noEventsContent: 'Нет событий',
         eventDisplay: 'dot',
         events: function(info, successCallback, failureCallback) {
-            const clients = JSON.parse(localStorage.getItem('clients')) || [];
-            const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+            const clients = JSON.parse(appStorage.getItem('clients')) || [];
+            const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
             const clientEvents = clients
                 .filter(client => client.courtDate)
                 .map(client => ({
@@ -2736,8 +2677,8 @@ function initCalendar() {
 }
 
 function showClientsForDate(dateStr) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     const filteredClients = clients.filter(client => client.courtDate === dateStr);
     const filteredConsultations = consultations.filter(consult => consult.date === dateStr);
     const managerList = getManagers();
@@ -2837,8 +2778,8 @@ function showClientsForDate(dateStr) {
 // Завершение клиента
 function completeClient(clientId) {
     // Получаем текущих клиентов
-    var clients = JSON.parse(localStorage.getItem('clients')) || [];
-    var archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    var clients = JSON.parse(appStorage.getItem('clients')) || [];
+    var archivedClients = JSON.parse(appStorage.getItem('archivedClients')) || [];
     var clientIndex = -1;
     for (var i = 0; i < clients.length; i++) {
         if (String(clients[i].id) === String(clientId)) {
@@ -2857,8 +2798,8 @@ function completeClient(clientId) {
     archivedClients.push(clients[clientIndex]);
     clients.splice(clientIndex, 1);
 
-    localStorage.setItem('clients', JSON.stringify(clients));
-    localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
+    appStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('archivedClients', JSON.stringify(archivedClients));
 
     showToast('Клиент перемещён в архив!');
     displayClientsList();
@@ -2868,7 +2809,7 @@ function completeClient(clientId) {
 function populateArchivedClientsList() {
     const listEl = document.getElementById('archivedClientsList');
     if (!listEl) return;
-    const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    const archivedClients = JSON.parse(appStorage.getItem('archivedClients')) || [];
     listEl.innerHTML = '';
     if (archivedClients.length === 0) {
         listEl.innerHTML = '<li class="list-group-item">Архив пуст</li>';
@@ -2895,12 +2836,12 @@ function showArchivedClients() {
 }
 
 function deleteArchivedClient(clientId) {
-    const archivedClients = JSON.parse(localStorage.getItem('archivedClients')) || [];
+    const archivedClients = JSON.parse(appStorage.getItem('archivedClients')) || [];
     const index = archivedClients.findIndex(c => String(c.id) === String(clientId));
     if (index === -1) return;
     if (confirm('Удалить этого клиента из архива?')) {
         archivedClients.splice(index, 1);
-        localStorage.setItem('archivedClients', JSON.stringify(archivedClients));
+        appStorage.setItem('archivedClients', JSON.stringify(archivedClients));
         populateArchivedClientsList();
         showToast('Клиент удалён из архива');
     }
@@ -2946,11 +2887,11 @@ function addTask() {
     } else {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clients = JSON.parse(appStorage.getItem('clients')) || [];
         const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
         if (clientIndex !== -1) {
             clients[clientIndex].tasks = window.tasks;
-            localStorage.setItem('clients', JSON.stringify(clients));
+            appStorage.setItem('clients', JSON.stringify(clients));
         }
     }
     renderTaskList();
@@ -3000,11 +2941,11 @@ function removeTask(idx) {
     } else {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clients = JSON.parse(appStorage.getItem('clients')) || [];
         const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
         if (clientIndex !== -1) {
             clients[clientIndex].tasks = window.tasks;
-            localStorage.setItem('clients', JSON.stringify(clients));
+            appStorage.setItem('clients', JSON.stringify(clients));
         }
     }
     renderTaskList();
@@ -3032,12 +2973,12 @@ function completeTask(idx) {
     } else {
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('id');
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clients = JSON.parse(appStorage.getItem('clients')) || [];
         const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
         if (clientIndex === -1) return;
         advanceClientStage(clients[clientIndex]);
         clients[clientIndex].tasks = window.tasks;
-        localStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('clients', JSON.stringify(clients));
     }
     renderTaskList();
     renderCompletedTasks(currentClientData);
@@ -3100,7 +3041,7 @@ function advanceClientStage(client) {
 }
 
 window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) return;
     const tasks = clients[clientIndex].tasks || [];
@@ -3110,7 +3051,7 @@ window.completeTaskFromCalendar = function(clientId, taskId, dateStr) {
     tasks[tIndex].completedAt = new Date().toISOString();
     advanceClientStage(clients[clientIndex]);
     clients[clientIndex].tasks = tasks;
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     renderDayActions(dateStr);
     if (window.FullCalendar && document.getElementById('calendar')._fullCalendar) {
         document.getElementById('calendar')._fullCalendar.refetchEvents();
@@ -3200,7 +3141,7 @@ window.completeManagerTaskFromCalendar = function(managerId, taskId, dateStr) {
 function completeSubStage() {
     const urlParams = new URLSearchParams(window.location.search);
     const clientId = urlParams.get('id');
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const clientIndex = clients.findIndex(c => String(c.id) === String(clientId));
     if (clientIndex === -1) return;
     const client = clients[clientIndex];
@@ -3215,7 +3156,7 @@ function completeSubStage() {
         });
     }
     advanceClientStage(client);
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     const stageSelect = document.getElementById('stage');
     const subStageSelect = document.getElementById('subStage');
     if (stageSelect && subStageSelect) {
@@ -3232,12 +3173,12 @@ function completeSubStage() {
 }
 
 // --- Для add-client.html ---
-// window.saveClient = function() { ... } уже реализовано и сохраняет задачи в localStorage
+// window.saveClient = function() { ... } уже реализовано и сохраняет задачи в appStorage
 
 // --- Для календаря ---
 // Модальное окно для добавления задачи через select
 function showAddTaskModal(dateStr) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const managers = getManagers();
     if (clients.length === 0 && managers.length === 0) {
         alert('Нет объектов для добавления задачи!');
@@ -3308,7 +3249,7 @@ function showAddTaskModal(dateStr) {
             if (!client) { alert('Клиент не найден!'); return; }
             if (!Array.isArray(client.tasks)) client.tasks = [];
             client.tasks.push(task);
-            localStorage.setItem('clients', JSON.stringify(clients));
+            appStorage.setItem('clients', JSON.stringify(clients));
         } else if (ownerType === 'manager') {
             const manager = managers.find(m => String(m.id) === String(ownerId));
             if (!manager) { alert('Менеджер не найден!'); return; }
@@ -3348,9 +3289,9 @@ window.saveConsultation = function() {
         return;
     }
 
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     consultations.push({ id: Date.now(), name, phone, date, notes });
-    localStorage.setItem('consultations', JSON.stringify(consultations));
+    appStorage.setItem('consultations', JSON.stringify(consultations));
 
     const modalEl = document.getElementById('addConsultationModal');
     const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -3375,10 +3316,10 @@ window.saveConsultation = function() {
 
 // --- вернуть функцию назначения консультации ---
 window.convertToClient = function(consultId, dateStr) {
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     const consult = consultations.find(c => c.id === consultId);
     if (!consult) return;
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const existingIds = new Set(clients.map(c => String(c.id)));
     clients.push({
         id: generateClientId(consult.name, '', '', consult.phone, existingIds),
@@ -3410,23 +3351,23 @@ window.convertToClient = function(consultId, dateStr) {
         managerPaidTotal: 0,
         managerFullyPaid: false
     });
-    localStorage.setItem('clients', JSON.stringify(clients));
+    appStorage.setItem('clients', JSON.stringify(clients));
     // Удалить консультацию
     const idx = consultations.findIndex(c => c.id === consultId);
     if (idx !== -1) {
         consultations.splice(idx, 1);
-        localStorage.setItem('consultations', JSON.stringify(consultations));
+        appStorage.setItem('consultations', JSON.stringify(consultations));
     }
     renderDayActions(dateStr);
     refetchCalendarEvents();
 };
 
 window.deleteConsultation = function(consultId, dateStr) {
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     const idx = consultations.findIndex(c => c.id === consultId);
     if (idx !== -1) {
         consultations.splice(idx, 1);
-        localStorage.setItem('consultations', JSON.stringify(consultations));
+        appStorage.setItem('consultations', JSON.stringify(consultations));
         renderDayActions(dateStr);
         refetchCalendarEvents();
     }
@@ -3507,7 +3448,7 @@ window.openAssignManagerForClient = function(clientId) {
         option.textContent = m.name;
         select.appendChild(option);
     });
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     document.getElementById('managerPercent').value = client?.managerPercent || '';
     document.getElementById('isFinManager').checked = client?.isFinManager || false;
@@ -3519,7 +3460,7 @@ window.saveClientManager = function(clientId) {
     const managerId = document.getElementById('managerSelect').value;
     const percent = document.getElementById('managerPercent').value;
     const isFU = document.getElementById('isFinManager').checked;
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (client) {
         client.managerId = managerId;
@@ -3527,7 +3468,7 @@ window.saveClientManager = function(clientId) {
         client.isFinManager = isFU;
         client.managerPaidTotal = 0;
         client.managerFullyPaid = false;
-        localStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('clients', JSON.stringify(clients));
         renderClientManager(client);
     }
     renderManagersPage();
@@ -3538,7 +3479,7 @@ function renderManagersPage() {
     const list = document.getElementById('managersList');
     if (!list) return;
     const managers = getManagers();
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     list.innerHTML = '';
     list.classList.toggle('manager-list--empty', managers.length === 0);
     if (managers.length === 0) {
@@ -3607,7 +3548,7 @@ function renderManagersPage() {
             })
             : ['<li class="manager-client-item manager-client-item--empty">Клиенты пока не назначены</li>'];
         const clientItems = clientItemsArr.join('');
-        const paymentsStore = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        const paymentsStore = JSON.parse(appStorage.getItem('managerPayments')) || {};
         const history = paymentsStore[manager.id]?.history || [];
         const currentMonth = new Date().toISOString().slice(0,7);
         const paidClientThisMonth = history
@@ -3778,7 +3719,7 @@ window.removeManager = function(managerId) {
     if (!confirm('Удалить менеджера?')) return;
     const managers = getManagers().filter(m => String(m.id) !== String(managerId));
     saveManagers(managers);
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     clients.forEach(c => {
         if (String(c.managerId) === String(managerId)) {
             delete c.managerId;
@@ -3787,10 +3728,10 @@ window.removeManager = function(managerId) {
             delete c.managerFullyPaid;
         }
     });
-    localStorage.setItem('clients', JSON.stringify(clients));
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    appStorage.setItem('clients', JSON.stringify(clients));
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     delete payments[managerId];
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    appStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagersPage();
 };
 
@@ -3799,7 +3740,7 @@ window.openAssignClientToManager = function(managerId) {
     currentClientId = null;
     const select = document.getElementById('assignClientSelect');
     if (!select) return;
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     select.innerHTML = '';
     clients.forEach(c => {
         const option = document.createElement('option');
@@ -3820,7 +3761,7 @@ window.openAssignClientToManager = function(managerId) {
 window.openEditAssignedClient = function(managerId, clientId) {
     currentManagerId = managerId;
     currentClientId = clientId;
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) return;
     const select = document.getElementById('assignClientSelect');
@@ -3840,7 +3781,7 @@ window.saveAssignedClient = function() {
     const percent = document.getElementById('assignClientPercent').value;
     const isFU = document.getElementById('assignClientFU').checked;
     const fuName = document.getElementById('assignClientFUName').value.trim();
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (client) {
         client.managerId = currentManagerId;
@@ -3851,7 +3792,7 @@ window.saveAssignedClient = function() {
             client.managerPaidTotal = 0;
             client.managerFullyPaid = false;
         }
-        localStorage.setItem('clients', JSON.stringify(clients));
+        appStorage.setItem('clients', JSON.stringify(clients));
     }
     renderManagersPage();
     const modal = bootstrap.Modal.getInstance(document.getElementById('assignClientModal'));
@@ -3860,7 +3801,7 @@ window.saveAssignedClient = function() {
 };
 
 window.removeClientFromManager = function(managerId, clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (client && String(client.managerId) === String(managerId)) {
         delete client.managerId;
@@ -3870,13 +3811,13 @@ window.removeClientFromManager = function(managerId, clientId) {
         client.isFinManager = false;
         client.finManagerName = '';
         client.managerPayments = [];
-        localStorage.setItem('clients', JSON.stringify(clients));
-        const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        appStorage.setItem('clients', JSON.stringify(clients));
+        const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
         const mp = payments[managerId];
         if (mp && mp.history) {
             mp.history = mp.history.filter(p => p.clientId !== clientId);
             payments[managerId] = mp;
-            localStorage.setItem('managerPayments', JSON.stringify(payments));
+            appStorage.setItem('managerPayments', JSON.stringify(payments));
         }
     }
     renderManagersPage();
@@ -3919,10 +3860,10 @@ function renderManagerPayments() {
     const body = document.getElementById('managerPaymentsBody');
     const clientsBody = document.getElementById('managerPaymentsClientsBody');
     if (!body || !clientsBody) return;
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const data = payments[currentManagerId] || {};
     const history = data.history || [];
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const salaryDateInput = document.getElementById('managerSalaryDate');
     if (salaryDateInput && !salaryDateInput.value) {
         salaryDateInput.value = new Date().toISOString().split('T')[0];
@@ -4030,7 +3971,7 @@ function updateManagerSalaryUI(historyOverride) {
     const month = selectedDate.slice(0, 7);
     let history = historyOverride;
     if (!Array.isArray(history)) {
-        const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+        const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
         history = payments[currentManagerId]?.history || [];
     }
     const baseSalary = getManagerBaseSalary(manager);
@@ -4089,7 +4030,7 @@ window.issueManagerSalary = function() {
         return;
     }
     const month = date.slice(0, 7);
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
     const salaryPaid = history
@@ -4109,13 +4050,13 @@ window.issueManagerSalary = function() {
     }
     history.push({ type: 'salary', amount, date });
     payments[currentManagerId] = { ...existing, history };
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    appStorage.setItem('managerPayments', JSON.stringify(payments));
     renderManagerPayments();
     renderManagersPage();
 };
 
 window.issueClientPercent = function(clientId) {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) return;
     const percent = parseFloat(client.managerPercent) || 0;
@@ -4128,7 +4069,7 @@ window.issueClientPercent = function(clientId) {
     const remaining = totalDue - paid;
     if (remaining <= 0) return;
     if (amount > remaining) amount = remaining;
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
     const today = new Date().toISOString().split('T')[0];
@@ -4143,7 +4084,7 @@ window.issueClientPercent = function(clientId) {
     }
     history.push({ clientId, amount, date: today, early: already });
     payments[currentManagerId] = { ...existing, history };
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    appStorage.setItem('managerPayments', JSON.stringify(payments));
     client.managerPaidTotal = paid + amount;
     if (client.managerPaidTotal >= totalDue) client.managerFullyPaid = true;
     client.managerPayments = client.managerPayments || [];
@@ -4155,7 +4096,7 @@ window.issueClientPercent = function(clientId) {
 
 window.openAddManagerPayment = function(clientId) {
     const select = document.getElementById('managerPaymentClient');
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    const clients = JSON.parse(appStorage.getItem('clients') || '[]');
     const currentMonth = new Date().toISOString().slice(0,7);
     if (select) {
         select.innerHTML = '';
@@ -4194,7 +4135,7 @@ window.saveManagerPayment = function() {
     const amount = document.getElementById('managerPaymentAmount').value;
     const date = document.getElementById('managerPaymentDate').value;
     if (!clientId || !amount || !date) return;
-    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    const clients = JSON.parse(appStorage.getItem('clients') || '[]');
     const client = clients.find(c => String(c.id) === String(clientId));
     if (!client) return;
     const month = date.slice(0,7);
@@ -4209,12 +4150,12 @@ window.saveManagerPayment = function() {
     const remaining = totalDue - client.managerPaidTotal;
     if (amt > remaining) amt = remaining;
     if (amt <= 0) return;
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const existing = payments[currentManagerId] || {};
     const history = existing.history || [];
     history.push({ clientId, amount: amt, date });
     payments[currentManagerId] = { ...existing, history };
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    appStorage.setItem('managerPayments', JSON.stringify(payments));
     client.managerPaidTotal += amt;
     if (client.managerPaidTotal >= totalDue) {
         client.managerFullyPaid = true;
@@ -4228,14 +4169,14 @@ window.saveManagerPayment = function() {
 };
 
 window.deleteManagerPayment = function(index) {
-    const payments = JSON.parse(localStorage.getItem('managerPayments')) || {};
+    const payments = JSON.parse(appStorage.getItem('managerPayments')) || {};
     const data = payments[currentManagerId] || {};
     if (!data.history) return;
     const removed = data.history.splice(index, 1)[0];
     payments[currentManagerId] = data;
-    localStorage.setItem('managerPayments', JSON.stringify(payments));
+    appStorage.setItem('managerPayments', JSON.stringify(payments));
     if (removed && removed.clientId) {
-        const clients = JSON.parse(localStorage.getItem('clients')) || [];
+        const clients = JSON.parse(appStorage.getItem('clients')) || [];
         const client = clients.find(c => String(c.id) === String(removed.clientId));
         if (client) {
             client.managerPaidTotal = (client.managerPaidTotal || 0) - (removed.amount || 0);
@@ -4255,7 +4196,7 @@ window.deleteManagerPayment = function(index) {
 };
 
 window.showConsultationDetails = function(consultId) {
-    const consultations = JSON.parse(localStorage.getItem('consultations')) || [];
+    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
     const consult = consultations.find(c => c.id === consultId);
     if (!consult) return;
     const nameEl = document.getElementById('consultDetailName');
@@ -4272,7 +4213,7 @@ window.showConsultationDetails = function(consultId) {
 };
 
 window.openClientsModal = function() {
-    const clients = JSON.parse(localStorage.getItem('clients')) || [];
+    const clients = JSON.parse(appStorage.getItem('clients')) || [];
     const list = document.getElementById('clientsModalList');
     if (list) {
         list.innerHTML = '';

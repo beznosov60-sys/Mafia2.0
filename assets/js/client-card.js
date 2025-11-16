@@ -26,6 +26,6 @@
     if (window.__crmAppReady) {
         initClientCardPage();
     } else {
-        window.addEventListener('app:ready', initClientCardPage, { once: true });
+        window.addEventListener('app-ready', initClientCardPage, { once: true });
     }
 })();
