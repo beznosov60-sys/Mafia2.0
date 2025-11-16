@@ -116,6 +116,6 @@
     if (window.__crmAppReady) {
         initAddClientPage();
     } else {
-        window.addEventListener('app:ready', initAddClientPage, { once: true });
+        window.addEventListener('app-ready', initAddClientPage, { once: true });
     }
 })();

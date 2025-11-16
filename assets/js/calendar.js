@@ -50,6 +50,6 @@
     if (window.__crmAppReady) {
         initCalendarPage();
     } else {
-        window.addEventListener('app:ready', initCalendarPage, { once: true });
+        window.addEventListener('app-ready', initCalendarPage, { once: true });
     }
 })();

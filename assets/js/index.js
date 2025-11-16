@@ -168,6 +168,6 @@
     if (window.__crmAppReady) {
         initIndexPage();
     } else {
-        window.addEventListener('app:ready', initIndexPage, { once: true });
+        window.addEventListener('app-ready', initIndexPage, { once: true });
     }
 })();

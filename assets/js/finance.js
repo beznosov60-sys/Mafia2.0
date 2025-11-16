@@ -16,6 +16,6 @@
     if (window.__crmAppReady) {
         initFinancePage();
     } else {
-        window.addEventListener('app:ready', initFinancePage, { once: true });
+        window.addEventListener('app-ready', initFinancePage, { once: true });
     }
 })();

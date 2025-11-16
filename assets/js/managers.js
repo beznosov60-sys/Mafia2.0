@@ -29,6 +29,6 @@
     if (window.__crmAppReady) {
         initManagersPage();
     } else {
-        window.addEventListener('app:ready', initManagersPage, { once: true });
+        window.addEventListener('app-ready', initManagersPage, { once: true });
     }
 })();
