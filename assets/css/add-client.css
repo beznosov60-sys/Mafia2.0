@@ -1,29 +1,158 @@
-/* Styles for add-client multi-step form */
-.form-step { display: none; }
-.form-step.active { display: block; }
+/* Styles for add-client page with CRM visual language */
+body,
+.form-screen {
+    background: radial-gradient(circle at 20% 20%, rgba(112, 102, 255, 0.06), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(92, 82, 249, 0.06), transparent 32%),
+        var(--neutral-300);
+}
+
+.page-header .eyebrow {
+    font-size: 0.85rem;
+    color: var(--purple-600);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.crm-form-card {
+    max-width: 960px;
+    margin: 0 auto;
+    border-radius: 20px;
+    background: linear-gradient(145deg, var(--neutral-100), #f8f9ff);
+    border: 1px solid var(--neutral-400);
+    overflow: hidden;
+}
+
+.crm-form-card .card-header {
+    background: linear-gradient(120deg, rgba(92, 82, 249, 0.08), rgba(112, 102, 255, 0.16));
+}
+
+.icon-pill {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(92, 82, 249, 0.12);
+    color: var(--purple-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.badge.bg-primary-subtle {
+    background: rgba(92, 82, 249, 0.12) !important;
+    color: var(--purple-700) !important;
+    border: 1px solid rgba(92, 82, 249, 0.28);
+}
+
 .step-indicator {
     display: flex;
     justify-content: space-between;
-    border-bottom: 2px solid var(--neutral-400);
-    margin-bottom: 1rem;
+    padding: 0.9rem 1.25rem;
+    background: var(--neutral-200);
+    border-bottom: 1px solid var(--neutral-400);
+    gap: 12px;
 }
+
 .step-indicator .step {
     flex: 1;
     text-align: center;
-    padding: 0.5rem 0;
-    color: var(--neutral-600);
+    padding: 0.65rem 0.5rem;
+    color: var(--neutral-700);
     position: relative;
-    font-weight: 500;
+    font-weight: 600;
+    border-radius: 12px;
+    background: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
+    transition: all 0.2s ease;
 }
+
 .step-indicator .step.active {
-    color: var(--primary-color);
+    color: var(--neutral-100);
+    background: linear-gradient(120deg, var(--purple-600), var(--purple-500));
+    border-color: transparent;
+    box-shadow: 0 12px 24px -16px rgba(67, 57, 242, 0.6);
 }
-.step-indicator .step.active::after {
-    content: '';
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+.section-block {
+    background: var(--neutral-100);
+    border: 1px solid var(--neutral-400);
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px -24px rgba(20, 20, 43, 0.3);
+    margin-bottom: 1.25rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-header h6 {
+    margin: 0;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: #d14343;
+    font-weight: 700;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
     position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--primary-color);
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--neutral-600);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.input-with-icon .form-control {
+    padding-left: 2.5rem;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--neutral-700);
+    font-weight: 600;
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+    color: var(--purple-700);
+    text-decoration: underline;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: #d14343;
+    box-shadow: 0 0 0 3px rgba(209, 67, 67, 0.12);
+}
+
+@media (max-width: 768px) {
+    .step-indicator {
+        flex-direction: column;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

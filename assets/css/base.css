@@ -498,6 +498,78 @@ body.calendar-screen {
     background: radial-gradient(circle at top, rgba(90, 76, 245, 0.36), rgba(20, 20, 43, 0.55));
 }
 
+.modal-eyebrow {
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--neutral-700);
+    font-weight: 700;
+}
+
+.choice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.choice-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--neutral-400);
+    border-radius: 14px;
+    background: linear-gradient(145deg, var(--neutral-100), #f9f9ff);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.choice-card:hover,
+.choice-card:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px -22px rgba(20, 20, 43, 0.35);
+    border-color: var(--purple-400);
+}
+
+.choice-card.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+    background: var(--neutral-200);
+}
+
+.choice-card.disabled:hover,
+.choice-card.disabled:focus-visible {
+    transform: none;
+    border-color: var(--neutral-400);
+}
+
+.choice-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(67, 57, 242, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--purple-700);
+    font-size: 1.35rem;
+}
+
+.choice-icon.active {
+    background: rgba(67, 57, 242, 0.14);
+}
+
+.choice-content h6 {
+    font-weight: 700;
+}
+
+.choice-arrow {
+    color: var(--purple-600);
+}
+
 @media (max-width: 576px) {
     .crm-modal .modal-dialog {
         margin: 1.2rem auto;
