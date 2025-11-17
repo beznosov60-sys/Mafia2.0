@@ -570,6 +570,140 @@ body.calendar-screen {
     color: var(--purple-600);
 }
 
+/* Add client choice modal accents */
+#addClientChoiceModal .modal-dialog {
+    max-width: clamp(680px, 94vw, 920px);
+}
+
+#addClientChoiceModal .modal-content.add-client-choice {
+    position: relative;
+    padding-top: 18px;
+    border: 1px solid rgba(112, 102, 255, 0.24);
+    background: radial-gradient(circle at 20% 10%, rgba(112, 102, 255, 0.18), transparent 26%),
+        radial-gradient(circle at 90% 0%, rgba(67, 57, 242, 0.16), transparent 24%),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(240, 241, 255, 0.95));
+    box-shadow: 0 28px 64px -30px rgba(33, 24, 116, 0.45);
+}
+
+#addClientChoiceModal .modal-body {
+    padding: 26px 30px 12px;
+    background: transparent;
+}
+
+#addClientChoiceModal .close-rounded {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 26px -16px rgba(20, 20, 43, 0.35);
+}
+
+#addClientChoiceModal .choice-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+#addClientChoiceModal .choice-hero-text .modal-title {
+    font-size: 1.35rem;
+}
+
+#addClientChoiceModal .choice-helper {
+    color: var(--neutral-700);
+    font-size: 0.95rem;
+}
+
+#addClientChoiceModal .choice-chip {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(112, 102, 255, 0.3);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 700;
+    color: var(--purple-700);
+    box-shadow: 0 10px 26px -18px rgba(33, 24, 116, 0.35);
+}
+
+#addClientChoiceModal .choice-grid {
+    gap: 14px;
+}
+
+#addClientChoiceModal .choice-card.elevated {
+    align-items: flex-start;
+    padding: 1.1rem 1.2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(112, 102, 255, 0.2);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(239, 240, 255, 0.94));
+    box-shadow: 0 16px 38px -22px rgba(20, 20, 43, 0.35);
+    column-gap: 14px;
+}
+
+#addClientChoiceModal .choice-card.elevated:hover,
+#addClientChoiceModal .choice-card.elevated:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(112, 102, 255, 0.45);
+}
+
+#addClientChoiceModal .choice-card.elevated.disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    border-style: dashed;
+}
+
+#addClientChoiceModal .choice-card .choice-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(67, 57, 242, 0.12), rgba(67, 57, 242, 0.08));
+    color: var(--purple-700);
+    font-size: 1.45rem;
+}
+
+#addClientChoiceModal .choice-card .choice-content h6 {
+    font-size: 1.02rem;
+}
+
+#addClientChoiceModal .choice-card .choice-eyebrow {
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--neutral-700);
+    font-weight: 700;
+}
+
+#addClientChoiceModal .choice-card .choice-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+#addClientChoiceModal .chip-primary,
+#addClientChoiceModal .chip-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+#addClientChoiceModal .chip-primary {
+    background: rgba(90, 76, 245, 0.15);
+    color: var(--purple-700);
+    border: 1px solid rgba(90, 76, 245, 0.32);
+}
+
+#addClientChoiceModal .chip-secondary {
+    background: rgba(124, 126, 155, 0.12);
+    color: var(--neutral-700);
+    border: 1px dashed rgba(124, 126, 155, 0.5);
+}
+
 @media (max-width: 576px) {
     .crm-modal .modal-dialog {
         margin: 1.2rem auto;
