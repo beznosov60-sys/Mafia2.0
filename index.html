@@ -31,10 +31,10 @@
             </div>
             <!-- Кнопки -->
             <div class="icon-buttons">
-                <a href="add-client.html" class="circle-btn" title="Добавить клиента" aria-label="Добавить клиента">
+                <button class="circle-btn" type="button" title="Добавить клиента" aria-label="Добавить клиента" data-bs-toggle="modal" data-bs-target="#addClientChoiceModal">
                     <span class="btn-icon" aria-hidden="true"><i class="ri-user-add-line"></i></span>
                     <span class="btn-label">Добавить клиента</span>
-                </a>
+                </button>
                 <a href="managers.html" class="circle-btn" title="Менеджеры" aria-label="Менеджеры">
                     <span class="btn-icon" aria-hidden="true"><i class="ri-user-star-line"></i></span>
                     <span class="btn-label">Менеджеры</span>
@@ -102,6 +102,44 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно выбора действия добавления клиента -->
+    <div class="modal fade crm-modal" id="addClientChoiceModal" tabindex="-1" aria-labelledby="addClientChoiceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <p class="modal-eyebrow mb-1">Новый клиент</p>
+                        <h5 class="modal-title" id="addClientChoiceModalLabel">Выберите способ добавления</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="choice-grid">
+                        <a class="choice-card" href="add-client.html">
+                            <div class="choice-icon active"><i class="ri-file-add-line"></i></div>
+                            <div class="choice-content">
+                                <h6 class="mb-1">Создать карточку клиента</h6>
+                                <p class="mb-0 text-muted">Заполните данные клиента вручную в новом окне.</p>
+                            </div>
+                            <i class="ri-arrow-right-up-line choice-arrow" aria-hidden="true"></i>
+                        </a>
+                        <div class="choice-card disabled" aria-disabled="true">
+                            <div class="choice-icon"><i class="ri-folder-5-line"></i></div>
+                            <div class="choice-content">
+                                <h6 class="mb-1">Добавить клиента по номеру дела</h6>
+                                <p class="mb-0 text-muted">Функция находится в разработке</p>
+                            </div>
+                            <span class="badge bg-light text-muted border">Скоро</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button>
                 </div>
             </div>
         </div>

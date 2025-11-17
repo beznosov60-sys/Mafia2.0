@@ -6,8 +6,6 @@
         }
 
         setupStepNavigation();
-        setupPassportToggle();
-        setupPaymentMonths();
         setupStageSelect();
         setupArbitrationLink();
     }
@@ -18,6 +16,13 @@
         if (steps.length === 0 || indicators.length === 0) {
             return;
         }
+
+        const validateStep = (index) => {
+            if (index === 0) {
+                return validateRequiredFields(['lastName', 'firstName', 'middleName']);
+            }
+            return true;
+        };
 
         const showStep = (index) => {
             steps.forEach((step, i) => {
@@ -30,58 +35,15 @@
 
         document.getElementById('toStep2')?.addEventListener('click', (event) => {
             event.preventDefault();
+            if (!validateStep(0)) {
+                return;
+            }
             showStep(1);
-        });
-        document.getElementById('toStep3')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            showStep(2);
         });
         document.getElementById('backToStep1')?.addEventListener('click', (event) => {
             event.preventDefault();
             showStep(0);
         });
-        document.getElementById('backToStep2')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            showStep(1);
-        });
-    }
-
-    function setupPassportToggle() {
-        const toggleBtn = document.getElementById('addPassportBtn');
-        const passportFields = document.getElementById('passportFields');
-        if (!toggleBtn || !passportFields) {
-            return;
-        }
-        toggleBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            passportFields.classList.toggle('d-none');
-        });
-    }
-
-    function setupPaymentMonths() {
-        const monthsInput = document.getElementById('paymentMonths');
-        if (!monthsInput) {
-            return;
-        }
-        const container = document.getElementById('paidMonthsContainer');
-        const rebuild = () => {
-            const months = parseInt(monthsInput.value, 10) || 0;
-            if (!container) {
-                return;
-            }
-            container.innerHTML = '';
-            for (let i = 1; i <= months; i += 1) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'form-check form-check-inline';
-                wrapper.innerHTML = `
-                    <input class="form-check-input" type="checkbox" id="paidMonth${i}">
-                    <label class="form-check-label" for="paidMonth${i}">Месяц ${i}</label>
-                `;
-                container.appendChild(wrapper);
-            }
-        };
-        monthsInput.addEventListener('input', rebuild);
-        rebuild();
     }
 
     function setupStageSelect() {
@@ -94,6 +56,23 @@
             updateSubStageOptions(stageSelect.value, subStageSelect);
         });
         updateSubStageOptions(stageSelect.value, subStageSelect);
+    }
+
+    function validateRequiredFields(ids) {
+        let isValid = true;
+        ids.forEach((id) => {
+            const field = document.getElementById(id);
+            if (!field) {
+                return;
+            }
+            const hasValue = Boolean(field.value.trim());
+            field.classList.toggle('is-invalid', !hasValue);
+            if (!hasValue) {
+                isValid = false;
+                field.focus();
+            }
+        });
+        return isValid;
     }
 
     function setupArbitrationLink() {

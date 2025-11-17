@@ -2178,10 +2178,7 @@ function saveClient() {
     const lastName = getInputValue('lastName');
     const phone = getInputValue('phone');
     const paymentMonthsValue = parseInt(getInputValue('paymentMonths', { trim: false }), 10) || 0;
-    const paidMonthsCheckboxes = Array.from(document.querySelectorAll('#paidMonthsContainer input[type="checkbox"]'));
-    const paidMonths = paidMonthsCheckboxes.length > 0
-        ? paidMonthsCheckboxes.map(cb => cb.checked)
-        : new Array(paymentMonthsValue).fill(false);
+    const paidMonths = new Array(paymentMonthsValue).fill(false);
     if (phone && !/^\d{10,12}$/.test(phone)) {
         alert('Номер телефона должен содержать 10-12 цифр!');
         return;
@@ -2194,10 +2191,6 @@ function saveClient() {
         lastName,
         birthDate: getInputValue('birthDate', { trim: false }),
         phone,
-        passportSeries: getInputValue('passportSeries'),
-        passportNumber: getInputValue('passportNumber'),
-        passportIssueDate: getInputValue('passportIssueDate', { trim: false }),
-        passportIssuePlace: getInputValue('passportIssuePlace'),
         totalAmount: parseInt(getInputValue('totalAmount', { trim: false }), 10) || 0,
         paymentMonths: paymentMonthsValue,
         paymentStartDate: getInputValue('paymentStartDate', { trim: false }),
@@ -2207,7 +2200,7 @@ function saveClient() {
         stage: getInputValue('stage', { trim: false }),
         subStage: getInputValue('subStage', { trim: false }),
         courtDate: getInputValue('courtDate', { trim: false }),
-        notes: getInputValue('notes'),
+        notes: '',
         favorite: document.getElementById('favoriteBtn')?.dataset.favorite === 'true',
         createdAt: new Date().toISOString(),
         tasks,
@@ -2221,9 +2214,19 @@ function saveClient() {
     };
 
     // Валидация
-    if (!client.firstName || !client.lastName) {
-        console.error('Валидация не пройдена: имя и фамилия обязательны');
-        alert('Имя и фамилия обязательны!');
+    if (!client.firstName || !client.lastName || !client.middleName) {
+        console.error('Валидация не пройдена: ФИО обязательно');
+        alert('ФИО обязательно для заполнения!');
+        return;
+    }
+
+    if (!client.totalAmount || client.totalAmount <= 0) {
+        alert('Укажите общую сумму сделки');
+        return;
+    }
+
+    if (!client.paymentStartDate) {
+        alert('Укажите дату первого платежа');
         return;
     }
 
