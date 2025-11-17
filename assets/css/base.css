@@ -608,6 +608,10 @@ body.calendar-screen {
     gap: 18px;
 }
 
+#addClientChoiceModal .choice-hero-text {
+    max-width: 640px;
+}
+
 #addClientChoiceModal .choice-hero-text .modal-title {
     font-size: 1.35rem;
 }
@@ -615,6 +619,54 @@ body.calendar-screen {
 #addClientChoiceModal .choice-helper {
     color: var(--neutral-700);
     font-size: 0.95rem;
+}
+
+#addClientChoiceModal .choice-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+    color: var(--neutral-800);
+    font-size: 0.95rem;
+}
+
+#addClientChoiceModal .choice-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+#addClientChoiceModal .choice-list .dot {
+    width: 9px;
+    height: 9px;
+    margin-right: 8px;
+    display: inline-block;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple-500), var(--purple-700));
+    box-shadow: 0 6px 12px -8px rgba(67, 57, 242, 0.55);
+}
+
+#addClientChoiceModal .choice-summary {
+    min-width: 240px;
+    max-width: 280px;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(112, 102, 255, 0.26);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 16px 36px -24px rgba(20, 20, 43, 0.32);
+}
+
+#addClientChoiceModal .choice-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(90, 76, 245, 0.14);
+    color: var(--purple-700);
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: 1px solid rgba(90, 76, 245, 0.2);
 }
 
 #addClientChoiceModal .choice-chip {
@@ -681,6 +733,12 @@ body.calendar-screen {
     margin-left: auto;
 }
 
+#addClientChoiceModal .choice-card .choice-meta-note {
+    color: var(--neutral-700);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
 #addClientChoiceModal .chip-primary,
 #addClientChoiceModal .chip-secondary {
     display: inline-flex;
@@ -702,6 +760,16 @@ body.calendar-screen {
     background: rgba(124, 126, 155, 0.12);
     color: var(--neutral-700);
     border: 1px dashed rgba(124, 126, 155, 0.5);
+}
+
+@media (max-width: 768px) {
+    #addClientChoiceModal .choice-hero {
+        flex-direction: column;
+    }
+
+    #addClientChoiceModal .choice-summary {
+        width: 100%;
+    }
 }
 
 @media (max-width: 576px) {
