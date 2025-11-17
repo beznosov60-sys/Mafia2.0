@@ -117,32 +117,46 @@
                         <div class="choice-hero-text">
                             <p class="modal-eyebrow mb-1">Новый клиент</p>
                             <h5 class="modal-title" id="addClientChoiceModalLabel">Выберите способ добавления</h5>
-                            <p class="choice-helper mb-0">Создайте карточку вручную или дождитесь автоматизации по номеру дела.</p>
+                            <p class="choice-helper mb-2">Создайте карточку вручную или дождитесь автоматизации по номеру дела.</p>
+                            <ul class="choice-list mb-0">
+                                <li><span class="dot" aria-hidden="true"></span>Для срочного внесения данных используйте ручной ввод.</li>
+                                <li><span class="dot" aria-hidden="true"></span>Автозаполнение по номеру дела появится позже.</li>
+                            </ul>
                         </div>
-                        <span class="choice-chip">CRM · Быстрый старт</span>
+                        <div class="choice-summary">
+                            <div class="choice-summary-chip">Рекомендация</div>
+                            <p class="mb-1 fw-semibold">Нужно занести клиента сейчас?</p>
+                            <p class="mb-0 text-muted">Откройте форму и заполните карточку — это займёт пару минут.</p>
+                        </div>
                     </div>
                     <div class="choice-grid mt-3">
                         <a class="choice-card elevated" href="add-client.html">
                             <div class="choice-icon active" aria-hidden="true"><i class="ri-file-add-line"></i></div>
                             <div class="choice-content">
-                                <p class="choice-eyebrow mb-1">Ручной ввод</p>
-                                <h6 class="mb-1">Создать карточку клиента</h6>
-                                <p class="mb-0 text-muted">Заполните данные клиента вручную в новом окне.</p>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <p class="choice-eyebrow mb-0">Ручной ввод</p>
+                                    <span class="chip-primary">Готово</span>
+                                </div>
+                                <h6 class="mb-1">Открыть форму клиента</h6>
+                                <p class="mb-0 text-muted">Заполните карточку в новом окне, чтобы не терять контекст работы.</p>
                             </div>
                             <div class="choice-meta">
-                                <span class="chip-primary">Готово</span>
+                                <span class="choice-meta-note">~2 мин</span>
                                 <i class="ri-arrow-right-up-line choice-arrow" aria-hidden="true"></i>
                             </div>
                         </a>
                         <div class="choice-card elevated disabled" aria-disabled="true">
                             <div class="choice-icon" aria-hidden="true"><i class="ri-folder-5-line"></i></div>
                             <div class="choice-content">
-                                <p class="choice-eyebrow mb-1">Интеграция</p>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <p class="choice-eyebrow mb-0">Интеграция</p>
+                                    <span class="chip-secondary">Скоро</span>
+                                </div>
                                 <h6 class="mb-1">Добавить клиента по номеру дела</h6>
-                                <p class="mb-0 text-muted">Функция находится в разработке</p>
+                                <p class="mb-0 text-muted">Автоматически подтянем данные, когда функция будет готова.</p>
                             </div>
                             <div class="choice-meta">
-                                <span class="chip-secondary">Скоро</span>
+                                <span class="choice-meta-note">На тестировании</span>
                             </div>
                         </div>
                     </div>
