@@ -41,7 +41,9 @@
 
 .home-screen .circle-btn.is-expanded .btn-label {
     opacity: 1;
-    max-width: max(0px, calc(clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width)) - var(--btn-size) - 32px));
+    max-width: calc(100% - var(--btn-size) - 24px);
+    flex: 1 1 auto;
+    min-width: 0;
     transform: translateX(0);
     padding: 0.45rem 0.9rem;
 }
@@ -53,7 +55,7 @@
 }
 
 .home-screen .add-client-btn {
-    --expanded-width: 260px;
+    --expanded-width: 300px;
 }
 
 /* Add client modal */
