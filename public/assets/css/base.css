@@ -800,7 +800,8 @@ body.calendar-screen {
 .home-screen .circle-btn {
     --btn-size: 56px;
     height: var(--btn-size);
-    width: var(--btn-size);
+    min-width: var(--btn-size);
+    width: auto;
     border-radius: 999px;
     border: 1px solid rgba(112, 102, 255, 0.22);
     background: radial-gradient(circle at 26% 26%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
@@ -813,8 +814,7 @@ body.calendar-screen {
     color: #fff;
     box-shadow: 0 18px 36px -18px rgba(67, 57, 242, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        background 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-        padding-right 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+        background 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-right 0.32s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     overflow: visible;
@@ -890,7 +890,6 @@ body.calendar-screen {
 .home-screen .circle-btn:focus,
 .home-screen .circle-btn.is-expanded,
 .home-screen .circle-btn.is-active {
-    width: auto;
     padding-right: 14px;
 }
 
@@ -907,8 +906,8 @@ body.calendar-screen {
 .home-screen .circle-btn.is-expanded .btn-label {
     opacity: 1;
     max-width: 240px;
-    padding: 0.5rem 0.85rem;
-    margin-left: 12px;
+    padding: 0.5rem 0.78rem;
+    margin-left: 6px;
     transform: translateX(0);
 }
 
@@ -934,13 +933,14 @@ body.calendar-screen {
     display: none;
 }
 
-@media (max-width: 576px) {
-    .home-screen .circle-btn {
-        --btn-size: 52px;
-        height: var(--btn-size);
-        width: var(--btn-size);
-        font-size: 1.15rem;
-    }
+    @media (max-width: 576px) {
+        .home-screen .circle-btn {
+            --btn-size: 52px;
+            height: var(--btn-size);
+            min-width: var(--btn-size);
+            width: auto;
+            font-size: 1.15rem;
+        }
 
     .home-screen .circle-btn .btn-label {
         font-size: 0.85rem;
