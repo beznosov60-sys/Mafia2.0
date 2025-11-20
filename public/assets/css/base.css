@@ -35,6 +35,7 @@
     align-items: center;
     justify-content: center;
     background: radial-gradient(circle at top, rgba(76, 110, 245, 0.12), rgba(67, 57, 242, 0.28)), var(--neutral-200);
+    -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     opacity: 0;
     visibility: hidden;
@@ -343,6 +344,7 @@ body.calendar-screen {
     gap: 32px;
     background: rgba(255, 255, 255, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.65);
+    -webkit-backdrop-filter: blur(22px);
     backdrop-filter: blur(22px);
     border-radius: 32px;
     padding: 36px 40px;
@@ -390,6 +392,16 @@ body.calendar-screen {
     justify-content: center;
     gap: 18px;
     flex-wrap: wrap;
+}
+
+@supports not (gap: 1rem) {
+    .home-screen .icon-buttons {
+        margin: -9px;
+    }
+
+    .home-screen .icon-buttons .circle-btn {
+        margin: 9px;
+    }
 }
 
 .icon-buttons .dropdown-menu {
@@ -788,6 +800,7 @@ body.calendar-screen {
 .home-screen .circle-btn {
     --btn-size: 56px;
     --expanded-width: 196px;
+    --expanded-target: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
     height: var(--btn-size);
     width: var(--btn-size);
     border-radius: 999px;
@@ -851,7 +864,7 @@ body.calendar-screen {
 .home-screen .circle-btn:focus {
     transform: translateY(-3px);
     box-shadow: 0 24px 44px -18px rgba(67, 57, 242, 0.55);
-    width: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
+    width: var(--expanded-target);
     justify-content: flex-start;
     gap: 12px;
 }
@@ -860,7 +873,7 @@ body.calendar-screen {
 .home-screen .circle-btn:focus-visible .btn-label,
 .home-screen .circle-btn:focus .btn-label {
     opacity: 1;
-    max-width: max(0px, calc(clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width)) - var(--btn-size) - 32px));
+    max-width: max(0px, calc(var(--expanded-target) - var(--btn-size) - 32px));
     transform: translateX(0);
     padding: 0.45rem 0.9rem;
 }
@@ -1532,6 +1545,7 @@ body.manager-screen {
     background: rgba(255, 255, 255, 0.14);
     color: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.18);
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
 }
 
@@ -2552,6 +2566,7 @@ body.manager-screen {
     background: rgba(255, 255, 255, 0.58);
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 28px;
+    -webkit-backdrop-filter: blur(22px);
     backdrop-filter: blur(22px);
     box-shadow: 0 34px 60px -38px rgba(67, 57, 242, 0.55);
     padding: 32px;
@@ -3276,6 +3291,7 @@ body.dark-theme {
     background: rgba(255, 255, 255, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 24px;
+    -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     box-shadow: 0 18px 45px -30px rgba(67, 57, 242, 0.35);
     padding: 24px;
@@ -4126,6 +4142,7 @@ body.dark-theme {
     resize: none;
     border-radius: var(--border-radius);
     padding: 10px;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
