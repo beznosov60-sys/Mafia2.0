@@ -56,7 +56,7 @@ const APP_DATA_DEFAULTS = {
     managerPayments: {},
 };
 
-const APP_DATA_SERVER_KEYS = ['archivedClients', 'consultations', 'managerPayments'];
+const APP_DATA_SERVER_KEYS = ['archivedClients', 'consultations'];
 const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
 const appData = APP_DATA_KEYS.reduce((acc, key) => {
     acc[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [...APP_DATA_DEFAULTS[key]] : { ...APP_DATA_DEFAULTS[key] };
@@ -93,6 +93,15 @@ function createAppStorage(store) {
                 return;
             }
 
+            if (key === 'managerPayments') {
+                await fetch('/api/manager-payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(store[key] ?? APP_DATA_DEFAULTS[key])
+                });
+                return;
+            }
+
             if (!APP_DATA_SERVER_KEYS.includes(key)) return;
 
             await fetch('/api/app-data', {
@@ -101,7 +110,7 @@ function createAppStorage(store) {
                 body: JSON.stringify({ [key]: store[key] ?? APP_DATA_DEFAULTS[key] })
             });
         } catch (error) {
-            console.error(`Не удалось сохранить данные ${key} в MySQL:`, error);
+            console.error(`Не удалось сохранить данные ${key} в SQLite:`, error);
         }
     };
 
@@ -132,10 +141,11 @@ const appStorage = createAppStorage(appData);
 
 async function loadAppDataFromServer() {
     try {
-        const [appDataResponse, clientsResponse, managersResponse] = await Promise.all([
+        const [appDataResponse, clientsResponse, managersResponse, managerPaymentsResponse] = await Promise.all([
             fetch('/api/app-data'),
             fetch('/api/clients'),
-            fetch('/api/managers')
+            fetch('/api/managers'),
+            fetch('/api/manager-payments')
         ]);
 
         if (!appDataResponse.ok) {
@@ -158,8 +168,12 @@ async function loadAppDataFromServer() {
         if (managersResponse.ok) {
             appData.managers = await managersResponse.json();
         }
+
+        if (managerPaymentsResponse?.ok) {
+            appData.managerPayments = await managerPaymentsResponse.json();
+        }
     } catch (error) {
-        console.error('Не удалось загрузить данные из MySQL:', error);
+        console.error('Не удалось загрузить данные из SQLite:', error);
         APP_DATA_KEYS.forEach(key => {
             if (appData[key] === undefined) {
                 appData[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [] : {};

@@ -62,14 +62,20 @@
             updateButtonStates();
         }
 
+        function resetButtonState() {
+            activeButton = null;
+            hoveredButton = null;
+            updateButtonStates();
+        }
+
         buttons.forEach((button) => {
-            button.addEventListener('pointerenter', () => {
+            button.addEventListener('mouseenter', () => {
                 if (!activeButton) {
                     setHoveredButton(button);
                 }
             });
 
-            button.addEventListener('pointerleave', () => {
+            button.addEventListener('mouseleave', () => {
                 if (!activeButton) {
                     clearHoveredButton(button);
                 }
@@ -92,18 +98,21 @@
             });
         });
 
-        container.addEventListener('pointerleave', () => {
+        container.addEventListener('mouseleave', () => {
             if (!activeButton) {
                 hoveredButton = null;
                 updateButtonStates();
             }
         });
 
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('show.bs.modal', resetButtonState);
+            modal.addEventListener('hidden.bs.modal', resetButtonState);
+        });
+
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
-                activeButton = null;
-                hoveredButton = null;
-                updateButtonStates();
+                resetButtonState();
             }
         });
     }

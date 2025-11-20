@@ -17,7 +17,7 @@
 .home-screen .circle-btn.is-expanded:hover,
 .home-screen .circle-btn.is-expanded:focus,
 .home-screen .circle-btn.is-expanded:focus-visible {
-    width: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
+    width: var(--expanded-target);
     justify-content: flex-start;
     gap: 12px;
     background: var(--purple-600);
@@ -41,7 +41,7 @@
 
 .home-screen .circle-btn.is-expanded .btn-label {
     opacity: 1;
-    max-width: calc(100% - var(--btn-size) - 24px);
+    max-width: calc(var(--expanded-target) - var(--btn-size) - 24px);
     flex: 1 1 auto;
     min-width: 0;
     transform: translateX(0);
@@ -136,9 +136,39 @@
     max-width: clamp(640px, 92vw, 900px);
 }
 
+@supports not (width: clamp(1px, 2px, 3px)) {
+    .home-screen .circle-btn {
+        --expanded-target: var(--expanded-width);
+    }
+
+    .home-screen .circle-btn.is-expanded,
+    .home-screen .circle-btn.is-expanded:hover,
+    .home-screen .circle-btn.is-expanded:focus,
+    .home-screen .circle-btn.is-expanded:focus-visible {
+        width: var(--expanded-width);
+    }
+
+    .home-screen .circle-btn.is-expanded .btn-label {
+        max-width: calc(var(--expanded-width) - var(--btn-size) - 24px);
+    }
+}
+
+@media (hover: none) {
+    .home-screen .circle-btn.is-expanded {
+        width: var(--expanded-target);
+    }
+
+    .home-screen .circle-btn.is-expanded .btn-label {
+        opacity: 1;
+        max-width: calc(var(--expanded-target) - var(--btn-size) - 24px);
+        transform: translateX(0);
+    }
+}
+
 #addClientChoiceModal .add-client-choice {
     position: relative;
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(240, 241, 255, 0.72));
+    -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border: 1px solid rgba(112, 102, 255, 0.25);
     box-shadow: 0 26px 64px -32px rgba(67, 57, 242, 0.35);
