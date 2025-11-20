@@ -25,6 +25,7 @@
 
         let activeButton = null;
         let hoveredButton = null;
+        let collapseTimeout = null;
 
         function updateButtonStates() {
             buttons.forEach((button) => {
@@ -54,6 +55,15 @@
             updateButtonStates();
         }
 
+        function scheduleHoverClear(button) {
+            clearTimeout(collapseTimeout);
+            collapseTimeout = setTimeout(() => {
+                if (!activeButton) {
+                    clearHoveredButton(button || hoveredButton);
+                }
+            }, 140);
+        }
+
         function clearHoveredButton(button) {
             if (hoveredButton !== button) {
                 return;
@@ -63,6 +73,7 @@
         }
 
         function resetButtonState() {
+            clearTimeout(collapseTimeout);
             activeButton = null;
             hoveredButton = null;
             updateButtonStates();
@@ -70,6 +81,7 @@
 
         buttons.forEach((button) => {
             button.addEventListener('mouseenter', () => {
+                clearTimeout(collapseTimeout);
                 if (!activeButton) {
                     setHoveredButton(button);
                 }
@@ -77,11 +89,12 @@
 
             button.addEventListener('mouseleave', () => {
                 if (!activeButton) {
-                    clearHoveredButton(button);
+                    scheduleHoverClear(button);
                 }
             });
 
             button.addEventListener('focus', () => {
+                clearTimeout(collapseTimeout);
                 if (!activeButton) {
                     setHoveredButton(button);
                 }
@@ -89,7 +102,7 @@
 
             button.addEventListener('blur', () => {
                 if (!activeButton) {
-                    clearHoveredButton(button);
+                    scheduleHoverClear(button);
                 }
             });
 
@@ -108,8 +121,7 @@
 
         container.addEventListener('mouseleave', () => {
             if (!activeButton) {
-                hoveredButton = null;
-                updateButtonStates();
+                scheduleHoverClear();
             }
         });
 
