@@ -38,6 +38,10 @@
         }
 
         function setActiveButton(button) {
+            if (activeButton && activeButton !== button) {
+                return;
+            }
+
             if (activeButton === button) {
                 activeButton = null;
             } else {
@@ -91,6 +95,10 @@
                 if (!activeButton) {
                     scheduleHoverClear(button);
                 }
+
+                if (button.dataset.bsToggle === 'modal' || button.dataset.bsToggle === 'dropdown') {
+                    button.blur();
+                }
             });
 
             button.addEventListener('focus', () => {
@@ -112,6 +120,7 @@
 
                 if (isTransientToggle) {
                     resetButtonState();
+                    button.blur();
                     return;
                 }
 
