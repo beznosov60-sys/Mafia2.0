@@ -68,9 +68,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 
   const APP_DATA_DEFAULTS = {
-    clients: [],
     archivedClients: [],
-    managers: [],
     consultations: [],
     managerPayments: {}
   };

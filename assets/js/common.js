@@ -56,6 +56,7 @@ const APP_DATA_DEFAULTS = {
     managerPayments: {},
 };
 
+const APP_DATA_SERVER_KEYS = ['archivedClients', 'consultations', 'managerPayments'];
 const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
 const appData = APP_DATA_KEYS.reduce((acc, key) => {
     acc[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [...APP_DATA_DEFAULTS[key]] : { ...APP_DATA_DEFAULTS[key] };
@@ -74,6 +75,26 @@ function createAppStorage(store) {
     const persistKey = async key => {
         if (!APP_DATA_KEYS.includes(key)) return;
         try {
+            if (key === 'clients') {
+                await fetch('/api/clients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Array.isArray(store[key]) ? store[key] : [])
+                });
+                return;
+            }
+
+            if (key === 'managers') {
+                await fetch('/api/managers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Array.isArray(store[key]) ? store[key] : [])
+                });
+                return;
+            }
+
+            if (!APP_DATA_SERVER_KEYS.includes(key)) return;
+
             await fetch('/api/app-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -111,19 +132,32 @@ const appStorage = createAppStorage(appData);
 
 async function loadAppDataFromServer() {
     try {
-        const response = await fetch('/api/app-data');
-        if (!response.ok) {
+        const [appDataResponse, clientsResponse, managersResponse] = await Promise.all([
+            fetch('/api/app-data'),
+            fetch('/api/clients'),
+            fetch('/api/managers')
+        ]);
+
+        if (!appDataResponse.ok) {
             throw new Error('Failed to load application data');
         }
 
-        const payload = await response.json();
-        APP_DATA_KEYS.forEach(key => {
+        const payload = await appDataResponse.json();
+        APP_DATA_SERVER_KEYS.forEach(key => {
             if (payload[key] !== undefined) {
                 appData[key] = payload[key];
             } else {
                 appData[key] = Array.isArray(APP_DATA_DEFAULTS[key]) ? [] : {};
             }
         });
+
+        if (clientsResponse.ok) {
+            appData.clients = await clientsResponse.json();
+        }
+
+        if (managersResponse.ok) {
+            appData.managers = await managersResponse.json();
+        }
     } catch (error) {
         console.error('Не удалось загрузить данные из MySQL:', error);
         APP_DATA_KEYS.forEach(key => {
