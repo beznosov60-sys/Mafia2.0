@@ -57,68 +57,48 @@
 }
 
 .home-screen .add-client-btn {
-    --expanded-width: 360px;
-    width: clamp(var(--expanded-width), 40vw, 520px);
-    justify-content: flex-start;
-    gap: 14px;
-    padding-right: 18px;
-    background: linear-gradient(135deg, #5c52f9 0%, #4339f2 60%, #2f2dbf 100%);
-    box-shadow: 0 28px 48px -18px rgba(67, 57, 242, 0.6);
+    --expanded-width: 320px;
+    background: linear-gradient(135deg, #5c52f9 0%, #4339f2 55%, #2f2dbf 100%);
+    box-shadow: 0 24px 44px -18px rgba(67, 57, 242, 0.6);
+    overflow: visible;
+    position: relative;
 }
 
-.home-screen .add-client-btn .btn-content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    min-width: 0;
+.home-screen .add-client-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(112, 102, 255, 0.28) 100%);
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.25s ease, transform 0.3s ease;
+    z-index: -1;
 }
 
 .home-screen .add-client-btn .btn-label {
-    opacity: 1;
-    max-width: none;
-    transform: none;
-    padding: 0;
     font-size: 0.98rem;
-}
-
-.home-screen .add-client-btn .btn-helper {
-    display: inline-block;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.35;
-    white-space: normal;
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
 
 .home-screen .add-client-btn .btn-icon {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 28px -18px rgba(12, 6, 98, 0.6);
-}
-
-.home-screen .add-client-btn .btn-chevron {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    margin-left: auto;
-    color: rgba(255, 255, 255, 0.92);
+    background: transparent;
+    box-shadow: none;
 }
 
 .home-screen .add-client-btn:hover,
 .home-screen .add-client-btn:focus-visible,
 .home-screen .add-client-btn:focus {
-    width: clamp(var(--expanded-width), 42vw, 560px);
-    background: linear-gradient(135deg, #645cff 0%, #5145ec 45%, #312fd0 100%);
+    background: linear-gradient(135deg, #665cff 0%, #5245ec 50%, #372fd0 100%);
+    box-shadow: 0 28px 52px -18px rgba(67, 57, 242, 0.65), 0 0 0 6px rgba(112, 102, 255, 0.22);
 }
 
-.home-screen .add-client-btn:hover .btn-label,
-.home-screen .add-client-btn:focus-visible .btn-label,
-.home-screen .add-client-btn:focus .btn-label {
+.home-screen .add-client-btn:hover::after,
+.home-screen .add-client-btn:focus-visible::after,
+.home-screen .add-client-btn:focus::after {
     opacity: 1;
-    max-width: none;
-    transform: none;
-    padding: 0;
+    transform: scale(1);
 }
 
 @media (max-width: 576px) {
