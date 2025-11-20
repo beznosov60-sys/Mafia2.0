@@ -94,6 +94,14 @@
             });
 
             button.addEventListener('click', () => {
+                const toggleType = button.dataset.bsToggle;
+                const isTransientToggle = toggleType === 'modal' || toggleType === 'dropdown';
+
+                if (isTransientToggle) {
+                    resetButtonState();
+                    return;
+                }
+
                 setActiveButton(button);
             });
         });
