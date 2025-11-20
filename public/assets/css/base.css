@@ -799,28 +799,39 @@ body.calendar-screen {
 
 .home-screen .circle-btn {
     --btn-size: 56px;
-    --expanded-width: 196px;
+    --expanded-width: 230px;
     --expanded-target: clamp(var(--btn-size), calc(100vw - 80px), var(--expanded-width));
     height: var(--btn-size);
     width: var(--btn-size);
     border-radius: 999px;
-    border: none;
-    background: var(--purple-500);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, #5c52f9 0%, #4339f2 55%, #2f2dbf 100%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     font-size: 1.25rem;
     color: #fff;
-    box-shadow: 0 20px 40px -22px rgba(67, 57, 242, 0.65);
+    box-shadow: 0 22px 46px -20px rgba(67, 57, 242, 0.6);
     transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    border: 2px solid transparent;
     position: relative;
     overflow: hidden;
     gap: 0;
     flex: 0 0 auto;
     text-decoration: none;
+}
+
+.home-screen .circle-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(112, 102, 255, 0.25) 100%);
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.25s ease, transform 0.3s ease;
+    z-index: -1;
 }
 
 .home-screen .circle-btn .btn-icon {
@@ -830,6 +841,8 @@ body.calendar-screen {
     width: var(--btn-size);
     height: var(--btn-size);
     flex: 0 0 var(--btn-size);
+    background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05));
+    border-right: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .home-screen .circle-btn i {
@@ -841,8 +854,9 @@ body.calendar-screen {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     opacity: 0;
     max-width: 0;
@@ -856,14 +870,14 @@ body.calendar-screen {
 
 .home-screen .circle-btn:hover,
 .home-screen .circle-btn:focus {
-    background: var(--purple-600);
+    background: linear-gradient(135deg, #665cff 0%, #5245ec 50%, #372fd0 100%);
 }
 
 .home-screen .circle-btn:hover,
 .home-screen .circle-btn:focus-visible,
 .home-screen .circle-btn:focus {
     transform: translateY(-3px);
-    box-shadow: 0 24px 44px -18px rgba(67, 57, 242, 0.55);
+    box-shadow: 0 26px 50px -20px rgba(67, 57, 242, 0.65);
     width: var(--expanded-target);
     justify-content: flex-start;
     gap: 12px;
@@ -878,29 +892,16 @@ body.calendar-screen {
     padding: 0.45rem 0.9rem;
 }
 
-.icon-buttons > a.circle-btn:nth-of-type(1) {
-    --expanded-width: 228px;
-}
-
-.icon-buttons > a.circle-btn:nth-of-type(2) {
-    --expanded-width: 200px;
-}
-
-.icon-buttons > button.circle-btn#sidebarToggle {
-    --expanded-width: 236px;
-}
-
-.icon-buttons > a.circle-btn:nth-of-type(3) {
-    --expanded-width: 200px;
-}
-
-.icon-buttons .dropdown .circle-btn {
-    --expanded-width: 252px;
+.home-screen .circle-btn:hover::after,
+.home-screen .circle-btn:focus-visible::after,
+.home-screen .circle-btn:focus::after {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .home-screen .circle-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(112, 102, 255, 0.35), 0 24px 44px -18px rgba(67, 57, 242, 0.55);
+    box-shadow: 0 0 0 4px rgba(112, 102, 255, 0.35), 0 26px 50px -20px rgba(67, 57, 242, 0.65);
 }
 
 .home-screen .circle-btn:active {
@@ -914,6 +915,7 @@ body.calendar-screen {
 @media (max-width: 576px) {
     .home-screen .circle-btn {
         --btn-size: 52px;
+        --expanded-width: 210px;
         height: var(--btn-size);
         width: var(--btn-size);
         font-size: 1.15rem;
@@ -929,28 +931,7 @@ body.calendar-screen {
     .home-screen .circle-btn .btn-label {
         font-size: 0.85rem;
     }
-
-    .icon-buttons > a.circle-btn:nth-of-type(1) {
-        --expanded-width: 212px;
-    }
-
-    .icon-buttons > a.circle-btn:nth-of-type(2) {
-        --expanded-width: 188px;
-    }
-
-    .icon-buttons > button.circle-btn#sidebarToggle {
-        --expanded-width: 216px;
-    }
-
-    .icon-buttons > a.circle-btn:nth-of-type(3) {
-        --expanded-width: 188px;
-    }
-
-    .icon-buttons .dropdown .circle-btn {
-        --expanded-width: 220px;
-    }
 }
-
 .search-suggestions {
     position: absolute;
     top: 100%;
