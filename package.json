@@ -12,7 +12,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.0",
-    "mysql2": "^3.15.3"
+    "sqlite3": "^5.1.7"
   }
 }

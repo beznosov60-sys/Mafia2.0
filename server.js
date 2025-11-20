@@ -1,76 +1,68 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const mysql = require('mysql2/promise');
+const sqlite3 = require('sqlite3').verbose();
 
 (async () => {
-  const {
-    MYSQL_HOST = 'localhost',
-    MYSQL_USER = 'root',
-    MYSQL_PASSWORD = '',
-    MYSQL_DATABASE = 'crm_app'
-  } = process.env;
-
   const serverRoot = __dirname;
+  const DATABASE_PATH = path.join(serverRoot, 'crm.db');
 
   const TABLE_DEFINITIONS = {
-  clients: `
+    clients: `
     CREATE TABLE IF NOT EXISTS clients (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      external_id VARCHAR(255),
-      full_name VARCHAR(255) NOT NULL,
-      email VARCHAR(255),
-      phone VARCHAR(50),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY unique_external_id (external_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      external_id TEXT UNIQUE,
+      full_name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      created_at TEXT DEFAULT (DATETIME('now')),
+      updated_at TEXT DEFAULT (DATETIME('now'))
+    );
   `,
-  managers: `
+    managers: `
     CREATE TABLE IF NOT EXISTS managers (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      full_name VARCHAR(255) NOT NULL,
-      email VARCHAR(255),
-      phone VARCHAR(50),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      full_name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      created_at TEXT DEFAULT (DATETIME('now')),
+      updated_at TEXT DEFAULT (DATETIME('now'))
+    );
   `,
-  tasks: `
+    tasks: `
     CREATE TABLE IF NOT EXISTS tasks (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      client_id INT,
-      manager_id INT,
-      title VARCHAR(255) NOT NULL,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER,
+      manager_id INTEGER,
+      title TEXT NOT NULL,
       description TEXT,
-      status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
-      due_date DATE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      CONSTRAINT fk_tasks_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
-      CONSTRAINT fk_tasks_manager FOREIGN KEY (manager_id) REFERENCES managers(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      status TEXT DEFAULT 'pending',
+      due_date TEXT,
+      created_at TEXT DEFAULT (DATETIME('now')),
+      updated_at TEXT DEFAULT (DATETIME('now')),
+      FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+      FOREIGN KEY (manager_id) REFERENCES managers(id) ON DELETE SET NULL
+    );
   `,
-  payments: `
+    payments: `
     CREATE TABLE IF NOT EXISTS payments (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      client_id INT NOT NULL,
-      amount DECIMAL(12, 2) NOT NULL,
-      currency VARCHAR(10) DEFAULT 'USD',
-      paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'USD',
+      paid_at TEXT DEFAULT (DATETIME('now')),
       notes TEXT,
-      CONSTRAINT fk_payments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    );
   `,
-  storage: `
+    storage: `
     CREATE TABLE IF NOT EXISTS storage (
-      \`key\` VARCHAR(255) NOT NULL,
-      \`value\` LONGTEXT,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (\`key\`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TEXT DEFAULT (DATETIME('now'))
+    );
   `
-};
+  };
 
 
   const APP_DATA_DEFAULTS = {
@@ -81,6 +73,30 @@ const mysql = require('mysql2/promise');
     managerPayments: {}
   };
   const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
+
+  const db = new sqlite3.Database(DATABASE_PATH);
+
+  const dbRun = (sql, params = []) =>
+    new Promise((resolve, reject) => {
+      db.run(sql, params, function runCallback(error) {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(this);
+      });
+    });
+
+  const dbAll = (sql, params = []) =>
+    new Promise((resolve, reject) => {
+      db.all(sql, params, (error, rows) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(rows || []);
+      });
+    });
 
   const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -100,40 +116,19 @@ const mysql = require('mysql2/promise');
   };
 
   async function ensureDatabaseAndTables() {
-    const bootstrapConnection = await mysql.createConnection({
-      host: MYSQL_HOST,
-      user: MYSQL_USER,
-      password: MYSQL_PASSWORD,
-      multipleStatements: true
-    });
-
-    await bootstrapConnection.query(
-      `CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
-    );
-    await bootstrapConnection.end();
-
-    const pool = mysql.createPool({
-      host: MYSQL_HOST,
-      user: MYSQL_USER,
-      password: MYSQL_PASSWORD,
-      database: MYSQL_DATABASE,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
+    await dbRun('PRAGMA foreign_keys = ON;');
 
     const tableStatus = {};
     for (const [tableName, createStatement] of Object.entries(TABLE_DEFINITIONS)) {
-      await pool.query(createStatement);
-      const [rows] = await pool.query('SHOW TABLES LIKE ?', [tableName]);
-      tableStatus[tableName] = rows.length > 0;
+      await dbRun(createStatement);
+      tableStatus[tableName] = true;
     }
 
-    return { pool, tableStatus };
+    return { tableStatus };
   }
 
-  const { pool, tableStatus } = await ensureDatabaseAndTables();
-  console.log('MySQL tables checked/created:', tableStatus);
+  const { tableStatus } = await ensureDatabaseAndTables();
+  console.log('SQLite tables checked/created:', tableStatus);
 
   async function parseJsonBody(req) {
     return new Promise((resolve, reject) => {
@@ -244,12 +239,13 @@ const mysql = require('mysql2/promise');
   const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/api/app-data') {
       try {
-        const [rows] = await pool.query('SELECT `key`, `value` FROM storage WHERE `key` IN (?)', [APP_DATA_KEYS]);
+        const placeholders = APP_DATA_KEYS.map(() => '?').join(', ');
+        const rows = await dbAll(`SELECT key, value FROM storage WHERE key IN (${placeholders})`, APP_DATA_KEYS);
         const payload = buildAppDataFromRows(rows);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(payload));
       } catch (error) {
-        console.error('Failed to fetch app data from MySQL:', error);
+        console.error('Failed to fetch app data from SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load app data' }));
       }
@@ -275,16 +271,25 @@ const mysql = require('mysql2/promise');
           return;
         }
 
-        await pool.query(
-          `INSERT INTO storage (\`key\`, \`value\`) VALUES ?
-           ON DUPLICATE KEY UPDATE \`value\` = VALUES(\`value\`), updated_at = CURRENT_TIMESTAMP;`,
-          [entries]
-        );
+        await dbRun('BEGIN TRANSACTION;');
+        try {
+          for (const [key, value] of entries) {
+            await dbRun(
+              `INSERT INTO storage (key, value, updated_at) VALUES (?, ?, DATETIME('now'))
+               ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at;`,
+              [key, value]
+            );
+          }
+          await dbRun('COMMIT;');
+        } catch (transactionError) {
+          await dbRun('ROLLBACK;');
+          throw transactionError;
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'saved', updated: entries.map(([key]) => key) }));
       } catch (error) {
-        console.error('Failed to save app data to MySQL:', error);
+        console.error('Failed to save app data to SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to save app data' }));
       }
@@ -293,11 +298,11 @@ const mysql = require('mysql2/promise');
 
     if (req.method === 'GET' && req.url === '/api/storage') {
       try {
-        const [rows] = await pool.query('SELECT `key`, `value` FROM storage');
+        const rows = await dbAll('SELECT key, value FROM storage');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ items: rows }));
       } catch (error) {
-        console.error('Failed to read storage from MySQL:', error);
+        console.error('Failed to read storage from SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to load storage' }));
       }
@@ -313,20 +318,20 @@ const mysql = require('mysql2/promise');
           return;
         }
 
-        await pool.query(
+        await dbRun(
           `INSERT INTO storage (
-            \`key\`, \`value\`
-          ) VALUES (?, ?)
-          ON DUPLICATE KEY UPDATE
-            \`value\` = VALUES(\`value\`),
-            updated_at = CURRENT_TIMESTAMP;`,
+            key, value, updated_at
+          ) VALUES (?, ?, DATETIME('now'))
+          ON CONFLICT(key) DO UPDATE SET
+            value = excluded.value,
+            updated_at = excluded.updated_at;`,
           [payload.key, payload.value ?? '']
         );
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'saved' }));
       } catch (error) {
-        console.error('Failed to save storage to MySQL:', error);
+        console.error('Failed to save storage to SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to save storage' }));
       }
@@ -342,11 +347,11 @@ const mysql = require('mysql2/promise');
           return;
         }
 
-        await pool.query('DELETE FROM storage WHERE `key` = ?', [payload.key]);
+        await dbRun('DELETE FROM storage WHERE key = ?', [payload.key]);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'deleted' }));
       } catch (error) {
-        console.error('Failed to delete storage from MySQL:', error);
+        console.error('Failed to delete storage from SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to delete storage' }));
       }
@@ -355,7 +360,7 @@ const mysql = require('mysql2/promise');
 
     if (req.method === 'POST' && req.url === '/api/storage/clear') {
       try {
-        await pool.query('TRUNCATE TABLE storage');
+        await dbRun('DELETE FROM storage');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'cleared' }));
       } catch (error) {
@@ -368,11 +373,11 @@ const mysql = require('mysql2/promise');
 
     if (req.method === 'GET' && req.url === '/api/clients') {
       try {
-        const [rows] = await pool.query('SELECT * FROM clients ORDER BY id DESC');
+        const rows = await dbAll('SELECT * FROM clients ORDER BY id DESC');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(rows));
       } catch (error) {
-        console.error('Failed to fetch clients from MySQL:', error);
+        console.error('Failed to fetch clients from SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to fetch clients' }));
       }
@@ -392,11 +397,9 @@ const mysql = require('mysql2/promise');
             return;
           }
 
-          const connection = await pool.getConnection();
+          await dbRun('BEGIN TRANSACTION;');
           try {
-            await connection.beginTransaction();
-
-            const [existing] = await connection.query('SELECT id FROM clients');
+            const existing = await dbAll('SELECT id FROM clients');
             const existingIds = existing.map(row => row.id);
             const payloadIds = clients
               .map(client => client.id)
@@ -404,40 +407,43 @@ const mysql = require('mysql2/promise');
 
             const idsToDelete = existingIds.filter(id => !payloadIds.includes(id));
             if (idsToDelete.length > 0) {
-              await connection.query('DELETE FROM clients WHERE id IN (?)', [idsToDelete]);
+              const placeholders = idsToDelete.map(() => '?').join(', ');
+              await dbRun(`DELETE FROM clients WHERE id IN (${placeholders})`, idsToDelete);
             }
-
-            const insertOrUpdateClient = `
-              INSERT INTO clients (id, external_id, full_name, email, phone)
-              VALUES (?, ?, ?, ?, ?)
-              ON DUPLICATE KEY UPDATE
-                external_id = VALUES(external_id),
-                full_name = VALUES(full_name),
-                email = VALUES(email),
-                phone = VALUES(phone),
-                updated_at = CURRENT_TIMESTAMP;
-            `;
 
             for (const client of clients) {
-              await connection.query(insertOrUpdateClient, [
-                client.id || null,
-                client.external_id || null,
-                client.full_name || client.name || 'Без имени',
-                client.email || null,
-                client.phone || null
-              ]);
+              const fullName = client.full_name || client.name || 'Без имени';
+              const email = client.email || null;
+              const phone = client.phone || null;
+
+              if (client.id) {
+                await dbRun(
+                  `INSERT INTO clients (id, external_id, full_name, email, phone, updated_at)
+                   VALUES (?, ?, ?, ?, ?, DATETIME('now'))
+                   ON CONFLICT(id) DO UPDATE SET
+                     external_id = excluded.external_id,
+                     full_name = excluded.full_name,
+                     email = excluded.email,
+                     phone = excluded.phone,
+                     updated_at = DATETIME('now');`,
+                  [client.id, client.external_id || null, fullName, email, phone]
+                );
+              } else {
+                await dbRun(
+                  'INSERT INTO clients (external_id, full_name, email, phone) VALUES (?, ?, ?, ?);',
+                  [client.external_id || null, fullName, email, phone]
+                );
+              }
             }
 
-            await connection.commit();
+            await dbRun('COMMIT;');
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ status: 'ok' }));
           } catch (error) {
-            await connection.rollback();
-            console.error('Failed to upsert clients into MySQL:', error);
+            await dbRun('ROLLBACK;');
+            console.error('Failed to upsert clients into SQLite:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to save clients' }));
-          } finally {
-            connection.release();
           }
         } catch (error) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -449,11 +455,11 @@ const mysql = require('mysql2/promise');
 
     if (req.method === 'GET' && req.url === '/api/managers') {
       try {
-        const [rows] = await pool.query('SELECT * FROM managers ORDER BY id DESC');
+        const rows = await dbAll('SELECT * FROM managers ORDER BY id DESC');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(rows));
       } catch (error) {
-        console.error('Failed to fetch managers from MySQL:', error);
+        console.error('Failed to fetch managers from SQLite:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Failed to fetch managers' }));
       }
@@ -470,11 +476,9 @@ const mysql = require('mysql2/promise');
           return;
         }
 
-        const connection = await pool.getConnection();
+        await dbRun('BEGIN TRANSACTION;');
         try {
-          await connection.beginTransaction();
-
-          const [existing] = await connection.query('SELECT id FROM managers');
+          const existing = await dbAll('SELECT id FROM managers');
           const existingIds = existing.map(row => row.id);
           const payloadIds = payload
             .map(manager => manager.id)
@@ -482,38 +486,39 @@ const mysql = require('mysql2/promise');
 
           const idsToDelete = existingIds.filter(id => !payloadIds.includes(id));
           if (idsToDelete.length > 0) {
-            await connection.query('DELETE FROM managers WHERE id IN (?)', [idsToDelete]);
+            const placeholders = idsToDelete.map(() => '?').join(', ');
+            await dbRun(`DELETE FROM managers WHERE id IN (${placeholders})`, idsToDelete);
           }
-
-          const insertOrUpdateManager = `
-            INSERT INTO managers (id, full_name, email, phone)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-              full_name = VALUES(full_name),
-              email = VALUES(email),
-              phone = VALUES(phone),
-              updated_at = CURRENT_TIMESTAMP;
-          `;
 
           for (const manager of payload) {
-            await connection.query(insertOrUpdateManager, [
-              manager.id || null,
-              manager.full_name || manager.name || manager.title || 'Без имени',
-              manager.email || null,
-              manager.phone || manager.telephone || null
-            ]);
+            const fullName = manager.full_name || manager.name || manager.title || 'Без имени';
+            const email = manager.email || null;
+            const phone = manager.phone || manager.telephone || null;
+
+            if (manager.id) {
+              await dbRun(
+                `INSERT INTO managers (id, full_name, email, phone, updated_at)
+                 VALUES (?, ?, ?, ?, DATETIME('now'))
+                 ON CONFLICT(id) DO UPDATE SET
+                   full_name = excluded.full_name,
+                   email = excluded.email,
+                   phone = excluded.phone,
+                   updated_at = DATETIME('now');`,
+                [manager.id, fullName, email, phone]
+              );
+            } else {
+              await dbRun('INSERT INTO managers (full_name, email, phone) VALUES (?, ?, ?);', [fullName, email, phone]);
+            }
           }
 
-          await connection.commit();
+          await dbRun('COMMIT;');
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ status: 'ok' }));
         } catch (error) {
-          await connection.rollback();
-          console.error('Failed to upsert managers into MySQL:', error);
+          await dbRun('ROLLBACK;');
+          console.error('Failed to upsert managers into SQLite:', error);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Failed to save managers' }));
-        } finally {
-          connection.release();
         }
       } catch (error) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -526,7 +531,7 @@ const mysql = require('mysql2/promise');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
-          database: MYSQL_DATABASE,
+          database: DATABASE_PATH,
           tables: tableStatus
         })
       );
