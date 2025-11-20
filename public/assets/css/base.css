@@ -812,7 +812,7 @@ body.calendar-screen {
     font-size: 1.25rem;
     color: #fff;
     box-shadow: 0 18px 36px -18px rgba(67, 57, 242, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, width 0.25s ease;
     cursor: pointer;
     position: relative;
     overflow: visible;
@@ -850,10 +850,10 @@ body.calendar-screen {
 }
 
 .home-screen .circle-btn .btn-label {
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 50%;
-    transform: translateY(-50%) translateX(-8px);
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -861,7 +861,7 @@ body.calendar-screen {
     font-weight: 700;
     letter-spacing: 0.01em;
     white-space: nowrap;
-    padding: 0.5rem 0.85rem;
+    padding: 0;
     color: var(--neutral-900);
     background: linear-gradient(135deg, #ffffff 0%, #eef0ff 100%);
     border-radius: 999px;
@@ -869,13 +869,24 @@ body.calendar-screen {
     box-shadow: 0 18px 38px -18px rgba(20, 20, 43, 0.35);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 0;
+    overflow: hidden;
+    transition: opacity 0.22s ease, max-width 0.25s ease, padding 0.25s ease, margin-left 0.25s ease;
 }
 
 .home-screen .circle-btn:hover,
 .home-screen .circle-btn:focus {
     background: radial-gradient(circle at 26% 26%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
         linear-gradient(140deg, #665cff 0%, #5245ec 60%, #332dcc 100%);
+}
+
+.home-screen .circle-btn:hover,
+.home-screen .circle-btn:focus-visible,
+.home-screen .circle-btn:focus,
+.home-screen .circle-btn.is-expanded,
+.home-screen .circle-btn.is-active {
+    width: auto;
+    padding-right: 14px;
 }
 
 .home-screen .circle-btn:hover,
@@ -890,7 +901,9 @@ body.calendar-screen {
 .home-screen .circle-btn:focus .btn-label,
 .home-screen .circle-btn.is-expanded .btn-label {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    max-width: 240px;
+    padding: 0.5rem 0.85rem;
+    margin-left: 12px;
 }
 
 .home-screen .circle-btn:hover::after,
