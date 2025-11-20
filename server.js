@@ -1,7 +1,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
+let Database;
+try {
+  // Preferred: performant native binding
+  Database = require('better-sqlite3');
+} catch (error) {
+  // Fallback to the built-in experimental driver if native bindings are unavailable
+  const { DatabaseSync } = require('node:sqlite');
+  Database = DatabaseSync;
+}
 
 (async () => {
   const serverRoot = __dirname;
@@ -74,7 +82,7 @@ const { DatabaseSync } = require('node:sqlite');
   };
   const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
 
-  const db = new DatabaseSync(DATABASE_PATH);
+  const db = new Database(DATABASE_PATH);
 
   const dbRun = async (sql, params = []) => {
     try {
