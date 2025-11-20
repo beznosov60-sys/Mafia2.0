@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const { DatabaseSync } = require('node:sqlite');
 
 (async () => {
   const serverRoot = __dirname;
@@ -76,29 +76,25 @@ const sqlite3 = require('sqlite3').verbose();
   };
   const APP_DATA_KEYS = Object.keys(APP_DATA_DEFAULTS);
 
-  const db = new sqlite3.Database(DATABASE_PATH);
+  const db = new DatabaseSync(DATABASE_PATH);
 
-  const dbRun = (sql, params = []) =>
-    new Promise((resolve, reject) => {
-      db.run(sql, params, function runCallback(error) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(this);
-      });
-    });
+  const dbRun = async (sql, params = []) => {
+    try {
+      const statement = db.prepare(sql);
+      return statement.run(...params);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
 
-  const dbAll = (sql, params = []) =>
-    new Promise((resolve, reject) => {
-      db.all(sql, params, (error, rows) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(rows || []);
-      });
-    });
+  const dbAll = async (sql, params = []) => {
+    try {
+      const statement = db.prepare(sql);
+      return statement.all(...params);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
 
   const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',

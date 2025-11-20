@@ -10,8 +10,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "sqlite3": "^5.1.7"
-  }
+  "type": "commonjs"
 }
