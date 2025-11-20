@@ -5,7 +5,9 @@ const sqlite3 = require('sqlite3').verbose();
 
 (async () => {
   const serverRoot = __dirname;
-  const DATABASE_PATH = path.join(serverRoot, 'crm.db');
+  const DATA_DIR = path.join(serverRoot, 'data');
+  await fs.promises.mkdir(DATA_DIR, { recursive: true });
+  const DATABASE_PATH = path.join(DATA_DIR, 'crm.db');
 
   const TABLE_DEFINITIONS = {
     clients: `
@@ -237,6 +239,16 @@ const sqlite3 = require('sqlite3').verbose();
   }
 
   const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
     if (req.method === 'GET' && req.url === '/api/app-data') {
       try {
         const placeholders = APP_DATA_KEYS.map(() => '?').join(', ');
