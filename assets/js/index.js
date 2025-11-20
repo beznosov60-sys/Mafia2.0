@@ -16,6 +16,7 @@
     }
 
     function setupCircleButtonInteractions() {
+        const addClientBtn = document.querySelector('.add-client-btn');
         const buttons = Array.from(document.querySelectorAll('.icon-buttons .circle-btn'));
         const container = document.querySelector('.icon-buttons');
         if (buttons.length === 0 || !container) {

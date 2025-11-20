@@ -278,6 +278,35 @@
     border: 1px dashed rgba(124, 126, 155, 0.45);
 }
 
+/* --- Fix Add Client button to look like other circle-btn --- */
+.home-screen .add-client-btn {
+    width: var(--btn-size) !important;
+    background: var(--purple-600) !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    box-shadow: none !important;
+}
+
+.home-screen .add-client-btn .btn-content,
+.home-screen .add-client-btn .btn-helper,
+.home-screen .add-client-btn .btn-chevron {
+    display: none !important;
+}
+
+.home-screen .add-client-btn .btn-label {
+    opacity: 1 !important;
+    max-width: none !important;
+    transform: none !important;
+    padding: 0 !important;
+}
+
+.home-screen .add-client-btn:hover,
+.home-screen .add-client-btn:focus-visible {
+    background: var(--purple-700) !important;
+}
+
+
 @media (max-width: 576px) {
     .home-screen .add-client-btn {
         width: 100%;
