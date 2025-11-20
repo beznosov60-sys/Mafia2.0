@@ -17,10 +17,12 @@
 .home-screen .circle-btn.is-expanded:hover,
 .home-screen .circle-btn.is-expanded:focus,
 .home-screen .circle-btn.is-expanded:focus-visible {
-    width: var(--expanded-target);
+    width: auto;
+    max-width: var(--expanded-target);
     justify-content: flex-start;
     gap: 12px;
     background: var(--purple-600);
+    padding-right: 14px;
 }
 
 .home-screen .circle-btn .btn-label {
@@ -42,7 +44,7 @@
 .home-screen .circle-btn.is-expanded .btn-label {
     opacity: 1;
     max-width: calc(var(--expanded-target) - var(--btn-size) - 24px);
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
     transform: translateX(0);
     padding: 0.45rem 0.9rem;
@@ -117,6 +119,16 @@
     max-width: none;
     transform: none;
     padding: 0;
+}
+
+@media (max-width: 576px) {
+    #addClientChoiceModal .modal-body {
+        padding: 22px 20px 20px;
+    }
+
+    #addClientChoiceModal .add-client-options {
+        grid-template-columns: 1fr;
+    }
 }
 
 .home-screen .add-client-btn:hover .btn-helper,
@@ -308,50 +320,3 @@
     border: 1px dashed rgba(124, 126, 155, 0.45);
 }
 
-/* --- Fix Add Client button to look like other circle-btn --- */
-.home-screen .add-client-btn {
-    width: var(--btn-size) !important;
-    background: var(--purple-600) !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    gap: 0 !important;
-    box-shadow: none !important;
-}
-
-.home-screen .add-client-btn .btn-content,
-.home-screen .add-client-btn .btn-helper,
-.home-screen .add-client-btn .btn-chevron {
-    display: none !important;
-}
-
-.home-screen .add-client-btn .btn-label {
-    opacity: 1 !important;
-    max-width: none !important;
-    transform: none !important;
-    padding: 0 !important;
-}
-
-.home-screen .add-client-btn:hover,
-.home-screen .add-client-btn:focus-visible {
-    background: var(--purple-700) !important;
-}
-
-
-@media (max-width: 576px) {
-    .home-screen .add-client-btn {
-        width: 100%;
-        padding-right: 14px;
-    }
-
-    .home-screen .add-client-btn .btn-helper {
-        display: none;
-    }
-
-    #addClientChoiceModal .modal-body {
-        padding: 22px 20px 20px;
-    }
-
-    #addClientChoiceModal .add-client-options {
-        grid-template-columns: 1fr;
-    }
-}
