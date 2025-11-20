@@ -442,7 +442,13 @@ const sqlite3 = require('sqlite3').verbose();
                 );
               } else {
                 await dbRun(
-                  'INSERT INTO clients (external_id, full_name, email, phone) VALUES (?, ?, ?, ?);',
+                  `INSERT INTO clients (external_id, full_name, email, phone, updated_at)
+                   VALUES (?, ?, ?, ?, DATETIME('now'))
+                   ON CONFLICT(external_id) DO UPDATE SET
+                     full_name = excluded.full_name,
+                     email = excluded.email,
+                     phone = excluded.phone,
+                     updated_at = DATETIME('now');`,
                   [client.external_id || null, fullName, email, phone]
                 );
               }
