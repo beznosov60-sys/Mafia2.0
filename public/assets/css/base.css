@@ -862,11 +862,12 @@ body.calendar-screen {
     letter-spacing: 0.01em;
     white-space: nowrap;
     padding: 0;
-    color: var(--neutral-900);
-    background: linear-gradient(135deg, #ffffff 0%, #eef0ff 100%);
+    color: #fff;
+    background: transparent;
     border-radius: 999px;
-    border: 1px solid rgba(112, 102, 255, 0.22);
-    box-shadow: 0 18px 38px -18px rgba(20, 20, 43, 0.35);
+    border: none;
+    box-shadow: none;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
     opacity: 0;
     pointer-events: none;
     max-width: 0;
