@@ -1628,6 +1628,10 @@ function toggleCourtType(type) {
     const id = type === 'arbitration' ? 'courtTypeArbitrationToggle' : 'courtTypeTretToggle';
     const button = document.getElementById(id);
     if (!button || button.hasAttribute('disabled')) return;
+    const otherType = type === 'arbitration' ? 'tret' : 'arbitration';
+    if (isCourtTypeActive(otherType)) {
+        return;
+    }
     const nextState = button.getAttribute('aria-pressed') !== 'true';
     setCourtTypeButtonState(button, nextState);
     handleCourtTypeChange();
