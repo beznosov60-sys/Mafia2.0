@@ -20,6 +20,13 @@
     box-shadow: 0 26px 50px -20px rgba(67, 57, 242, 0.65);
 }
 
+.home-screen .circle-btn.is-disabled {
+    pointer-events: none;
+    opacity: 0.55;
+    filter: grayscale(0.2);
+    box-shadow: none;
+}
+
 @media (max-width: 576px) {
     #addClientChoiceModal .modal-body {
         padding: 22px 20px 20px;
@@ -49,7 +56,7 @@
 
 #addClientChoiceModal .add-client-choice {
     position: relative;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(240, 241, 255, 0.72));
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(240, 241, 255, 0.9));
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border: 1px solid rgba(112, 102, 255, 0.25);
@@ -94,11 +101,11 @@
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 14px;
-    padding: 20px 18px;
+    gap: 16px;
+    padding: 22px 20px;
     border-radius: 16px;
     border: 1px solid rgba(112, 102, 255, 0.18);
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 18px 40px -26px rgba(20, 20, 43, 0.45);
     text-decoration: none;
     color: inherit;
@@ -106,15 +113,16 @@
 }
 
 #addClientChoiceModal .add-client-tile .tile-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 16px;
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
-    background: rgba(255, 255, 255, 0.82);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 12px 26px -18px rgba(20, 20, 43, 0.3);
+    font-size: 1.5rem;
+    background: linear-gradient(150deg, #6e5cf7, #4f3cf0);
+    color: #fff;
+    box-shadow: 0 14px 30px -20px rgba(67, 57, 242, 0.6);
 }
 
 #addClientChoiceModal .add-client-tile .tile-text {
@@ -135,6 +143,12 @@
     line-height: 1.35;
 }
 
+#addClientChoiceModal .add-client-tile .tile-description {
+    color: var(--neutral-800);
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+
 #addClientChoiceModal .add-client-tile .tile-arrow,
 #addClientChoiceModal .add-client-tile .tile-badge {
     font-weight: 700;
@@ -142,41 +156,34 @@
 }
 
 #addClientChoiceModal .add-client-tile.is-primary {
-    background: linear-gradient(145deg, rgba(92, 82, 249, 0.95), rgba(112, 102, 255, 0.9));
-    color: #fff;
-    border-color: rgba(112, 102, 255, 0.6);
+    background: #ffffff;
+    color: var(--neutral-900);
+    border: 1px solid rgba(112, 102, 255, 0.5);
+    box-shadow: 0 24px 46px -22px rgba(67, 57, 242, 0.4);
 }
 
-#addClientChoiceModal .add-client-tile.is-primary .tile-icon {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 16px 32px -20px rgba(12, 6, 98, 0.55);
-}
-
-#addClientChoiceModal .add-client-tile.is-primary .tile-label,
-#addClientChoiceModal .add-client-tile.is-primary .tile-helper,
 #addClientChoiceModal .add-client-tile.is-primary .tile-arrow {
-    color: #fff;
+    color: #4f3cf0;
 }
 
 #addClientChoiceModal .add-client-tile.is-primary:hover,
 #addClientChoiceModal .add-client-tile.is-primary:focus-visible {
     transform: translateY(-2px);
-    box-shadow: 0 24px 46px -20px rgba(67, 57, 242, 0.55);
+    box-shadow: 0 24px 46px -16px rgba(67, 57, 242, 0.55);
     outline: none;
 }
 
 #addClientChoiceModal .add-client-tile.is-muted {
-    background: linear-gradient(145deg, rgba(245, 245, 245, 0.95), rgba(235, 235, 238, 0.95));
+    background: #f1f2f6;
     color: var(--neutral-800);
-    border: 1px dashed rgba(124, 126, 155, 0.6);
+    border: 1px dashed rgba(124, 126, 155, 0.7);
     cursor: not-allowed;
 }
 
 #addClientChoiceModal .add-client-tile.is-muted .tile-icon {
-    background: rgba(255, 255, 255, 0.86);
-    color: var(--neutral-700);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: linear-gradient(150deg, rgba(112, 102, 255, 0.16), rgba(112, 102, 255, 0.08));
+    color: #4f3cf0;
+    box-shadow: none;
 }
 
 #addClientChoiceModal .add-client-tile .tile-badge {
@@ -185,8 +192,8 @@
     justify-content: center;
     padding: 0.35rem 0.85rem;
     border-radius: 999px;
-    background: rgba(124, 126, 155, 0.18);
-    color: var(--neutral-800);
-    border: 1px dashed rgba(124, 126, 155, 0.45);
+    background: rgba(112, 102, 255, 0.12);
+    color: #4f3cf0;
+    border: 1px dashed rgba(112, 102, 255, 0.4);
 }
 
