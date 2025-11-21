@@ -110,6 +110,10 @@ const MIME_TYPES = {
 };
 
 const APP_DATA_KEYS = ['archivedClients', 'consultations'];
+const APP_DATA_DEFAULTS = {
+  archivedClients: [],
+  consultations: []
+};
 
 function ensureTables() {
   Object.values(TABLE_DEFINITIONS).forEach(statement => {
@@ -346,13 +350,17 @@ const server = http.createServer(async (req, res) => {
         : [];
       const payload = APP_DATA_KEYS.reduce((acc, key) => {
         const row = rows.find(r => r.key === key);
+        const fallback = APP_DATA_DEFAULTS[key];
         if (!row) {
-          acc[key] = key === 'archivedClients' ? [] : {};
+          acc[key] = Array.isArray(fallback) ? [...fallback] : { ...fallback };
         } else {
           try {
             acc[key] = JSON.parse(row.value);
+            if (Array.isArray(fallback) && !Array.isArray(acc[key])) {
+              acc[key] = [...fallback];
+            }
           } catch (error) {
-            acc[key] = key === 'archivedClients' ? [] : {};
+            acc[key] = Array.isArray(fallback) ? [...fallback] : { ...fallback };
           }
         }
         return acc;

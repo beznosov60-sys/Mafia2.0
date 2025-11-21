@@ -139,6 +139,31 @@ function createAppStorage(store) {
 
 const appStorage = createAppStorage(appData);
 
+function getArrayFromStorage(key, fallback = []) {
+    const raw = appStorage.getItem(key);
+    if (!raw) {
+        return Array.isArray(fallback) ? [...fallback] : [];
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            return parsed;
+        }
+        return Array.isArray(fallback) ? [...fallback] : [];
+    } catch (error) {
+        console.warn(`Не удалось прочитать данные ${key}:`, error);
+        return Array.isArray(fallback) ? [...fallback] : [];
+    }
+}
+
+function saveArrayToStorage(key, value) {
+    if (!Array.isArray(value)) return;
+    appStorage.setItem(key, JSON.stringify(value));
+}
+
+const getConsultations = () => getArrayFromStorage('consultations', APP_DATA_DEFAULTS.consultations);
+const saveConsultations = consultations => saveArrayToStorage('consultations', consultations);
+
 async function loadAppDataFromServer() {
     try {
         const [appDataResponse, clientsResponse, managersResponse, managerPaymentsResponse] = await Promise.all([
@@ -991,9 +1016,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.appLoadingOverlay?.hide();
     }
 
-    if (!appStorage.getItem('consultations')) {
-        appStorage.setItem('consultations', JSON.stringify([]));
-    }
+    const consultations = getConsultations();
+    appStorage.setItem('consultations', JSON.stringify(consultations));
 
     window.dispatchEvent(new Event('app-ready'));
     window.dispatchEvent(new Event('app:ready'));
@@ -2348,7 +2372,7 @@ function renderDayActions(dateStr) {
     }
 
     const clients = JSON.parse(appStorage.getItem('clients')) || [];
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     const managers = getManagers();
 
     const clientTasks = clients
@@ -2522,7 +2546,7 @@ function initCalendar() {
         eventDisplay: 'dot',
         events: function(info, successCallback, failureCallback) {
             const clients = JSON.parse(appStorage.getItem('clients')) || [];
-            const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+            const consultations = getConsultations();
             const clientEvents = clients
                 .filter(client => client.courtDate)
                 .map(client => ({
@@ -2729,7 +2753,7 @@ function initCalendar() {
 
 function showClientsForDate(dateStr) {
     const clients = JSON.parse(appStorage.getItem('clients')) || [];
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     const filteredClients = clients.filter(client => client.courtDate === dateStr);
     const filteredConsultations = consultations.filter(consult => consult.date === dateStr);
     const managerList = getManagers();
@@ -3340,9 +3364,9 @@ window.saveConsultation = function() {
         return;
     }
 
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     consultations.push({ id: Date.now(), name, phone, date, notes });
-    appStorage.setItem('consultations', JSON.stringify(consultations));
+    saveConsultations(consultations);
 
     const modalEl = document.getElementById('addConsultationModal');
     const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -3367,7 +3391,7 @@ window.saveConsultation = function() {
 
 // --- вернуть функцию назначения консультации ---
 window.convertToClient = function(consultId, dateStr) {
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     const consult = consultations.find(c => c.id === consultId);
     if (!consult) return;
     const clients = JSON.parse(appStorage.getItem('clients')) || [];
@@ -3407,18 +3431,18 @@ window.convertToClient = function(consultId, dateStr) {
     const idx = consultations.findIndex(c => c.id === consultId);
     if (idx !== -1) {
         consultations.splice(idx, 1);
-        appStorage.setItem('consultations', JSON.stringify(consultations));
+        saveConsultations(consultations);
     }
     renderDayActions(dateStr);
     refetchCalendarEvents();
 };
 
 window.deleteConsultation = function(consultId, dateStr) {
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     const idx = consultations.findIndex(c => c.id === consultId);
     if (idx !== -1) {
         consultations.splice(idx, 1);
-        appStorage.setItem('consultations', JSON.stringify(consultations));
+        saveConsultations(consultations);
         renderDayActions(dateStr);
         refetchCalendarEvents();
     }
@@ -4247,7 +4271,7 @@ window.deleteManagerPayment = function(index) {
 };
 
 window.showConsultationDetails = function(consultId) {
-    const consultations = JSON.parse(appStorage.getItem('consultations')) || [];
+    const consultations = getConsultations();
     const consult = consultations.find(c => c.id === consultId);
     if (!consult) return;
     const nameEl = document.getElementById('consultDetailName');
