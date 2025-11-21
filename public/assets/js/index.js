@@ -28,12 +28,20 @@
         let collapseTimeout = null;
 
         function updateButtonStates() {
+            const sidebarActive = activeButton?.id === 'sidebarToggle';
             buttons.forEach((button) => {
                 const isActive = button === activeButton;
                 const shouldExpand = isActive || (!activeButton && button === hoveredButton);
 
                 button.classList.toggle('is-active', isActive);
                 button.classList.toggle('is-expanded', shouldExpand);
+                const isLocked = sidebarActive && button !== activeButton;
+                button.classList.toggle('is-disabled', isLocked);
+                if (button.tagName === 'BUTTON') {
+                    button.disabled = isLocked;
+                }
+                button.setAttribute('aria-disabled', isLocked ? 'true' : 'false');
+                button.tabIndex = isLocked ? -1 : 0;
             });
         }
 
