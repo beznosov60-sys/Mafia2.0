@@ -1043,9 +1043,16 @@ function setupLinkTransitions() {
 }
 
 // Открытие/закрытие боковой панели
-function toggleSidebar() {
+function toggleSidebar(force) {
     const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
+    if (!sidebar) {
+        return;
+    }
+
+    const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', shouldOpen);
+
+    document.dispatchEvent(new CustomEvent(shouldOpen ? 'sidebar:opened' : 'sidebar:closed'));
 }
 
 // Открытие ссылки на арбитр

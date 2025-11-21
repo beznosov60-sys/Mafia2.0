@@ -139,6 +139,8 @@
             modal.addEventListener('hidden.bs.modal', resetButtonState);
         });
 
+        document.addEventListener('sidebar:closed', resetButtonState);
+
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 resetButtonState();
@@ -151,20 +153,28 @@
         const close = document.getElementById('sidebarClose');
         const sidebar = document.getElementById('sidebar');
 
+        function closeSidebar() {
+            toggleSidebar(false);
+        }
+
+        function isClickOutside(event) {
+            return !sidebar?.contains(event.target) && !event.target.closest('#sidebarToggle');
+        }
+
         if (toggle) {
-            toggle.addEventListener('click', toggleSidebar);
+            toggle.addEventListener('click', () => toggleSidebar());
         }
         if (close) {
-            close.addEventListener('click', toggleSidebar);
+            close.addEventListener('click', closeSidebar);
         }
         document.addEventListener('click', (event) => {
             if (!sidebar || !sidebar.classList.contains('open')) {
                 return;
             }
-            if (sidebar.contains(event.target) || event.target.closest('#sidebarToggle')) {
+            if (!isClickOutside(event)) {
                 return;
             }
-            sidebar.classList.remove('open');
+            closeSidebar();
         });
     }
 
