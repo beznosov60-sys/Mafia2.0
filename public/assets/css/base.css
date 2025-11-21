@@ -855,7 +855,7 @@ body.calendar-screen {
     position: relative;
     left: auto;
     top: auto;
-    transform: translateX(-6px);
+    transform: translateX(-3px);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -907,7 +907,7 @@ body.calendar-screen {
     opacity: 1;
     max-width: 240px;
     padding: 0.5rem 0.78rem;
-    margin-left: 6px;
+    margin-left: 3px;
     transform: translateX(0);
 }
 
