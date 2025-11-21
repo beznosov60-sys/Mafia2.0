@@ -1,48 +1,29 @@
 (function() {
     function initAddClientPage() {
-        const stepContainer = document.getElementById('step1');
-        if (!stepContainer) {
+        const form = document.getElementById('clientForm');
+        if (!form) {
             return;
         }
 
-        setupStepNavigation();
+        setupFormValidation(form);
         setupStageSelect();
         setupArbitrationLink();
     }
 
-    function setupStepNavigation() {
-        const steps = Array.from(document.querySelectorAll('.form-step'));
-        const indicators = Array.from(document.querySelectorAll('.step-indicator .step'));
-        if (steps.length === 0 || indicators.length === 0) {
-            return;
-        }
+    function setupFormValidation(form) {
+        const requiredFields = ['lastName', 'firstName', 'middleName', 'totalAmount', 'paymentStartDate'];
 
-        const validateStep = (index) => {
-            if (index === 0) {
-                return validateRequiredFields(['lastName', 'firstName', 'middleName']);
-            }
-            return true;
-        };
-
-        const showStep = (index) => {
-            steps.forEach((step, i) => {
-                step.classList.toggle('active', i === index);
-                if (indicators[i]) {
-                    indicators[i].classList.toggle('active', i === index);
-                }
-            });
-        };
-
-        document.getElementById('toStep2')?.addEventListener('click', (event) => {
+        form.addEventListener('submit', (event) => {
             event.preventDefault();
-            if (!validateStep(0)) {
+            if (!validateRequiredFields(requiredFields)) {
                 return;
             }
-            showStep(1);
+            saveClient();
         });
-        document.getElementById('backToStep1')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            showStep(0);
+
+        requiredFields.forEach((id) => {
+            const field = document.getElementById(id);
+            field?.addEventListener('input', () => field.classList.remove('is-invalid'));
         });
     }
 
